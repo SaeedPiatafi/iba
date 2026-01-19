@@ -1,0 +1,254 @@
+// components/FeeHeroSection.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+
+export default function FeeHeroSection() {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  return (
+    <div className="relative w-full overflow-hidden min-h-[250px] md:min-h-[350px] lg:min-h-[400px] bg-blue-600">
+      {/* Background Image with Gradient Overlay */}
+      <div className="absolute inset-0 z-0">
+        {/* Fallback background */}
+        <div className={`absolute inset-0 ${imageError ? 'bg-blue-600' : 'bg-transparent'}`}></div>
+        
+        {/* Image from public folder */}
+        <div className="relative w-full h-full">
+          <Image
+            src="/images/feehero.jpg" // Changed to .jpg extension
+            alt="University Campus"
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+            quality={90}
+            onLoad={() => console.log('Fee hero image loaded successfully')}
+            onError={() => {
+              console.error('Image failed to load');
+              setImageError(true);
+            }}
+          />
+        </div>
+        
+        {/* MAIN FIX: Single overlay with black opacity gradient */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.4) 100%)',
+          }}
+        />
+        
+        {/* Blue tint overlay - reduced opacity */}
+        <div className="absolute inset-0 bg-blue-600/20"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 h-full flex items-center">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-16">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center">
+              {/* Main Title with Animation */}
+              <h1 
+                className={`text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4 transform transition-all duration-700 ${
+                  isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                }`}
+                style={{
+                  fontFamily: '"Montserrat", sans-serif',
+                  lineHeight: '1.2',
+                  textShadow: '0 4px 12px rgba(0, 0, 0, 0.8)'
+                }}
+              >
+                Fee Structure
+              </h1>
+
+              {/* Breadcrumb Navigation */}
+              <nav 
+                aria-label="breadcrumb"
+                className={`mb-4 md:mb-6 transform transition-all duration-700 delay-300 ${
+                  isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                }`}
+              >
+                <ol className="flex flex-wrap justify-center items-center space-x-2 md:space-x-3 text-sm md:text-base">
+                  <li className="flex items-center">
+                    <a
+                      href="/"
+                      className="text-white/95 hover:text-white transition-colors duration-300 flex items-center hover:scale-105 transform"
+                      style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
+                    >
+                      <svg 
+                        className="w-4 h-4 mr-1" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" 
+                        />
+                      </svg>
+                      Home
+                    </a>
+                    <svg 
+                      className="w-3 h-3 mx-2 text-white/80" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M9 5l7 7-7 7" 
+                      />
+                    </svg>
+                  </li>
+                  <li className="flex items-center">
+                    <a
+                      href="/about"
+                      className="text-white/95 hover:text-white transition-colors duration-300 hover:scale-105 transform"
+                      style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
+                    >
+                      about
+                    </a>
+                    <svg 
+                      className="w-3 h-3 mx-2 text-white/80" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M9 5l7 7-7 7" 
+                      />
+                    </svg>
+                  </li>
+                  <li className="flex items-center">
+                    <span 
+                      className="text-white font-semibold px-2 py-1 rounded-md text-sm bg-gradient-to-r from-black/20 to-black/10 backdrop-blur-sm"
+                      aria-current="page"
+                      style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
+                    >
+                      Fee Structure
+                    </span>
+                  </li>
+                </ol>
+              </nav>
+
+              {/* Description Text */}
+              <p 
+                className={`text-base md:text-lg lg:text-xl text-white/95 max-w-2xl mx-auto px-4 transform transition-all duration-700 delay-500 ${
+                  isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
+                }`}
+                style={{
+                  fontFamily: '"Inter", sans-serif',
+                  lineHeight: '1.5',
+                  textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)'
+                }}
+              >
+                Transparent and competitive fee structure designed to make quality education accessible
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional CSS for better display */}
+      <style jsx>{`
+        /* Ensure image container has proper dimensions */
+        .relative.w-full.h-full {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: inherit;
+        }
+        
+        /* Make sure Next.js Image fills the container */
+        .relative.w-full.h-full > span {
+          position: absolute !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+        
+        /* Remove mix-blend-multiply that might be interfering */
+        .bg-blue-600\\/20 {
+          background-color: rgba(37, 99, 235, 0.2);
+          mix-blend-mode: normal;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+          .min-h-\\[250px\\] {
+            min-height: 220px !important;
+          }
+          
+          h1 {
+            font-size: 1.75rem !important;
+            margin-bottom: 0.75rem !important;
+          }
+          
+          .container {
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+          }
+          
+          nav {
+            margin-bottom: 1rem !important;
+          }
+          
+          p {
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          nav ol {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+          }
+          
+          h1 {
+            font-size: 2.25rem !important;
+          }
+          
+          .container {
+            padding-top: 2.5rem !important;
+            padding-bottom: 2.5rem !important;
+          }
+          
+          p {
+            font-size: 1rem !important;
+          }
+        }
+        
+        @media (max-width: 1024px) {
+          .min-h-\\[400px\\] {
+            min-height: 350px !important;
+          }
+        }
+        
+        /* Smooth transitions */
+        * {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Ensure text is always on top */
+        .relative.z-10 {
+          z-index: 10;
+        }
+      `}</style>
+    </div>
+  );
+}
