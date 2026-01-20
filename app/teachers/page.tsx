@@ -1,68 +1,90 @@
-// app/teachers/page.jsx
-
+// app/teachers/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import TeacherHeroSection from '../components/teachhero';
 
-// Custom SVG icons as components
-const GraduationCapIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+// Icon Props Interface
+interface IconProps {
+  className?: string;
+}
+
+// Custom SVG icons as components with proper typing
+const GraduationCapIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const SearchIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
   </svg>
 );
 
-const BackIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+const BackIcon = ({ className = "w-5 h-5 mr-2" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
   </svg>
 );
 
-const BookIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const BookIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
   </svg>
 );
 
-const BriefcaseIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const BriefcaseIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
     <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
   </svg>
 );
 
-const UserIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const UserIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
   </svg>
 );
 
-const AwardIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const AwardIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
   </svg>
 );
 
-const CalendarIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const CalendarIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
   </svg>
 );
 
-const TeachingIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const TeachingIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
   </svg>
 );
 
+// Teacher Type Definition
+interface Teacher {
+  id: number;
+  name: string;
+  subject: string;
+  classLevels: string[];
+  image: string;
+  education: string[];
+  experience: string;
+  teachingExperience: string[];
+  bio: string;
+  achievements: string[];
+  teachingPhilosophy: string;
+  officeHours: string;
+  roomNumber: string;
+  email: string;
+}
+
 // Teacher data with additional fields for profile
-const teachers = [
+const teachersData: Teacher[] = [
   {
     id: 1,
     name: "Dr. Sarah Johnson",
@@ -342,8 +364,26 @@ const teachers = [
   }
 ];
 
+// Props for TeacherCard component
+interface TeacherCardProps {
+  teacher: Teacher;
+  onViewProfile: (id: number) => void;
+}
+
 // Teacher Card Component
-function TeacherCard({ teacher, onViewProfile }) {
+function TeacherCard({ teacher, onViewProfile }: TeacherCardProps) {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    if (target.parentElement) {
+      target.parentElement.innerHTML = `
+        <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-teal-600">
+          <span class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</span>
+        </div>
+      `;
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       {/* Teacher Image */}
@@ -355,14 +395,7 @@ function TeacherCard({ teacher, onViewProfile }) {
               alt={teacher.name}
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
               loading="lazy"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = `
-                  <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-teal-600">
-                    <span class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</span>
-                  </div>
-                `;
-              }}
+              onError={handleImageError}
             />
           </div>
         </div>
@@ -389,12 +422,30 @@ function TeacherCard({ teacher, onViewProfile }) {
   );
 }
 
-// Detailed Teacher Profile Component (Alumni style)
-function TeacherProfile({ teacher, onBack }) {
+// Props for TeacherProfile component
+interface TeacherProfileProps {
+  teacher: Teacher;
+  onBack: () => void;
+}
+
+// Detailed Teacher Profile Component
+function TeacherProfile({ teacher, onBack }: TeacherProfileProps) {
   // Scroll to top when profile opens
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    if (target.parentElement) {
+      target.parentElement.innerHTML = `
+        <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-teal-600">
+          <span class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</span>
+        </div>
+      `;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4">
@@ -419,14 +470,7 @@ function TeacherProfile({ teacher, onBack }) {
                   src={teacher.image}
                   alt={teacher.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = `
-                      <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-teal-600">
-                        <span class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</span>
-                      </div>
-                    `;
-                  }}
+                  onError={handleImageError}
                 />
               </div>
               
@@ -643,12 +687,13 @@ function TeacherProfile({ teacher, onBack }) {
 
 // Main Teachers Page Component
 export default function TeachersPage() {
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTeachers, setFilteredTeachers] = useState(teachers);
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>(teachersData);
 
-  const handleViewProfile = (teacherId) => {
-    setSelectedTeacher(teachers.find(t => t.id === teacherId));
+  const handleViewProfile = (teacherId: number) => {
+    const foundTeacher = teachersData.find(t => t.id === teacherId);
+    setSelectedTeacher(foundTeacher || null);
   };
 
   const handleBackToList = () => {
@@ -658,10 +703,10 @@ export default function TeachersPage() {
   // Handle search
   useEffect(() => {
     if (searchQuery.trim() === "") {
-      setFilteredTeachers(teachers);
+      setFilteredTeachers(teachersData);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = teachers.filter(teacher =>
+      const filtered = teachersData.filter(teacher =>
         teacher.name.toLowerCase().includes(query) ||
         teacher.subject.toLowerCase().includes(query) ||
         teacher.education.some(edu => edu.toLowerCase().includes(query))
@@ -751,7 +796,7 @@ export default function TeachersPage() {
         {/* Teachers Count */}
         <div className="mt-12 pt-6 border-t border-gray-200">
           <p className="text-center text-gray-600">
-            Showing <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> of <span className="font-semibold text-blue-600">{teachers.length}</span> teachers
+            Showing <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> of <span className="font-semibold text-blue-600">{teachersData.length}</span> teachers
           </p>
         </div>
       </section>

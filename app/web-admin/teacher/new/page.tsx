@@ -1,14 +1,36 @@
-// app/web-admin/teacher/new/page.jsx
+// app/web-admin/teacher/new/page.tsx
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+
+// Type definitions
+interface TeacherData {
+  name: string;
+  subject: string;
+  classLevels: string[];
+  image: string;
+  imageFile: File | null;
+  education: string[];
+  experience: string;
+  teachingExperience: string[];
+  bio: string;
+  achievements: string[];
+  teachingPhilosophy: string;
+  email: string;
+}
+
+interface Notification {
+  show: boolean;
+  message: string;
+  type: 'success' | 'error' | '';
+}
 
 const AddTeacherPage = () => {
   const router = useRouter();
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const initialTeacherData = {
+  const initialTeacherData: TeacherData = {
     name: '',
     subject: '',
     classLevels: [],
@@ -23,11 +45,11 @@ const AddTeacherPage = () => {
     email: ''
   };
 
-  const [teacherData, setTeacherData] = useState(initialTeacherData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedClassLevels, setSelectedClassLevels] = useState([]);
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
-  const [imagePreview, setImagePreview] = useState('');
+  const [teacherData, setTeacherData] = useState<TeacherData>(initialTeacherData);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>([]);
+  const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: '' });
+  const [imagePreview, setImagePreview] = useState<string>('');
   
   const classLevelOptions = [
     'Primary Teacher (1-5)',
@@ -37,7 +59,7 @@ const AddTeacherPage = () => {
   ];
 
   // Show notification
-  const showNotification = (message, type = 'success') => {
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ show: true, message, type });
     setTimeout(() => {
       setNotification({ show: false, message: '', type: '' });
@@ -45,7 +67,7 @@ const AddTeacherPage = () => {
   };
 
   // Handle input change
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setTeacherData(prev => ({
       ...prev,
@@ -54,8 +76,8 @@ const AddTeacherPage = () => {
   };
 
   // Handle file input change
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file type
@@ -80,7 +102,7 @@ const AddTeacherPage = () => {
     // Create preview URL
     const reader = new FileReader();
     reader.onloadend = () => {
-      setImagePreview(reader.result);
+      setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
@@ -104,8 +126,8 @@ const AddTeacherPage = () => {
   };
 
   // Handle array input change
-  const handleArrayInputChange = (field, index, value) => {
-    const newArray = [...teacherData[field]];
+  const handleArrayInputChange = (field: keyof TeacherData, index: number, value: string) => {
+    const newArray = [...teacherData[field] as string[]];
     newArray[index] = value;
     setTeacherData(prev => ({
       ...prev,
@@ -114,18 +136,19 @@ const AddTeacherPage = () => {
   };
 
   // Add array field
-  const addArrayField = (field) => {
+  const addArrayField = (field: keyof TeacherData) => {
     setTeacherData(prev => ({
       ...prev,
-      [field]: [...prev[field], '']
+      [field]: [...prev[field] as string[], '']
     }));
   };
 
   // Remove array field
-  const removeArrayField = (field, index) => {
-    if (teacherData[field].length === 1) return;
+  const removeArrayField = (field: keyof TeacherData, index: number) => {
+    const fieldArray = teacherData[field] as string[];
+    if (fieldArray.length === 1) return;
     
-    const newArray = teacherData[field].filter((_, i) => i !== index);
+    const newArray = fieldArray.filter((_, i) => i !== index);
     setTeacherData(prev => ({
       ...prev,
       [field]: newArray
@@ -133,7 +156,7 @@ const AddTeacherPage = () => {
   };
 
   // Handle class level toggle
-  const handleClassLevelToggle = (level) => {
+  const handleClassLevelToggle = (level: string) => {
     setSelectedClassLevels(prev => {
       if (prev.includes(level)) {
         return prev.filter(l => l !== level);
@@ -144,7 +167,7 @@ const AddTeacherPage = () => {
   };
 
   // Validate form
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     if (!teacherData.name.trim()) {
       showNotification('Please enter teacher name', 'error');
       return false;
@@ -177,7 +200,7 @@ const AddTeacherPage = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -534,7 +557,7 @@ const AddTeacherPage = () => {
                     <input
                       type="text"
                       value={edu}
-                      onChange={(e) => handleArrayInputChange('education', index, e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayInputChange('education', index, e.target.value)}
                       className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                       placeholder="e.g., PhD in Mathematics, Stanford University"
                     />
@@ -590,7 +613,7 @@ const AddTeacherPage = () => {
                     <input
                       type="text"
                       value={exp}
-                      onChange={(e) => handleArrayInputChange('teachingExperience', index, e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayInputChange('teachingExperience', index, e.target.value)}
                       className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                       placeholder="e.g., Head of Mathematics Department (2015-Present)"
                     />
@@ -645,7 +668,7 @@ const AddTeacherPage = () => {
                     <input
                       type="text"
                       value={achievement}
-                      onChange={(e) => handleArrayInputChange('achievements', index, e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayInputChange('achievements', index, e.target.value)}
                       className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
                       placeholder="e.g., National Mathematics Teacher of the Year 2022"
                     />
@@ -690,7 +713,7 @@ const AddTeacherPage = () => {
                     value={teacherData.bio}
                     onChange={handleInputChange}
                     required
-                    rows="4"
+                    rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="Write a brief professional biography..."
                   />
@@ -711,7 +734,7 @@ const AddTeacherPage = () => {
                     value={teacherData.teachingPhilosophy}
                     onChange={handleInputChange}
                     required
-                    rows="4"
+                    rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="Describe the teacher's teaching philosophy..."
                   />

@@ -1,22 +1,47 @@
-// app/gallery/page.jsx
+// app/gallery/page.tsx
 'use client';
 
 import { useState, useMemo, Suspense, lazy } from 'react';
 import GalleryHeroSection from '../components/galleryhero';
 
-// Lazy load the image component
-const LazyImage = lazy(() => Promise.resolve({
-  default: ({ src, alt, className, ...props }) => (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      loading="lazy"
-      decoding="async"
-      {...props}
-    />
-  )
-}));
+// Define types
+interface ImageType {
+  id: number;
+  src: string;
+  tags: string[];
+  alt: string;
+}
+
+interface FilterType {
+  id: string;
+  name: string;
+  color: string;
+}
+
+// Lazy load the image component with proper TypeScript typing
+const LazyImage = lazy(() => 
+  Promise.resolve({
+    default: ({ src, alt, className, ...props }: { 
+      src: string; 
+      alt: string; 
+      className?: string; 
+      loading?: 'lazy' | 'eager';
+      decoding?: 'async' | 'auto' | 'sync';
+      width?: string | number;
+      height?: string | number;
+      onError?: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
+    }) => (
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        loading="lazy"
+        decoding="async"
+        {...props}
+      />
+    )
+  }) as Promise<{ default: React.ComponentType<any> }>
+);
 
 // Fallback component for lazy loading
 const ImageFallback = () => (
@@ -26,12 +51,12 @@ const ImageFallback = () => (
 );
 
 export default function GalleryPage() {
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [visibleCount, setVisibleCount] = useState(12); // Initially show 12 images
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [visibleCount, setVisibleCount] = useState<number>(12); // Initially show 12 images
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
   // Gallery categories as requested
-  const filters = useMemo(() => [
+  const filters = useMemo<FilterType[]>(() => [
     { id: 'all', name: 'All Photos', color: 'bg-blue-600' },
     { id: 'campus-life', name: 'Campus Life', color: 'bg-teal-600' },
     { id: 'events', name: 'Events', color: 'bg-purple-600' },
@@ -41,7 +66,7 @@ export default function GalleryPage() {
   ], []);
   
   // 30 Optimized School Images (using smaller Unsplash sizes for faster loading)
-  const galleryImages = useMemo(() => [
+  const galleryImages = useMemo<ImageType[]>(() => [
     // Campus Life (6 images)
     { id: 1, src: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life'], alt: 'School campus aerial view' },
     { id: 2, src: 'https://images.unsplash.com/photo-1562774053-701939374585?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life', 'academics'], alt: 'Students walking on campus' },
@@ -102,7 +127,7 @@ export default function GalleryPage() {
   const hasMoreImages = visibleCount < totalFiltered;
   
   // Handle filter change
-  const handleFilterChange = (filterId) => {
+  const handleFilterChange = (filterId: string) => {
     setActiveFilter(filterId);
     setVisibleCount(12); // Reset to initial count when filter changes
   };
@@ -117,9 +142,10 @@ export default function GalleryPage() {
   };
 
   // Handle image error
-  const handleImageError = (e) => {
-    e.target.style.display = 'none';
-    const parent = e.target.parentElement;
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    const parent = target.parentElement;
     if (parent) {
       parent.innerHTML = `
         <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-gray-200">
@@ -132,10 +158,6 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Pre-connect to Unsplash for faster loading */}
-      <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
-      <link rel="dns-prefetch" href="https://images.unsplash.com" />
-      
       {/* Hero Section */}
       <GalleryHeroSection />
       
@@ -166,7 +188,7 @@ export default function GalleryPage() {
               <span className="font-semibold text-gray-800">{totalFiltered}</span> photos
               {activeFilter !== 'all' && (
                 <> in <span className="font-semibold" style={{
-                  color: filters.find(f => f.id === activeFilter)?.color.replace('bg-', '').replace('-600', '-700')
+                  color: `var(--${filters.find(f => f.id === activeFilter)?.color.replace('bg-', '').replace('-600', '-700')})`
                 }}>
                   {filters.find(f => f.id === activeFilter)?.name}
                 </span></>

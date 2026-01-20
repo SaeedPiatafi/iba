@@ -1,7 +1,7 @@
-// app/web-admin/fees/page.jsx
+// app/web-admin/fees/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, JSX } from 'react';
 import { useRouter } from 'next/navigation';
 
 // Icons components
@@ -35,8 +35,36 @@ const MoneyIcon = () => (
   </svg>
 );
 
-const CategoryBadge = ({ category }) => {
-  const colors = {
+// Define TypeScript interfaces
+interface FeeStructure {
+  id: number;
+  class: string;
+  category: string;
+  admissionFee: string;
+  monthlyFee: string;
+  annualFee: string;
+  otherCharges: string;
+  totalAnnual: string;
+  description: string;
+  isActive: boolean;
+}
+
+interface CategoryBadgeProps {
+  category: string;
+}
+
+interface Totals {
+  totalClasses: number;
+  totalAnnualSum: number;
+  avgAnnual: number;
+}
+
+interface ShowDetailsState {
+  [key: number]: boolean;
+}
+
+const CategoryBadge = ({ category }: CategoryBadgeProps): JSX.Element => {
+  const colors: { [key: string]: string } = {
     'Pre-School': 'bg-pink-100 text-pink-800',
     'Primary': 'bg-blue-100 text-blue-800',
     'Middle School': 'bg-green-100 text-green-800',
@@ -51,32 +79,32 @@ const CategoryBadge = ({ category }) => {
   );
 };
 
-const LoadingSpinner = () => (
+const LoadingSpinner = (): JSX.Element => (
   <div className="flex justify-center items-center py-8">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
   </div>
 );
 
-export default function AdminFeesPage() {
+export default function AdminFeesPage(): JSX.Element {
   const router = useRouter();
-  const [fees, setFees] = useState([]);
-  const [filteredFees, setFilteredFees] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [feeToDelete, setFeeToDelete] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showDetails, setShowDetails] = useState({});
+  const [fees, setFees] = useState<FeeStructure[]>([]);
+  const [filteredFees, setFilteredFees] = useState<FeeStructure[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [feeToDelete, setFeeToDelete] = useState<FeeStructure | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showDetails, setShowDetails] = useState<ShowDetailsState>({});
 
   // Mock API call to fetch fees
   useEffect(() => {
-    const fetchFees = async () => {
+    const fetchFees = async (): Promise<void> => {
       try {
         setLoading(true);
         // In real app, this would be an API call
         setTimeout(() => {
-          const mockFees = [
+          const mockFees: FeeStructure[] = [
             {
               id: 1,
               class: "KG (Kindergarten)",
@@ -209,20 +237,20 @@ export default function AdminFeesPage() {
     setFilteredFees(filtered);
   }, [searchQuery, selectedCategory, fees]);
 
-  const handleAddNew = () => {
+  const handleAddNew = (): void => {
     router.push('/web-admin/fee/new');
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = (id: number): void => {
     router.push(`/web-admin/fee/edit/${id}`);
   };
 
-  const handleDeleteClick = (fee) => {
+  const handleDeleteClick = (fee: FeeStructure): void => {
     setFeeToDelete(fee);
     setShowDeleteModal(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = (): void => {
     if (feeToDelete) {
       setFees(prev => prev.filter(f => f.id !== feeToDelete.id));
       setFilteredFees(prev => prev.filter(f => f.id !== feeToDelete.id));
@@ -231,12 +259,12 @@ export default function AdminFeesPage() {
     }
   };
 
-  const handleDeleteCancel = () => {
+  const handleDeleteCancel = (): void => {
     setShowDeleteModal(false);
     setFeeToDelete(null);
   };
 
-  const toggleDetails = (id) => {
+  const toggleDetails = (id: number): void => {
     setShowDetails(prev => ({
       ...prev,
       [id]: !prev[id]
@@ -244,10 +272,10 @@ export default function AdminFeesPage() {
   };
 
   // Get unique categories
-  const categories = ['all', ...new Set(fees.map(fee => fee.category))];
+  const categories: string[] = ['all', ...new Set(fees.map(fee => fee.category))];
 
   // Calculate totals
-  const calculateTotals = () => {
+  const calculateTotals = (): Totals => {
     const activeFees = fees.filter(f => f.isActive);
     const totalAnnualSum = activeFees.reduce((sum, fee) => {
       const amount = parseInt(fee.totalAnnual.replace(/[^\d]/g, ''));
@@ -263,7 +291,7 @@ export default function AdminFeesPage() {
     };
   };
 
-  const totals = calculateTotals();
+  const totals: Totals = calculateTotals();
 
   if (loading) {
     return (

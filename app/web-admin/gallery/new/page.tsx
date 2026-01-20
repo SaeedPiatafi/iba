@@ -1,66 +1,80 @@
-// app/web-admin/gallery/new/page.jsx
+// app/web-admin/gallery/new/page.tsx
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, ChangeEvent, KeyboardEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Icons
-const BackIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+// Define TypeScript interfaces
+interface FormData {
+  title: string;
+  description: string;
+  imageUrl: string;
+  tags: string[];
+  isFeatured: boolean;
+}
+
+interface IconProps {
+  className?: string;
+}
+
+// Icons with proper typing
+const BackIcon = ({ className }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
   </svg>
 );
 
-const SaveIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+const SaveIcon = ({ className }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
   </svg>
 );
 
-const UploadIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const UploadIcon = ({ className }: IconProps) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
   </svg>
 );
 
-const TagIcon = () => (
-  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+const TagIcon = ({ className }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
   </svg>
 );
 
-const AddIcon = () => (
-  <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+const AddIcon = ({ className }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
   </svg>
 );
 
-const RemoveIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const RemoveIcon = ({ className }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
   </svg>
 );
 
 export default function NewGalleryPage() {
   const router = useRouter();
-  const fileInputRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [uploadMethod, setUploadMethod] = useState('url'); // 'url' or 'file'
-  const [imagePreview, setImagePreview] = useState(null);
-  const [formData, setFormData] = useState({
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     imageUrl: '',
     tags: [],
     isFeatured: false,
   });
-  const [newTag, setNewTag] = useState('');
+  const [newTag, setNewTag] = useState<string>('');
 
   // Available tags for quick selection
-  const availableTags = ['events', 'campus-life', 'academics', 'sports', 'cultural'];
+  const availableTags: string[] = ['events', 'campus-life', 'academics', 'sports', 'cultural'];
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const target = e.target as HTMLInputElement;
     
     if (name === 'imageUrl' && uploadMethod === 'url') {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -71,13 +85,13 @@ export default function NewGalleryPage() {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: type === 'checkbox' ? target.checked : value
       }));
     }
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -94,7 +108,7 @@ export default function NewGalleryPage() {
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result);
+        setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
 
@@ -107,29 +121,46 @@ export default function NewGalleryPage() {
     }
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (uploadMethod === 'file') {
       const file = e.dataTransfer.files[0];
       if (file) {
-        const event = {
-          target: {
-            files: [file]
-          }
+        // Process the dropped file directly instead of creating synthetic event
+        if (!file.type.startsWith('image/')) {
+          alert('Please upload an image file (JPEG, PNG, etc.)');
+          return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Image size should be less than 5MB');
+          return;
+        }
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
         };
-        handleFileUpload(event);
+        reader.readAsDataURL(file);
+
+        // Set the image URL
+        setFormData(prev => ({
+          ...prev,
+          imageUrl: `uploaded_${Date.now()}_${file.name}`
+        }));
       }
     }
   };
 
-  const addTag = (tag) => {
+  const addTag = (tag: string) => {
     if (!formData.tags.includes(tag)) {
       setFormData(prev => ({
         ...prev,
@@ -138,7 +169,7 @@ export default function NewGalleryPage() {
     }
   };
 
-  const removeTag = (tagToRemove) => {
+  const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
@@ -156,14 +187,14 @@ export default function NewGalleryPage() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAddCustomTag();
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     if (!formData.title.trim()) {
       alert('Please enter a title for the image');
       return false;
@@ -182,7 +213,7 @@ export default function NewGalleryPage() {
     return true;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -221,7 +252,7 @@ export default function NewGalleryPage() {
             onClick={handleBack}
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4 font-medium transition-colors"
           >
-            <BackIcon />
+            <BackIcon className="w-5 h-5 mr-2" />
             Back to Gallery
           </button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Gallery Image</h1>
@@ -334,7 +365,7 @@ export default function NewGalleryPage() {
                   ) : (
                     <div>
                       <div className="mx-auto w-16 h-16 mb-4 flex items-center justify-center bg-gray-100 rounded-full">
-                        <UploadIcon className="w-8 h-8 text-gray-400" />
+                        <UploadIcon className="w-6 h-6" />
                       </div>
                       <div className="text-center">
                         <p className="text-sm font-medium text-gray-900 mb-1">
@@ -363,12 +394,12 @@ export default function NewGalleryPage() {
                           alt="Preview"
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = `
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement!.innerHTML = `
                               <div class="w-full h-full flex items-center justify-center">
                                 <div class="text-gray-400">
                                   <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                   </svg>
                                 </div>
                               </div>
@@ -458,7 +489,7 @@ export default function NewGalleryPage() {
                       disabled={formData.tags.includes(tag)}
                       className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors flex items-center gap-1 ${formData.tags.includes(tag) ? 'bg-blue-100 text-blue-700 border-blue-300 cursor-not-allowed' : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'}`}
                     >
-                      <TagIcon />
+                      <TagIcon className="w-4 h-4" />
                       {tag.charAt(0).toUpperCase() + tag.slice(1)}
                     </button>
                   ))}
@@ -482,9 +513,9 @@ export default function NewGalleryPage() {
                   <button
                     type="button"
                     onClick={handleAddCustomTag}
-                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center"
                   >
-                    <AddIcon />
+                    <AddIcon className="w-5 h-5 mr-1" />
                   </button>
                 </div>
                 <p className="mt-2 text-sm text-gray-500">
@@ -508,9 +539,9 @@ export default function NewGalleryPage() {
                         <button
                           type="button"
                           onClick={() => removeTag(tag)}
-                          className="ml-2 text-blue-600 hover:text-blue-800"
+                          className="ml-2 text-blue-600 hover:text-blue-800 flex items-center"
                         >
-                          <RemoveIcon />
+                          <RemoveIcon className="w-5 h-5" />
                         </button>
                       </div>
                     ))}
@@ -559,8 +590,8 @@ export default function NewGalleryPage() {
                         alt="Preview"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = `
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement!.innerHTML = `
                             <div class="w-full h-full flex items-center justify-center">
                               <div class="text-center">
                                 <div class="text-gray-400 text-4xl mb-2">📷</div>
@@ -671,7 +702,7 @@ export default function NewGalleryPage() {
                   </>
                 ) : (
                   <>
-                    <SaveIcon />
+                    <SaveIcon className="w-5 h-5 mr-2" />
                     Upload to Gallery
                   </>
                 )}

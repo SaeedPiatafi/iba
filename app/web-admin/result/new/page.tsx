@@ -1,10 +1,10 @@
-// app/web-admin/results/new/page.jsx
+// app/web-admin/results/new/page.tsx
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, ChangeEvent, DragEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Icons
+// Icons with proper typing
 const BackIcon = () => (
   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -17,28 +17,34 @@ const UploadIcon = () => (
   </svg>
 );
 
-const ExcelIcon = () => (
-  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+const ExcelIcon = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
   </svg>
 );
 
+// Type definitions
+interface FormData {
+  term: string;
+  year: string;
+}
+
 export default function NewResultPage() {
   const router = useRouter();
-  const fileInputRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [fileName, setFileName] = useState('');
-  const [formData, setFormData] = useState({
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string>('');
+  const [formData, setFormData] = useState<FormData>({
     term: '',
     year: '',
   });
 
-  // Options
-  const testTypes = ['First Term', 'Second Term', 'Mid Term', 'Final Examination'];
-  const academicYears = ['2024-2025', '2023-2024', '2022-2023', '2021-2022'];
+  // Options with type safety
+  const testTypes: string[] = ['First Term', 'Second Term', 'Mid Term', 'Final Examination'];
+  const academicYears: string[] = ['2024-2025', '2023-2024', '2022-2023', '2021-2022'];
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLSelectElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -46,8 +52,7 @@ export default function NewResultPage() {
     }));
   };
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
+  const handleFileSelect = (file: File): void => {
     if (file) {
       // Check if it's an Excel file
       const validTypes = [
@@ -55,7 +60,9 @@ export default function NewResultPage() {
         'application/vnd.ms-excel'
       ];
       
-      if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
+      const isValidType = validTypes.includes(file.type) || file.name.match(/\.(xlsx|xls)$/i);
+      
+      if (!isValidType) {
         alert('Please upload an Excel file (.xlsx or .xls)');
         return;
       }
@@ -71,27 +78,29 @@ export default function NewResultPage() {
     }
   };
 
-  const handleDragOver = (e) => {
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
     
     const file = e.dataTransfer.files[0];
     if (file) {
-      const event = {
-        target: {
-          files: [file]
-        }
-      };
-      handleFileSelect(event);
+      handleFileSelect(file);
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     if (!formData.term) {
       alert('Please select a term');
       return false;
@@ -110,7 +119,7 @@ export default function NewResultPage() {
     return true;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -124,7 +133,7 @@ export default function NewResultPage() {
       term: formData.term,
       year: formData.year,
       fileName: fileName,
-      fileSize: selectedFile.size
+      fileSize: selectedFile?.size
     });
     
     // Simulate file upload
@@ -135,11 +144,11 @@ export default function NewResultPage() {
     }, 2000);
   };
 
-  const handleBack = () => {
+  const handleBack = (): void => {
     router.back();
   };
 
-  const handleClear = () => {
+  const handleClear = (): void => {
     setSelectedFile(null);
     setFileName('');
     setFormData({
@@ -159,6 +168,7 @@ export default function NewResultPage() {
           <button
             onClick={handleBack}
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4 font-medium transition-colors"
+            type="button"
           >
             <BackIcon />
             Back to Results
@@ -231,11 +241,14 @@ export default function NewResultPage() {
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
             >
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleFileSelect}
+                onChange={handleFileInputChange}
                 accept=".xlsx,.xls"
                 className="hidden"
               />

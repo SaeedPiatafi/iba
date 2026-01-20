@@ -1,40 +1,64 @@
-// app/web-admin/teachers/edit/[id]/page.jsx
+// app/web-admin/teacher/edit/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, KeyboardEvent, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
-// Icons
-const BackIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+// Icons with proper typing
+interface IconProps {
+  className?: string;
+}
+
+const BackIcon = ({ className = "w-5 h-5 mr-2" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
   </svg>
 );
 
-const SaveIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+const SaveIcon = ({ className = "w-5 h-5 mr-2" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
   </svg>
 );
 
-const AddIcon = () => (
-  <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+const AddIcon = ({ className = "w-5 h-5 mr-1" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
   </svg>
 );
 
-const RemoveIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const RemoveIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
   </svg>
 );
 
+// Type definitions - Added id to FormData interface
+interface FormData {
+  id?: number; // Added id as optional
+  name: string;
+  subject: string;
+  classLevels: string[];
+  image: string;
+  education: string[];
+  experience: string;
+  teachingExperience: string[];
+  bio: string;
+  achievements: string[];
+  teachingPhilosophy: string;
+  officeHours: string;
+  roomNumber: string;
+  email: string;
+  phone: string;
+  isActive: boolean;
+}
+
 export default function EditTeacherPage() {
   const params = useParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     subject: '',
     classLevels: [],
@@ -52,14 +76,14 @@ export default function EditTeacherPage() {
     isActive: true,
   });
 
-  const [newClassLevel, setNewClassLevel] = useState('');
-  const [newEducation, setNewEducation] = useState('');
-  const [newTeachingExp, setNewTeachingExp] = useState('');
-  const [newAchievement, setNewAchievement] = useState('');
+  const [newClassLevel, setNewClassLevel] = useState<string>('');
+  const [newEducation, setNewEducation] = useState<string>('');
+  const [newTeachingExp, setNewTeachingExp] = useState<string>('');
+  const [newAchievement, setNewAchievement] = useState<string>('');
 
   // Mock teacher data - in real app, fetch from API
-  const mockTeacherData = {
-    id: 1,
+  const mockTeacherData: FormData = {
+    id: 1, // Now valid since id is in FormData interface
     name: "Dr. Sarah Johnson",
     subject: "Mathematics & Physics",
     classLevels: ["9th Grade", "10th Grade", "11th Grade", "12th Grade"],
@@ -104,11 +128,13 @@ export default function EditTeacherPage() {
     fetchTeacherData();
   }, [params.id]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const target = e.target as HTMLInputElement;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? target.checked : value
     }));
   };
 
@@ -123,7 +149,7 @@ export default function EditTeacherPage() {
     }
   };
 
-  const removeClassLevel = (index) => {
+  const removeClassLevel = (index: number) => {
     setFormData(prev => ({
       ...prev,
       classLevels: prev.classLevels.filter((_, i) => i !== index)
@@ -140,7 +166,7 @@ export default function EditTeacherPage() {
     }
   };
 
-  const removeEducation = (index) => {
+  const removeEducation = (index: number) => {
     setFormData(prev => ({
       ...prev,
       education: prev.education.filter((_, i) => i !== index)
@@ -157,7 +183,7 @@ export default function EditTeacherPage() {
     }
   };
 
-  const removeTeachingExperience = (index) => {
+  const removeTeachingExperience = (index: number) => {
     setFormData(prev => ({
       ...prev,
       teachingExperience: prev.teachingExperience.filter((_, i) => i !== index)
@@ -174,21 +200,42 @@ export default function EditTeacherPage() {
     }
   };
 
-  const removeAchievement = (index) => {
+  const removeAchievement = (index: number) => {
     setFormData(prev => ({
       ...prev,
       achievements: prev.achievements.filter((_, i) => i !== index)
     }));
   };
 
-  const handleKeyPress = (e, action) => {
+  const handleClassLevelKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      action();
+      addClassLevel();
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleEducationKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addEducation();
+    }
+  };
+
+  const handleTeachingExpKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTeachingExperience();
+    }
+  };
+
+  const handleAchievementKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addAchievement();
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
     
@@ -310,8 +357,9 @@ export default function EditTeacherPage() {
                           alt="Preview" 
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = `
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement!.innerHTML = `
                               <div class="w-full h-full flex items-center justify-center bg-gray-100">
                                 <span class="text-gray-400 text-sm">No image</span>
                               </div>
@@ -350,8 +398,8 @@ export default function EditTeacherPage() {
                     <input
                       type="text"
                       value={newClassLevel}
-                      onChange={(e) => setNewClassLevel(e.target.value)}
-                      onKeyPress={(e) => handleKeyPress(e, addClassLevel)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setNewClassLevel(e.target.value)}
+                      onKeyPress={handleClassLevelKeyPress}
                       className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       placeholder="Add new class level"
                     />
@@ -360,7 +408,7 @@ export default function EditTeacherPage() {
                       onClick={addClassLevel}
                       className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                     >
-                      <AddIcon />
+                      <AddIcon className="w-5 h-5" />
                     </button>
                   </div>
                   
@@ -379,7 +427,7 @@ export default function EditTeacherPage() {
                               onClick={() => removeClassLevel(index)}
                               className="ml-2 text-blue-600 hover:text-blue-800"
                             >
-                              <RemoveIcon />
+                              <RemoveIcon className="w-5 h-5" />
                             </button>
                           </div>
                         ))}
@@ -472,8 +520,8 @@ export default function EditTeacherPage() {
                 <input
                   type="text"
                   value={newEducation}
-                  onChange={(e) => setNewEducation(e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, addEducation)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewEducation(e.target.value)}
+                  onKeyPress={handleEducationKeyPress}
                   className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder="Add new education"
                 />
@@ -482,7 +530,7 @@ export default function EditTeacherPage() {
                   onClick={addEducation}
                   className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                 >
-                  <AddIcon />
+                  <AddIcon className="w-5 h-5" />
                 </button>
               </div>
               
@@ -500,7 +548,7 @@ export default function EditTeacherPage() {
                         onClick={() => removeEducation(index)}
                         className="text-red-600 hover:text-red-800 p-1"
                       >
-                        <RemoveIcon />
+                        <RemoveIcon className="w-5 h-5" />
                       </button>
                     </div>
                   ))}
@@ -520,8 +568,8 @@ export default function EditTeacherPage() {
                 <input
                   type="text"
                   value={newTeachingExp}
-                  onChange={(e) => setNewTeachingExp(e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, addTeachingExperience)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewTeachingExp(e.target.value)}
+                  onKeyPress={handleTeachingExpKeyPress}
                   className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder="Add new teaching experience"
                 />
@@ -530,7 +578,7 @@ export default function EditTeacherPage() {
                   onClick={addTeachingExperience}
                   className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                 >
-                  <AddIcon />
+                  <AddIcon className="w-5 h-5" />
                 </button>
               </div>
               
@@ -548,7 +596,7 @@ export default function EditTeacherPage() {
                         onClick={() => removeTeachingExperience(index)}
                         className="text-red-600 hover:text-red-800 p-1"
                       >
-                        <RemoveIcon />
+                        <RemoveIcon className="w-5 h-5" />
                       </button>
                     </div>
                   ))}
@@ -568,8 +616,8 @@ export default function EditTeacherPage() {
                 <input
                   type="text"
                   value={newAchievement}
-                  onChange={(e) => setNewAchievement(e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, addAchievement)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewAchievement(e.target.value)}
+                  onKeyPress={handleAchievementKeyPress}
                   className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder="Add new achievement"
                 />
@@ -578,7 +626,7 @@ export default function EditTeacherPage() {
                   onClick={addAchievement}
                   className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
                 >
-                  <AddIcon />
+                  <AddIcon className="w-5 h-5" />
                 </button>
               </div>
               
@@ -596,7 +644,7 @@ export default function EditTeacherPage() {
                         onClick={() => removeAchievement(index)}
                         className="text-red-600 hover:text-red-800 p-1"
                       >
-                        <RemoveIcon />
+                        <RemoveIcon className="w-5 h-5" />
                       </button>
                     </div>
                   ))}
@@ -733,7 +781,7 @@ export default function EditTeacherPage() {
                   </>
                 ) : (
                   <>
-                    <SaveIcon />
+                    <SaveIcon className="w-5 h-5 mr-2" />
                     Save Changes
                   </>
                 )}

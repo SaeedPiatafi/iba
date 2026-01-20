@@ -1,12 +1,21 @@
-// app/web-admin/teachers/page.jsx
+// app/web-admin/teacher/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
 
-// Icons components
+// Define TypeScript interfaces
+interface Teacher {
+  id: number;
+  name: string;
+  subject: string;
+  image: string;
+  isActive: boolean;
+  email: string;
+  phone: string;
+}
+
+// Icons components with proper typing
 const SearchIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -45,13 +54,13 @@ const LoadingSpinner = () => (
 
 export default function AdminTeachersPage() {
   const router = useRouter();
-  const [teachers, setTeachers] = useState([]);
-  const [filteredTeachers, setFilteredTeachers] = useState([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [teacherToDelete, setTeacherToDelete] = useState(null);
+  const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
 
   // Mock API call to fetch teachers
   useEffect(() => {
@@ -60,7 +69,7 @@ export default function AdminTeachersPage() {
         setLoading(true);
         // In real app, this would be an API call
         setTimeout(() => {
-          const mockTeachers = [
+          const mockTeachers: Teacher[] = [
             {
               id: 1,
               name: "Dr. Sarah Johnson",
@@ -139,11 +148,11 @@ export default function AdminTeachersPage() {
     router.push('/web-admin/teacher/new');
   };
 
-  const handleEdit = (id) => {
-    router.push(`/web-admin/teachers/edit/${id}`);
+  const handleEdit = (id: number) => {
+    router.push(`/web-admin/teacher/edit/${id}`);
   };
 
-  const handleDeleteClick = (teacher) => {
+  const handleDeleteClick = (teacher: Teacher) => {
     setTeacherToDelete(teacher);
     setShowDeleteModal(true);
   };
@@ -190,7 +199,7 @@ export default function AdminTeachersPage() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               placeholder="Search teachers by name, subject, or email..."
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
@@ -238,8 +247,9 @@ export default function AdminTeachersPage() {
                       alt={teacher.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = `
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.parentElement!.innerHTML = `
                           <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
                             <div class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</div>
                           </div>
@@ -248,7 +258,9 @@ export default function AdminTeachersPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                      <UserIcon className="text-white" />
+                      <div className="text-white">
+                        <UserIcon />
+                      </div>
                     </div>
                   )}
                   <div className="absolute top-3 right-3">

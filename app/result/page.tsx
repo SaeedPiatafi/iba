@@ -1,11 +1,13 @@
+// app/result/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { 
   Search, RefreshCw, Printer, Download, Calculator, 
   FlaskConical, BookOpen, Globe, Cpu, Palette, 
   Dumbbell, GraduationCap, User, Hash, Calendar,
-  Award, Percent, CheckCircle, XCircle, Clock
+  Award, Percent, CheckCircle, XCircle, Clock,
+  LucideIcon
 } from 'lucide-react';
 import Resulthero from '../components/resulthero'
 
@@ -39,12 +41,12 @@ interface StudentResult {
 
 export default function ResultPortal() {
   // State management
-  const [year, setYear] = useState('');
-  const [testType, setTestType] = useState('');
-  const [rollNumber, setRollNumber] = useState('');
+  const [year, setYear] = useState<string>('');
+  const [testType, setTestType] = useState<string>('');
+  const [rollNumber, setRollNumber] = useState<string>('');
   const [result, setResult] = useState<StudentResult | null>(null);
-  const [showResult, setShowResult] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showResult, setShowResult] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Sample data
   const sampleResults: StudentResult[] = [
@@ -151,7 +153,7 @@ export default function ResultPortal() {
 
   // Render icon component
   const renderIcon = (iconName: string, className: string = '') => {
-    const icons: { [key: string]: React.ReactNode } = {
+    const icons: { [key: string]: ReactNode } = {
       Calculator: <Calculator className={`w-5 h-5 ${className}`} />,
       FlaskConical: <FlaskConical className={`w-5 h-5 ${className}`} />,
       BookOpen: <BookOpen className={`w-5 h-5 ${className}`} />,
@@ -294,7 +296,10 @@ export default function ResultPortal() {
                   <Printer className="w-5 h-5" />
                   Print Result
                 </button>
-                <button className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center gap-3 shadow-lg hover:shadow-xl">
+                <button 
+                  onClick={() => alert('Download feature coming soon!')}
+                  className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center gap-3 shadow-lg hover:shadow-xl"
+                >
                   <Download className="w-5 h-5" />
                   Download PDF
                 </button>
@@ -366,7 +371,8 @@ export default function ResultPortal() {
                 </thead>
                 <tbody>
                   {result.subjects.map((subject) => {
-                    const percentage = ((subject.obtained / subject.maxMarks) * 100).toFixed(1);
+                    const percentageNum = (subject.obtained / subject.maxMarks) * 100;
+                    const percentageStr = percentageNum.toFixed(1);
                     const isPass = subject.obtained >= (subject.maxMarks * 0.33);
                     
                     return (
@@ -386,8 +392,8 @@ export default function ResultPortal() {
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <Percent className="w-4 h-4 text-gray-500" />
-                            <span className={`font-semibold ${percentage >= 33 ? 'text-green-600' : 'text-red-600'}`}>
-                              {percentage}%
+                            <span className={`font-semibold ${percentageNum >= 33 ? 'text-green-600' : 'text-red-600'}`}>
+                              {percentageStr}%
                             </span>
                           </div>
                         </td>

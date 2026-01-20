@@ -1,7 +1,7 @@
-// app/web-admin/fees/new/page.jsx
+// app/web-admin/fees/new/page.tsx
 "use client";
 
-import { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 // Icons
@@ -17,10 +17,22 @@ const SaveIcon = () => (
   </svg>
 );
 
+interface FeeFormData {
+  class: string;
+  category: string;
+  admissionFee: string;
+  monthlyFee: string;
+  annualFee: string;
+  otherCharges: string;
+  totalAnnual: string;
+  description: string;
+  isActive: boolean;
+}
+
 export default function NewFeePage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FeeFormData>({
     class: '',
     category: '',
     admissionFee: '',
@@ -32,31 +44,46 @@ export default function NewFeePage() {
     isActive: true,
   });
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const parseCurrencyToNumber = (value: string): number => {
+    if (typeof value !== 'string') return 0;
+    const cleaned = value.replace(/[^\d]/g, '');
+    return parseInt(cleaned) || 0;
+  };
+
+  const formatCurrency = (amount: number): string => {
+    return `Rs. ${amount.toLocaleString()}`;
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
     
-    if (name === 'monthlyFee' || name === 'otherCharges') {
+    // Type assertion for checkbox
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    if (name === 'monthlyFee' || name === 'otherCharges' || name === 'admissionFee') {
       // Calculate annual and total automatically
       const monthlyFee = name === 'monthlyFee' ? value : formData.monthlyFee;
       const otherCharges = name === 'otherCharges' ? value : formData.otherCharges;
-      const admissionFee = formData.admissionFee;
+      const admissionFee = name === 'admissionFee' ? value : formData.admissionFee;
+      
+      // Parse values to numbers
+      const monthlyNum = parseCurrencyToNumber(monthlyFee);
+      const otherNum = parseCurrencyToNumber(otherCharges);
+      const admissionNum = parseCurrencyToNumber(admissionFee);
       
       // Calculate annual fee (monthly * 12)
-      const monthlyNum = parseInt(monthlyFee.replace(/[^\d]/g, '')) || 0;
       const annualNum = monthlyNum * 12;
-      const annualFee = `Rs. ${annualNum.toLocaleString()}`;
+      const annualFee = formatCurrency(annualNum);
       
       // Calculate total (admission + annual + other charges)
-      const admissionNum = parseInt(admissionFee.replace(/[^\d]/g, '')) || 0;
-      const otherNum = parseInt(otherCharges.replace(/[^\d]/g, '')) || 0;
       const totalNum = admissionNum + annualNum + otherNum;
-      const totalAnnual = `Rs. ${totalNum.toLocaleString()}`;
+      const totalAnnual = formatCurrency(totalNum);
       
       setFormData(prev => ({
         ...prev,
         [name]: value,
-        annualFee: name === 'monthlyFee' ? annualFee : prev.annualFee,
-        totalAnnual: totalAnnual
+        annualFee,
+        totalAnnual
       }));
     } else {
       setFormData(prev => ({
@@ -66,27 +93,26 @@ export default function NewFeePage() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     
-    // Calculate totals if not already calculated
-    if (!formData.annualFee) {
-      const monthlyNum = parseInt(formData.monthlyFee.replace(/[^\d]/g, '')) || 0;
-      const annualNum = monthlyNum * 12;
-      formData.annualFee = `Rs. ${annualNum.toLocaleString()}`;
-    }
+    // Ensure all calculations are done
+    const monthlyNum = parseCurrencyToNumber(formData.monthlyFee);
+    const admissionNum = parseCurrencyToNumber(formData.admissionFee);
+    const otherNum = parseCurrencyToNumber(formData.otherCharges);
     
-    if (!formData.totalAnnual) {
-      const monthlyNum = parseInt(formData.monthlyFee.replace(/[^\d]/g, '')) || 0;
-      const admissionNum = parseInt(formData.admissionFee.replace(/[^\d]/g, '')) || 0;
-      const otherNum = parseInt(formData.otherCharges.replace(/[^\d]/g, '')) || 0;
-      const totalNum = admissionNum + (monthlyNum * 12) + otherNum;
-      formData.totalAnnual = `Rs. ${totalNum.toLocaleString()}`;
-    }
+    const annualNum = monthlyNum * 12;
+    const totalNum = admissionNum + annualNum + otherNum;
+    
+    const finalFormData: FeeFormData = {
+      ...formData,
+      annualFee: formData.annualFee || formatCurrency(annualNum),
+      totalAnnual: formData.totalAnnual || formatCurrency(totalNum)
+    };
     
     // In real app, submit to API
-    console.log('Fee Data:', formData);
+    console.log('Fee Data:', finalFormData);
     
     setTimeout(() => {
       setLoading(false);
@@ -98,8 +124,8 @@ export default function NewFeePage() {
     router.back();
   };
 
-  const categories = ['Pre-School', 'Primary', 'Middle School', 'Secondary', 'Higher Secondary'];
-  const classOptions = [
+  const categories: string[] = ['Pre-School', 'Primary', 'Middle School', 'Secondary', 'Higher Secondary'];
+  const classOptions: string[] = [
     'PG (Play Group)', 'KG (Kindergarten)', 
     'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
     'Class 6', 'Class 7', 'Class 8',
@@ -113,6 +139,7 @@ export default function NewFeePage() {
         {/* Header */}
         <div className="mb-8">
           <button
+            type="button"
             onClick={handleBack}
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4 font-medium transition-colors"
           >

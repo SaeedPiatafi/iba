@@ -1,4 +1,4 @@
-// app/web-admin/results/page.jsx
+// app/web-admin/results/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,8 +11,8 @@ const AddIcon = () => (
   </svg>
 );
 
-const ExcelIcon = () => (
-  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+const ExcelIcon = ({ className = "" }: { className?: string }) => (
+  <svg className={`w-8 h-8 ${className}`} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
   </svg>
 );
@@ -35,19 +35,35 @@ const EditIcon = () => (
   </svg>
 );
 
+// Type definitions
+interface ResultFile {
+  id: string;
+  term: string;
+  year: string;
+  fileName: string;
+  fileSize: string;
+  uploadedAt: string;
+  totalStudents: number;
+  uploader: string;
+}
+
+interface GroupedResults {
+  [year: string]: ResultFile[];
+}
+
 export default function AdminResultsPage() {
   const router = useRouter();
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [resultToDelete, setResultToDelete] = useState(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedTerm, setSelectedTerm] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
+  const [results, setResults] = useState<ResultFile[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [resultToDelete, setResultToDelete] = useState<ResultFile | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const [selectedYear, setSelectedYear] = useState<string>('');
 
   // Available terms and years
-  const testTypes = ['First Term', 'Second Term', 'Mid Term', 'Final Examination'];
-  const academicYears = ['2024-2025', '2023-2024', '2022-2023', '2021-2022'];
+  const testTypes: string[] = ['First Term', 'Second Term', 'Mid Term', 'Final Examination'];
+  const academicYears: string[] = ['2024-2025', '2023-2024', '2022-2023', '2021-2022'];
 
   // Mock API call to fetch result files
   useEffect(() => {
@@ -55,7 +71,7 @@ export default function AdminResultsPage() {
       try {
         setLoading(true);
         setTimeout(() => {
-          const mockResults = [
+          const mockResults: ResultFile[] = [
             {
               id: '1',
               term: 'Mid Term',
@@ -133,7 +149,7 @@ export default function AdminResultsPage() {
     setShowUploadModal(true);
   };
 
-  const handleDeleteClick = (result) => {
+  const handleDeleteClick = (result: ResultFile) => {
     setResultToDelete(result);
     setShowDeleteModal(true);
   };
@@ -151,12 +167,12 @@ export default function AdminResultsPage() {
     setResultToDelete(null);
   };
 
-  const handleDownload = (result) => {
+  const handleDownload = (result: ResultFile) => {
     // In real app, this would download the Excel file
     alert(`Downloading: ${result.fileName}`);
   };
 
-  const handleView = (result) => {
+  const handleView = (result: ResultFile) => {
     // In real app, this would open/view the Excel file
     alert(`Opening Excel file: ${result.fileName}\n\nThis would redirect to or preview the Excel file.`);
   };
@@ -168,7 +184,7 @@ export default function AdminResultsPage() {
     }
 
     // In real app, this would upload the Excel file
-    const newResult = {
+    const newResult: ResultFile = {
       id: Date.now().toString(),
       term: selectedTerm,
       year: selectedYear,
@@ -194,7 +210,7 @@ export default function AdminResultsPage() {
   };
 
   // Group results by year for better organization
-  const groupedResults = results.reduce((acc, result) => {
+  const groupedResults: GroupedResults = results.reduce((acc: GroupedResults, result) => {
     if (!acc[result.year]) {
       acc[result.year] = [];
     }

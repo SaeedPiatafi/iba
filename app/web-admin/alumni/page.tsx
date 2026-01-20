@@ -1,50 +1,65 @@
-// app/web-admin/alumni/page.jsx
+// app/web-admin/alumni/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
-// Icons components
-const SearchIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+// Define TypeScript interfaces
+interface Alumni {
+  id: number;
+  name: string;
+  graduationYear: number;
+  currentPosition: string;
+  company: string;
+  image: string;
+  email: string;
+  phone: string;
+  degree: string;
+  achievements: string[];
+  linkedin: string;
+  isActive: boolean;
+}
+
+// Update icon components to accept className prop
+const SearchIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
   </svg>
 );
 
-const EditIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const EditIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
   </svg>
 );
 
-const DeleteIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const DeleteIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
   </svg>
 );
 
-const AddIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+const AddIcon = ({ className = "w-5 h-5 mr-2" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
   </svg>
 );
 
-const GraduationIcon = () => (
-  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+const GraduationIcon = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
   </svg>
 );
 
-const BriefcaseIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const BriefcaseIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
     <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
   </svg>
 );
 
-const CalendarIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const CalendarIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
   </svg>
 );
@@ -57,13 +72,13 @@ const LoadingSpinner = () => (
 
 export default function AdminAlumniPage() {
   const router = useRouter();
-  const [alumni, setAlumni] = useState([]);
-  const [filteredAlumni, setFilteredAlumni] = useState([]);
+  const [alumni, setAlumni] = useState<Alumni[]>([]);
+  const [filteredAlumni, setFilteredAlumni] = useState<Alumni[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [alumniToDelete, setAlumniToDelete] = useState(null);
+  const [alumniToDelete, setAlumniToDelete] = useState<Alumni | null>(null);
   const [selectedYear, setSelectedYear] = useState('all');
 
   // Mock API call to fetch alumni
@@ -73,7 +88,7 @@ export default function AdminAlumniPage() {
         setLoading(true);
         // In real app, this would be an API call
         setTimeout(() => {
-          const mockAlumni = [
+          const mockAlumni: Alumni[] = [
             {
               id: 1,
               name: "Michael Rodriguez",
@@ -227,11 +242,11 @@ export default function AdminAlumniPage() {
     router.push('/web-admin/alumni/new');
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = (id: number) => {
     router.push(`/web-admin/alumni/edit/${id}`);
   };
 
-  const handleDeleteClick = (alum) => {
+  const handleDeleteClick = (alum: Alumni) => {
     setAlumniToDelete(alum);
     setShowDeleteModal(true);
   };
@@ -283,7 +298,7 @@ export default function AdminAlumniPage() {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 placeholder="Search alumni by name, degree, or position..."
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
@@ -316,12 +331,12 @@ export default function AdminAlumniPage() {
               </label>
               <select
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedYear(e.target.value)}
                 className="px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               >
                 <option value="all">All Years</option>
                 {graduationYears.map(year => (
-                  <option key={year} value={year}>{year}</option>
+                  <option key={year} value={year.toString()}>{year}</option>
                 ))}
               </select>
             </div>
@@ -356,25 +371,11 @@ export default function AdminAlumniPage() {
               >
                 {/* Alumni Image */}
                 <div className="relative h-48 bg-gray-100">
-                  {alum.image ? (
-                    <img
-                      src={alum.image}
-                      alt={alum.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = `
-                          <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-                            <div class="text-white text-4xl font-bold">${alum.name.charAt(0)}</div>
-                          </div>
-                        `;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-                      <GraduationIcon className="text-white" />
-                    </div>
-                  )}
+                  <img
+                    src={alum.image}
+                    alt={alum.name}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute top-3 right-3">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${alum.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                       {alum.isActive ? 'Active' : 'Inactive'}
@@ -428,14 +429,14 @@ export default function AdminAlumniPage() {
                       onClick={() => handleEdit(alum.id)}
                       className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-lg transition-colors duration-200"
                     >
-                      <EditIcon />
+                      <EditIcon className="w-5 h-5" />
                       <span className="ml-2">Edit</span>
                     </button>
                     <button
                       onClick={() => handleDeleteClick(alum)}
                       className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors duration-200"
                     >
-                      <DeleteIcon />
+                      <DeleteIcon className="w-5 h-5" />
                       <span className="ml-2">Delete</span>
                     </button>
                   </div>

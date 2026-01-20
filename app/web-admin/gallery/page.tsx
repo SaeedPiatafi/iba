@@ -1,10 +1,23 @@
-// app/web-admin/gallery/page.jsx
+// app/web-admin/gallery/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Icons components
+// Types
+interface GalleryImage {
+  id: number;
+  src: string;
+  tags: string[];
+  title: string;
+  description: string;
+  uploadedAt: string;
+  isFeatured: boolean;
+}
+
+type ViewMode = 'grid' | 'list';
+
+// Icons components (unchanged)
 const SearchIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -29,13 +42,7 @@ const AddIcon = () => (
   </svg>
 );
 
-const TagIcon = () => (
-  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-  </svg>
-);
-
-// Image Skeleton Loader
+// Image Skeleton Loader (unchanged)
 const ImageSkeleton = () => (
   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
     <div className="h-48 bg-gray-200"></div>
@@ -52,8 +59,8 @@ const ImageSkeleton = () => (
   </div>
 );
 
-// Sample images - optimized URLs with smaller sizes
-const SAMPLE_IMAGES = [
+// Sample images - optimized URLs with smaller sizes (unchanged)
+const SAMPLE_IMAGES: GalleryImage[] = [
   { id: 1, src: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=300&fit=crop', tags: ['events', 'campus-life'], title: 'Annual Sports Day', description: 'Students participating in sports activities', uploadedAt: '2024-01-15', isFeatured: true },
   { id: 2, src: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=300&fit=crop', tags: ['academics'], title: 'Science Lab Session', description: 'Students conducting experiments in the science lab', uploadedAt: '2024-01-14', isFeatured: true },
   { id: 3, src: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400&h=300&fit=crop', tags: ['sports'], title: 'Basketball Tournament', description: 'Inter-school basketball competition', uploadedAt: '2024-01-13', isFeatured: false },
@@ -66,31 +73,37 @@ const SAMPLE_IMAGES = [
   { id: 10, src: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=300&fit=crop', tags: ['cultural'], title: 'Dance Performance', description: 'Traditional dance performance', uploadedAt: '2024-01-06', isFeatured: false }
 ];
 
+// Available tags - moved outside component to avoid dependency issues
+const AVAILABLE_TAGS = ['events', 'campus-life', 'academics', 'sports', 'cultural'] as const;
+
 export default function AdminGalleryPage() {
   const router = useRouter();
-  const [images, setImages] = useState([]);
-  const [filteredImages, setFilteredImages] = useState([]);
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [filteredImages, setFilteredImages] = useState<GalleryImage[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [imageToDelete, setImageToDelete] = useState(null);
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [viewMode, setViewMode] = useState('grid');
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imageLoadStates, setImageLoadStates] = useState({});
+  const [imageToDelete, setImageToDelete] = useState<GalleryImage | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
-  // Available tags
-  const availableTags = ['events', 'campus-life', 'academics', 'sports', 'cultural'];
+  // Type for stats
+  interface GalleryStats {
+    totalImages: number;
+    featuredImages: number;
+    imagesByCategory: Record<string, number>;
+  }
 
   // Memoized stats calculation
-  const stats = useMemo(() => {
+  const stats: GalleryStats = useMemo(() => {
     const totalImages = images.length;
     const featuredImages = images.filter(img => img.isFeatured).length;
-    const imagesByCategory = availableTags.reduce((acc, tag) => {
+    const imagesByCategory = AVAILABLE_TAGS.reduce((acc, tag) => {
       acc[tag] = images.filter(img => img.tags.includes(tag)).length;
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
     
     return { totalImages, featuredImages, imagesByCategory };
   }, [images]);
@@ -144,27 +157,25 @@ export default function AdminGalleryPage() {
   }, [filterImages]);
 
   // Image click handler
-  const handleImageClick = useCallback((image) => {
+  const handleImageClick = useCallback((image: GalleryImage) => {
     setSelectedImage(image);
   }, []);
 
-  // Image load handler
-  const handleImageLoad = useCallback((id) => {
-    setImageLoadStates(prev => ({
-      ...prev,
-      [id]: true
-    }));
-  }, []);
-
   // Image error handler
-  const handleImageError = useCallback((id, e) => {
-    e.target.style.display = 'none';
-    e.target.parentElement.innerHTML = `
-      <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-        <div class="text-white text-4xl font-bold mb-2">📷</div>
-        <div class="text-white text-sm text-center px-4">${images.find(img => img.id === id)?.title || 'Image'}</div>
-      </div>
-    `;
+  const handleImageError = useCallback((id: number, e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    const image = images.find(img => img.id === id);
+    const parent = target.parentElement;
+    
+    if (parent && image) {
+      parent.innerHTML = `
+        <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
+          <div class="text-white text-4xl font-bold mb-2">📷</div>
+          <div class="text-white text-sm text-center px-4">${image.title || 'Image'}</div>
+        </div>
+      `;
+    }
   }, [images]);
 
   // Navigation handlers
@@ -172,11 +183,11 @@ export default function AdminGalleryPage() {
     router.push('/web-admin/gallery/new');
   }, [router]);
 
-  const handleEdit = useCallback((id) => {
+  const handleEdit = useCallback((id: number) => {
     router.push(`/web-admin/gallery/edit/${id}`);
   }, [router]);
 
-  const handleDeleteClick = useCallback((image) => {
+  const handleDeleteClick = useCallback((image: GalleryImage) => {
     setImageToDelete(image);
     setShowDeleteModal(true);
   }, []);
@@ -196,7 +207,7 @@ export default function AdminGalleryPage() {
   }, []);
 
   // Tag filter handlers
-  const toggleTag = useCallback((tag) => {
+  const toggleTag = useCallback((tag: string) => {
     setSelectedTags(prev =>
       prev.includes(tag)
         ? prev.filter(t => t !== tag)
@@ -210,7 +221,7 @@ export default function AdminGalleryPage() {
   }, []);
 
   // Featured toggle handler
-  const toggleFeatured = useCallback((id) => {
+  const toggleFeatured = useCallback((id: number) => {
     setImages(prev =>
       prev.map(img =>
         img.id === id ? { ...img, isFeatured: !img.isFeatured } : img
@@ -223,7 +234,14 @@ export default function AdminGalleryPage() {
     setSelectedImage(null);
   }, []);
 
-  // Render loading skeleton
+  // Handle modal backdrop click
+  const handleModalBackdropClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleCloseModal();
+    }
+  }, [handleCloseModal]);
+
+  // Render loading skeleton (unchanged)
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -262,7 +280,7 @@ export default function AdminGalleryPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header (unchanged) */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gallery Management</h1>
           <p className="text-gray-600">Manage and organize school gallery images</p>
@@ -282,7 +300,7 @@ export default function AdminGalleryPage() {
           
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-sm text-gray-600 mb-1">Categories</div>
-            <div className="text-2xl font-bold text-green-600">{availableTags.length}</div>
+            <div className="text-2xl font-bold text-green-600">{AVAILABLE_TAGS.length}</div>
           </div>
           
           <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -354,7 +372,7 @@ export default function AdminGalleryPage() {
               >
                 All Images
               </button>
-              {availableTags.map(tag => (
+              {AVAILABLE_TAGS.map(tag => (
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
@@ -410,7 +428,6 @@ export default function AdminGalleryPage() {
                       alt={image.title}
                       loading="lazy"
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                      onLoad={() => handleImageLoad(image.id)}
                       onError={(e) => handleImageError(image.id, e)}
                     />
                     
@@ -484,12 +501,15 @@ export default function AdminGalleryPage() {
                           loading="lazy"
                           className="h-full w-full object-cover"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = `
-                              <div class="h-full w-full flex items-center justify-center bg-gray-100">
-                                <span class="text-gray-400">📷</span>
-                              </div>
-                            `;
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            if (target.parentElement) {
+                              target.parentElement.innerHTML = `
+                                <div class="h-full w-full flex items-center justify-center bg-gray-100">
+                                  <span class="text-gray-400">📷</span>
+                                </div>
+                              `;
+                            }
                           }}
                         />
                       </div>
@@ -583,7 +603,7 @@ export default function AdminGalleryPage() {
       {selectedImage && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4 z-50" 
-          onClick={handleCloseModal}
+          onClick={handleModalBackdropClick}
         >
           <div className="relative max-w-4xl w-full max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             <button
@@ -602,13 +622,16 @@ export default function AdminGalleryPage() {
                   alt={selectedImage.title}
                   className="w-full h-full object-contain"
                   onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = `
-                      <div class="w-full h-full flex flex-col items-center justify-center">
-                        <div class="text-white text-6xl mb-4">📷</div>
-                        <div class="text-white text-xl">${selectedImage.title}</div>
-                      </div>
-                    `;
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      target.parentElement.innerHTML = `
+                        <div class="w-full h-full flex flex-col items-center justify-center">
+                          <div class="text-white text-6xl mb-4">📷</div>
+                          <div class="text-white text-xl">${selectedImage.title}</div>
+                        </div>
+                      `;
+                    }
                   }}
                 />
               </div>

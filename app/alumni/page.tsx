@@ -1,55 +1,76 @@
-// app/alumni/page.jsx
+// app/alumni/page.tsx
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import Alumnihero from '../components/alumnihero'
+import { useState, useEffect, ReactNode } from 'react';
+import Alumnihero from '../components/alumnihero';
+
+// Icon Props Interface
+interface IconProps {
+  className?: string;
+}
+
 // Custom SVG icons as components
-const GraduationCapIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const GraduationCapIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const SearchIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
   </svg>
 );
 
-const BackIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+const BackIcon = ({ className = "w-5 h-5 mr-2" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
   </svg>
 );
 
-const BriefcaseIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const BriefcaseIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
     <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
   </svg>
 );
 
-const UserIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const UserIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
   </svg>
 );
 
-const LocationIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const LocationIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
   </svg>
 );
 
-const CompanyIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+const CompanyIcon = ({ className = "w-5 h-5" }: IconProps) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
   </svg>
 );
 
+// Alumni Type Definition
+interface AlumniType {
+  id: number;
+  name: string;
+  graduationYear: string;
+  degree: string;
+  currentProfession: string;
+  company: string;
+  location: string;
+  image: string;
+  bio: string;
+  achievements: string[];
+  higherEducation: string;
+}
+
 // Alumni data with their current profession
-const alumni = [
+const alumniData: AlumniType[] = [
   {
     id: 1,
     name: "Alexandra Rodriguez",
@@ -182,8 +203,26 @@ const alumni = [
   }
 ];
 
+// Props for AlumniCard component
+interface AlumniCardProps {
+  alumni: AlumniType;
+  onViewProfile: (id: number) => void;
+}
+
 // Alumni Card Component
-function AlumniCard({ alumni, onViewProfile }) {
+function AlumniCard({ alumni, onViewProfile }: AlumniCardProps) {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    if (target.parentElement) {
+      target.parentElement.innerHTML = `
+        <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-[#2563EB] to-[#0D9488]">
+          <span class="text-white text-4xl font-bold">${alumni.name.charAt(0)}</span>
+        </div>
+      `;
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       {/* Alumni Image */}
@@ -195,14 +234,7 @@ function AlumniCard({ alumni, onViewProfile }) {
               alt={alumni.name}
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
               loading="lazy"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = `
-                  <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-[#2563EB] to-[#0D9488]">
-                    <span class="text-white text-4xl font-bold">${alumni.name.charAt(0)}</span>
-                  </div>
-                `;
-              }}
+              onError={handleImageError}
             />
           </div>
         </div>
@@ -234,12 +266,33 @@ function AlumniCard({ alumni, onViewProfile }) {
   );
 }
 
+// Props for AlumniProfile component
+interface AlumniProfileProps {
+  alumni: AlumniType;
+  onBack: () => void;
+}
+
 // Detailed Alumni Profile Component
-function AlumniProfile({ alumni, onBack }) {
+function AlumniProfile({ alumni, onBack }: AlumniProfileProps) {
   // Scroll to top when profile opens
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    if (target.parentElement) {
+      target.parentElement.innerHTML = `
+        <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-[#2563EB] to-[#0D9488]">
+          <span class="text-white text-4xl font-bold">${alumni.name.charAt(0)}</span>
+        </div>
+      `;
+    }
+  };
+
+  const currentYear = new Date().getFullYear();
+  const yearsSinceGraduation = currentYear - parseInt(alumni.graduationYear);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] py-8 md:py-12 px-4">
@@ -264,14 +317,7 @@ function AlumniProfile({ alumni, onBack }) {
                   src={alumni.image}
                   alt={alumni.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = `
-                      <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-[#2563EB] to-[#0D9488]">
-                        <span class="text-white text-4xl font-bold">${alumni.name.charAt(0)}</span>
-                      </div>
-                    `;
-                  }}
+                  onError={handleImageError}
                 />
               </div>
               
@@ -429,7 +475,7 @@ function AlumniProfile({ alumni, onBack }) {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-[#6B7280]">Years Since Graduation</span>
-                        <span className="font-semibold text-[#1F2937]">{2024 - parseInt(alumni.graduationYear)} years</span>
+                        <span className="font-semibold text-[#1F2937]">{yearsSinceGraduation} years</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-[#6B7280]">Industry</span>
@@ -453,12 +499,13 @@ function AlumniProfile({ alumni, onBack }) {
 
 // Main Alumni Page Component
 export default function AlumniPage() {
-  const [selectedAlumni, setSelectedAlumni] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredAlumni, setFilteredAlumni] = useState(alumni);
+  const [selectedAlumni, setSelectedAlumni] = useState<AlumniType | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filteredAlumni, setFilteredAlumni] = useState<AlumniType[]>(alumniData);
 
-  const handleViewProfile = (alumniId) => {
-    setSelectedAlumni(alumni.find(a => a.id === alumniId));
+  const handleViewProfile = (alumniId: number) => {
+    const foundAlumni = alumniData.find(a => a.id === alumniId);
+    setSelectedAlumni(foundAlumni || null);
   };
 
   const handleBackToList = () => {
@@ -468,10 +515,10 @@ export default function AlumniPage() {
   // Handle search
   useEffect(() => {
     if (searchQuery.trim() === "") {
-      setFilteredAlumni(alumni);
+      setFilteredAlumni(alumniData);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = alumni.filter(alum =>
+      const filtered = alumniData.filter(alum =>
         alum.name.toLowerCase().includes(query) ||
         alum.degree.toLowerCase().includes(query) ||
         alum.currentProfession.toLowerCase().includes(query) ||
@@ -560,7 +607,7 @@ export default function AlumniPage() {
         {/* Alumni Count */}
         <div className="mt-12 pt-6 border-t border-gray-200">
           <p className="text-center text-gray-600">
-            Showing <span className="font-semibold text-[#2563EB]">{filteredAlumni.length}</span> of <span className="font-semibold text-[#2563EB]">{alumni.length}</span> alumni
+            Showing <span className="font-semibold text-[#2563EB]">{filteredAlumni.length}</span> of <span className="font-semibold text-[#2563EB]">{alumniData.length}</span> alumni
           </p>
         </div>
       </section>

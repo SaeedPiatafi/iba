@@ -1,7 +1,7 @@
-// app/web-admin/alumni/new/page.jsx
+// app/web-admin/alumni/new/page.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 // Icons
@@ -29,10 +29,25 @@ const RemoveIcon = () => (
   </svg>
 );
 
+interface FormData {
+  name: string;
+  graduationYear: number;
+  degree: string;
+  currentPosition: string;
+  company: string;
+  image: string;
+  email: string;
+  phone: string;
+  achievements: string[];
+  linkedin: string;
+  bio: string;
+  isActive: boolean;
+}
+
 export default function NewAlumniPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     graduationYear: new Date().getFullYear(),
     degree: '',
@@ -49,11 +64,13 @@ export default function NewAlumniPage() {
 
   const [newAchievement, setNewAchievement] = useState('');
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const target = e.target as HTMLInputElement;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? target.checked : value
     }));
   };
 
@@ -67,21 +84,21 @@ export default function NewAlumniPage() {
     }
   };
 
-  const removeAchievement = (index) => {
+  const removeAchievement = (index: number) => {
     setFormData(prev => ({
       ...prev,
       achievements: prev.achievements.filter((_, i) => i !== index)
     }));
   };
 
-  const handleKeyPress = (e, action) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      action();
+      addAchievement();
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
@@ -299,8 +316,8 @@ export default function NewAlumniPage() {
                 <input
                   type="text"
                   value={newAchievement}
-                  onChange={(e) => setNewAchievement(e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, addAchievement)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewAchievement(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   placeholder="Add achievement (e.g., Summa Cum Laude, Research Grant)"
                 />
