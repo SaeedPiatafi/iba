@@ -68,7 +68,7 @@ export default function TeachersSection() {
   }, []);
 
   return (
-    <div className="py-16 md:py-20" style={{ backgroundColor: colors.card }}>
+    <div className="py-10 md:py-20" style={{ backgroundColor: colors.card }}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center wow fadeInUp" data-wow-delay="0.1s">

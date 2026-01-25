@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, ReactNode } from 'react';
-import TeacherHeroSection from '../components/teachhero';
 
 // Icon Props Interface
 interface IconProps {
@@ -12,7 +11,7 @@ interface IconProps {
 // Custom SVG icons as components with proper typing
 const GraduationCapIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+    <path d="M10.394 2.08a1 0 00-.788 0l-7 3a1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
   </svg>
 );
 
@@ -61,7 +60,7 @@ const CalendarIcon = ({ className = "w-5 h-5" }: IconProps) => (
 
 const TeachingIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+    <path d="M10.394 2.08a1 0 00-.788 0l-7 3a1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
   </svg>
 );
 
@@ -385,9 +384,9 @@ function TeacherCard({ teacher, onViewProfile }: TeacherCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-      {/* Teacher Image */}
-      <div className="relative h-64 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
+      {/* Teacher Image - Fixed Height */}
+      <div className="relative h-48 overflow-hidden">
         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
           <div className="relative w-full h-full">
             <img 
@@ -401,22 +400,20 @@ function TeacherCard({ teacher, onViewProfile }: TeacherCardProps) {
         </div>
       </div>
       
-      {/* Teacher Info */}
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">{teacher.name}</h3>
-        <p className="text-blue-600 font-semibold mb-4">{teacher.subject}</p>
-        <div className="mb-6">
-          <p className="text-gray-600 text-sm mb-1">Experience:</p>
-          <p className="text-gray-800 font-medium">{teacher.experience}</p>
-        </div>
+      {/* Teacher Info - Fixed Content Area */}
+      <div className="p-4 flex flex-col flex-grow">
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">{teacher.name}</h3>
+        <p className="text-blue-600 font-semibold mb-3 line-clamp-1">{teacher.subject}</p>
         
-        {/* View Profile Button */}
-        <button
-          onClick={() => onViewProfile(teacher.id)}
-          className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02]"
-        >
-          View Profile
-        </button>
+        {/* View Profile Button at bottom */}
+        <div className="mt-auto">
+          <button
+            onClick={() => onViewProfile(teacher.id)}
+            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] text-sm"
+          >
+            View Profile
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -481,15 +478,8 @@ function TeacherProfile({ teacher, onBack }: TeacherProfileProps) {
                   <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-semibold text-sm md:text-base">
                     {teacher.subject}
                   </span>
-                  <span className="text-gray-700 font-medium text-lg">{teacher.experience}</span>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-center md:justify-start gap-2">
-                    <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-gray-800">{teacher.roomNumber}</span>
-                  </div>
                   <div className="flex items-center justify-center md:justify-start gap-2">
                     <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
@@ -630,52 +620,6 @@ function TeacherProfile({ teacher, onBack }: TeacherProfileProps) {
                     </div>
                   </div>
                 </section>
-                
-                {/* Office Hours Section */}
-                <section>
-                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
-                    <div className="text-indigo-600">
-                      <CalendarIcon />
-                    </div>
-                    Office Information
-                  </h2>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-indigo-100 text-indigo-600 p-2 rounded-full">
-                          <CalendarIcon />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-sm">Office Hours</h3>
-                          <p className="text-gray-800 text-sm font-medium">{teacher.officeHours}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="bg-teal-100 text-teal-600 p-2 rounded-full">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-sm">Room Number</h3>
-                          <p className="text-gray-800 text-sm">{teacher.roomNumber}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-sm">Email</h3>
-                          <p className="text-gray-800 text-sm">{teacher.email}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
               </div>
             </div>
           </div>
@@ -690,6 +634,8 @@ export default function TeachersPage() {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>(teachersData);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const teachersPerPage = 10;
 
   const handleViewProfile = (teacherId: number) => {
     const foundTeacher = teachersData.find(t => t.id === teacherId);
@@ -708,12 +654,23 @@ export default function TeachersPage() {
       const query = searchQuery.toLowerCase();
       const filtered = teachersData.filter(teacher =>
         teacher.name.toLowerCase().includes(query) ||
-        teacher.subject.toLowerCase().includes(query) ||
-        teacher.education.some(edu => edu.toLowerCase().includes(query))
+        teacher.subject.toLowerCase().includes(query)
       );
       setFilteredTeachers(filtered);
     }
+    setCurrentPage(1); // Reset to first page when searching
   }, [searchQuery]);
+
+  // Pagination logic
+  const indexOfLastTeacher = currentPage * teachersPerPage;
+  const indexOfFirstTeacher = indexOfLastTeacher - teachersPerPage;
+  const currentTeachers = filteredTeachers.slice(indexOfFirstTeacher, indexOfLastTeacher);
+  const totalPages = Math.ceil(filteredTeachers.length / teachersPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // If a teacher is selected, show their detailed profile
   if (selectedTeacher) {
@@ -722,13 +679,19 @@ export default function TeachersPage() {
 
   // Main teachers list view
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <TeacherHeroSection />
+    <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Heading */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Our Faculty
+          </h1>
+          <p className="text-gray-600 max-w-3xl mx-auto text-base sm:text-lg">
+            Meet our dedicated and experienced teaching faculty members
+          </p>
+        </div>
 
-      {/* Teachers Grid Section */}
-      <section className="py-12 md:py-16 px-4 md:px-6 max-w-7xl mx-auto -mt-8 md:-mt-12 relative z-20">
-        {/* Search Section */}
+        {/* Search Bar */}
         <div className="max-w-2xl mx-auto mb-12">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -738,8 +701,8 @@ export default function TeachersPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search teachers by name, subject, or education..."
-              className="w-full pl-10 pr-4 py-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+              placeholder="Search teachers by name or subject..."
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
             />
             {searchQuery && (
               <button
@@ -752,25 +715,11 @@ export default function TeachersPage() {
               </button>
             )}
           </div>
-          <p className="text-center text-gray-600 mt-3 text-sm">
-            Discover our highly qualified and experienced teaching faculty
-          </p>
-        </div>
-
-        {/* Teachers Grid Header */}
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
-            Our Distinguished Faculty
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-sm sm:text-base md:text-lg px-2">
-            Highly qualified professionals with extensive experience in their respective fields
-          </p>
-          <div className="w-16 sm:w-20 md:w-24 h-1 bg-gradient-to-r from-blue-600 to-teal-600 mx-auto mt-4 md:mt-6 rounded-full"></div>
         </div>
 
         {/* Teachers Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-          {filteredTeachers.map((teacher) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+          {currentTeachers.map((teacher) => (
             <TeacherCard 
               key={teacher.id} 
               teacher={teacher} 
@@ -779,27 +728,81 @@ export default function TeachersPage() {
           ))}
         </div>
 
+        {/* No Results Message */}
         {filteredTeachers.length === 0 && (
-          <div className="text-center py-12 md:py-16">
-            <div className="text-gray-600 text-xl md:text-2xl mb-4 md:mb-6">
+          <div className="text-center py-12">
+            <div className="text-gray-600 text-xl mb-4">
               No teachers found matching "{searchQuery}"
             </div>
             <button
               onClick={() => setSearchQuery("")}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 text-base md:text-lg font-semibold"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-all duration-300"
             >
               Clear Search
             </button>
           </div>
         )}
 
-        {/* Teachers Count */}
-        <div className="mt-12 pt-6 border-t border-gray-200">
-          <p className="text-center text-gray-600">
-            Showing <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> of <span className="font-semibold text-blue-600">{teachersData.length}</span> teachers
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center gap-4 mb-12">
+            <div className="flex items-center gap-2">
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    currentPage === page
+                      ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+
+            {/* Page Info */}
+            <p className="text-gray-600 text-sm">
+              Showing {indexOfFirstTeacher + 1}-{Math.min(indexOfLastTeacher, filteredTeachers.length)} of {filteredTeachers.length} teachers
+            </p>
+          </div>
+        )}
+
+        {/* Results Count */}
+        <div className="pt-6 border-t border-gray-200 text-center">
+          <p className="text-gray-600">
+            Found <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> teachers
           </p>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

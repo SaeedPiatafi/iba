@@ -5,11 +5,9 @@ import { useState, useEffect, ReactNode } from 'react';
 import { 
   Search, RefreshCw, Printer, Download, Calculator, 
   FlaskConical, BookOpen, Globe, Cpu, Palette, 
-  Dumbbell, GraduationCap, User, Hash, Calendar,
-  Award, Percent, CheckCircle, XCircle, Clock,
-  LucideIcon
+  Dumbbell, User, Hash, Calendar,
+  Award, Percent, CheckCircle, XCircle, Clock
 } from 'lucide-react';
-import Resulthero from '../components/resulthero'
 
 interface Subject {
   id: number;
@@ -175,8 +173,6 @@ export default function ResultPortal() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <Resulthero/>
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">

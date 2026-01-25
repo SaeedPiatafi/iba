@@ -187,26 +187,6 @@ export default function FeeStructure() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="text-center mb-12 md:mb-16">
-          <div className="flex items-center justify-center mb-6">
-            <div
-              className="inline-flex items-center px-4 py-2 rounded-full"
-              style={{
-                backgroundColor: "rgba(37, 99, 235, 0.1)",
-              }}
-            >
-              <span
-                className="text-sm font-bold uppercase tracking-wider"
-                style={{
-                  color: colors.primaryBlue,
-                  fontFamily: "var(--font-poppins)",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                School Fee Structure
-              </span>
-            </div>
-          </div>
-
           <h1
             className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
             style={{
@@ -217,163 +197,182 @@ export default function FeeStructure() {
           >
             School Fee Details
           </h1>
-
-          <p
-            className="text-lg md:text-xl max-w-3xl mx-auto"
-            style={{
-              color: colors.textSecondary,
-              fontFamily: "var(--font-inter)",
-              lineHeight: "1.6",
-            }}
-          >
-            Transparent fee structure for all classes from Kindergarten to Class 12. All amounts are in Pakistani Rupees (PKR).
-          </p>
         </div>
 
         {/* Class Selection - Dropdown for both mobile and desktop */}
-        <div className="mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-              <div className="mb-4 md:mb-0">
-                <h2 className="text-xl font-bold" style={{ color: colors.textPrimary }}>
-                  Select Class
-                </h2>
-                <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>
-                  Choose a class to view detailed fee structure
-                </p>
+       {/* Class Selection - Different for mobile vs desktop */}
+<div className="mb-8">
+  <div className="bg-white rounded-2xl p-6 shadow-lg">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div className="mb-4 md:mb-0">
+        <h2 className="text-xl font-bold" style={{ color: colors.textPrimary }}>
+          Select Class
+        </h2>
+        <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>
+          Choose a class to view detailed fee structure
+        </p>
+      </div>
+      
+      {/* Desktop Toggle Button (Optional) */}
+      <button
+        onClick={() => setShowDesktopList(!showDesktopList)}
+        className="hidden md:inline-flex items-center px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors border"
+        style={{ 
+          color: colors.primaryBlue,
+          borderColor: colors.border
+        }}
+      >
+        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={showDesktopList ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+        </svg>
+        {showDesktopList ? 'Hide Class List' : 'Show Class List'}
+      </button>
+    </div>
+    
+    {/* Mobile: Horizontal Scrollable Menu */}
+    <div className="md:hidden mb-6">
+      <div className="relative">
+        <div className="flex overflow-x-auto pb-4 space-x-3 scrollbar-hide -mx-2 px-2">
+          {schoolFeeStructure.map((classItem, index) => (
+            <button
+              key={index}
+              onClick={() => handleClassSelect(classItem)}
+              className={`flex-shrink-0 px-5 py-3 rounded-xl transition-all min-w-fit ${
+                selectedClass.class === classItem.class
+                  ? 'ring-2 ring-offset-2'
+                  : 'hover:shadow-md'
+              }`}
+              style={{
+                backgroundColor: selectedClass.class === classItem.class 
+                  ? colors.primaryBlue 
+                  : 'white',
+                border: `1px solid ${
+                  selectedClass.class === classItem.class 
+                    ? colors.primaryBlue 
+                    : colors.border
+                }`,
+                color: selectedClass.class === classItem.class 
+                  ? 'white' 
+                  : colors.textPrimary,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <div className="font-medium text-sm">
+                {classItem.class}
               </div>
-              
-              {/* Desktop Toggle Button (Optional) */}
-              <button
-                onClick={() => setShowDesktopList(!showDesktopList)}
-                className="hidden md:inline-flex items-center px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors border"
-                style={{ 
-                  color: colors.primaryBlue,
-                  borderColor: colors.border
-                }}
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={showDesktopList ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
-                </svg>
-                {showDesktopList ? 'Hide Class List' : 'Show Class List'}
-              </button>
-            </div>
-            
-            {/* Dropdown for all devices */}
-            <div className="mb-6">
-              <div className="relative">
-                <select
-                  ref={dropdownRef}
-                  value={selectedClass.class}
-                  onChange={handleDropdownChange}
-                  className="w-full p-4 rounded-xl border-2 transition-all duration-300 focus:ring-2 focus:outline-none appearance-none"
-                  style={{
-                    borderColor: colors.primaryBlue,
-                    color: colors.textPrimary,
-                    backgroundColor: 'white',
-                    fontSize: '16px',
-                  }}
-                  size={1} // Shows as dropdown
-                >
-                  {schoolFeeStructure.map((classItem, index) => (
-                    <option key={index} value={classItem.class}>
-                      {classItem.class} ({classItem.category}) - Total: {classItem.totalAnnual}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                  <svg className="w-5 h-5" style={{ color: colors.primaryBlue }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+              <div className="text-xs opacity-90 mt-1">
+                {classItem.category}
               </div>
-              
-              {/* Selected Class Preview */}
-              <div className="mt-4 p-4 rounded-lg" style={{ 
-                backgroundColor: `${colors.primaryBlue}05`,
-                border: `1px solid ${colors.primaryBlue}20`
-              }}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-bold" style={{ color: colors.textPrimary }}>
-                      {selectedClass.class}
-                    </div>
-                    <div className="text-sm" style={{ color: colors.textSecondary }}>
-                      {selectedClass.category}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold" style={{ color: colors.primaryBlue }}>
-                      {selectedClass.totalAnnual}
-                    </div>
-                    <div className="text-xs" style={{ color: colors.textSecondary }}>
-                      Total Annual Fee
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Desktop Class List (Optional View) */}
-            {showDesktopList && (
-              <div className="mt-6 border-t pt-6" style={{ borderColor: colors.border }}>
-                <h3 className="font-medium mb-4" style={{ color: colors.textSecondary }}>
-                  Quick Class Overview
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {schoolFeeStructure.map((classItem, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleClassSelect(classItem)}
-                      className={`text-left p-3 rounded-lg transition-all duration-300 ${
-                        selectedClass.class === classItem.class
-                          ? 'ring-2 transform scale-[1.02]'
-                          : 'hover:bg-gray-50'
-                      }`}
-                      style={{
-                        backgroundColor: selectedClass.class === classItem.class 
-                          ? `${colors.primaryBlue}10` 
-                          : 'transparent',
-                        border: `1px solid ${
-                          selectedClass.class === classItem.class 
-                            ? colors.primaryBlue 
-                            : colors.border
-                        }`,
-                      }}
-                    >
-                      <div className="font-medium text-sm" style={{ 
-                        color: selectedClass.class === classItem.class 
-                          ? colors.primaryBlue 
-                          : colors.textPrimary 
-                      }}>
-                        {classItem.class}
-                      </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ 
-                          backgroundColor: 
-                            classItem.category === 'Pre-School' ? `${colors.accentGreen}15` :
-                            classItem.category === 'Primary' ? `${colors.primaryBlue}15` :
-                            classItem.category === 'Middle School' ? `${colors.secondaryTeal}15` :
-                            `${colors.accentGreen}15`,
-                          color: 
-                            classItem.category === 'Pre-School' ? colors.accentGreen :
-                            classItem.category === 'Primary' ? colors.primaryBlue :
-                            classItem.category === 'Middle School' ? colors.secondaryTeal :
-                            colors.accentGreen,
-                        }}>
-                          {classItem.category}
-                        </span>
-                        <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
-                          {classItem.totalAnnual}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            </button>
+          ))}
         </div>
+        
+        {/* Scroll indicators */}
+        <div className="flex justify-center space-x-1 mt-3">
+          {[0, 1, 2].map((dot) => (
+            <div 
+              key={dot}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ 
+                backgroundColor: dot === 0 ? colors.primaryBlue : colors.border 
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+    
+    {/* Desktop: Dropdown */}
+    <div className="hidden md:block mb-6">
+      <div className="relative">
+        <select
+          ref={dropdownRef}
+          value={selectedClass.class}
+          onChange={handleDropdownChange}
+          className="w-full p-4 rounded-xl border-2 transition-all duration-300 focus:ring-2 focus:outline-none appearance-none"
+          style={{
+            borderColor: colors.primaryBlue,
+            color: colors.textPrimary,
+            backgroundColor: 'white',
+            fontSize: '16px',
+          }}
+          size={1}
+        >
+          {schoolFeeStructure.map((classItem, index) => (
+            <option key={index} value={classItem.class}>
+              {classItem.class} ({classItem.category})
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+          <svg className="w-5 h-5" style={{ color: colors.primaryBlue }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+    </div>
+    
+
+    {/* Desktop Class List (Optional View) - Keep existing */}
+    {showDesktopList && (
+      <div className="mt-6 border-t pt-6" style={{ borderColor: colors.border }}>
+        <h3 className="font-medium mb-4" style={{ color: colors.textSecondary }}>
+          Quick Class Overview
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {schoolFeeStructure.map((classItem, index) => (
+            <button
+              key={index}
+              onClick={() => handleClassSelect(classItem)}
+              className={`text-left p-3 rounded-lg transition-all duration-300 ${
+                selectedClass.class === classItem.class
+                  ? 'ring-2 transform scale-[1.02]'
+                  : 'hover:bg-gray-50'
+              }`}
+              style={{
+                backgroundColor: selectedClass.class === classItem.class 
+                  ? `${colors.primaryBlue}10` 
+                  : 'transparent',
+                border: `1px solid ${
+                  selectedClass.class === classItem.class 
+                    ? colors.primaryBlue 
+                    : colors.border
+                }`,
+              }}
+            >
+              <div className="font-medium text-sm" style={{ 
+                color: selectedClass.class === classItem.class 
+                  ? colors.primaryBlue 
+                  : colors.textPrimary 
+              }}>
+                {classItem.class}
+              </div>
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ 
+                  backgroundColor: 
+                    classItem.category === 'Pre-School' ? `${colors.accentGreen}15` :
+                    classItem.category === 'Primary' ? `${colors.primaryBlue}15` :
+                    classItem.category === 'Middle School' ? `${colors.secondaryTeal}15` :
+                    `${colors.accentGreen}15`,
+                  color: 
+                    classItem.category === 'Pre-School' ? colors.accentGreen :
+                    classItem.category === 'Primary' ? colors.primaryBlue :
+                    classItem.category === 'Middle School' ? colors.secondaryTeal :
+                    colors.accentGreen,
+                }}>
+                  {classItem.category}
+                </span>
+                <span className="text-xs font-medium" style={{ color: colors.textSecondary }}>
+                  {classItem.totalAnnual}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
 
         {/* Selected Class Fee Details */}
         <div id="fee-details-section" className="mt-8">
@@ -527,60 +526,6 @@ export default function FeeStructure() {
                     </ul>
                   </div>
                 </div>
-              </div>
-            </div>
-
-           
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className="mt-8">
-          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
-            <h2 className="text-2xl font-bold mb-6" style={{ color: colors.textPrimary }}>
-              Contact for Fee Queries
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="p-4 rounded-xl" style={{ backgroundColor: `${colors.primaryBlue}05`, border: `1px solid ${colors.border}` }}>
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: colors.primaryBlue }}>
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-bold" style={{ color: colors.textPrimary }}>Phone</h3>
-                </div>
-                <p className="text-lg font-medium" style={{ color: colors.primaryBlue }}>021-111-222-333</p>
-                <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>Mon-Fri, 8 AM - 3 PM</p>
-              </div>
-
-              <div className="p-4 rounded-xl" style={{ backgroundColor: `${colors.secondaryTeal}05`, border: `1px solid ${colors.border}` }}>
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: colors.secondaryTeal }}>
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-bold" style={{ color: colors.textPrimary }}>Email</h3>
-                </div>
-                <p className="text-lg font-medium" style={{ color: colors.secondaryTeal }}>fees@ibaschool.edu.pk</p>
-                <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>Response within 24 hours</p>
-              </div>
-
-              <div className="p-4 rounded-xl" style={{ backgroundColor: `${colors.accentGreen}05`, border: `1px solid ${colors.border}` }}>
-                <div className="flex items-center mb-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: colors.accentGreen }}>
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-bold" style={{ color: colors.textPrimary }}>Visit Office</h3>
-                </div>
-                <p className="text-sm" style={{ color: colors.textSecondary }}>
-                  IBA School System<br />
-                  Ghotki, Pakistan
-                </p>
               </div>
             </div>
           </div>

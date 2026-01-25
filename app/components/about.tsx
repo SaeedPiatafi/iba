@@ -1,11 +1,9 @@
 // components/AboutSection.tsx
 "use client";
 
-import { useEffect } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 
 export default function AboutSection() {
-  // Color palette (from your specifications)
   const colors = {
     primaryBlue: "#2563EB",
     secondaryTeal: "#0D9488",
@@ -17,330 +15,235 @@ export default function AboutSection() {
     border: "#E5E7EB",
   };
 
-  // Features list
+  // Updated features list with arrows
   const features = [
-    "Skilled Instructors",
-    "Online Classes",
-    "International Certificate",
-    "Modern Curriculum",
-    "Career Support",
-    "Research Facilities",
+    {
+      title: "Managed by IBA Sukkur University",
+      color: colors.primaryBlue,
+    },
+    {
+      title: "We offer Aga Khan and Sindh Board",
+      color: colors.secondaryTeal,
+    },
+    {
+      title: "Computer and Science Lab Faculty",
+      color: colors.accentGreen,
+    },
+    {
+      title: "Career Support",
+      color: "#8B5CF6",
+    }
   ];
 
-  // Add fadeInUp animation when component mounts
+  // Carousel images
+  const carouselImages = [
+    {
+      id: 1,
+      src: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&h=800&fit=crop&auto=format",
+      alt: "School Campus"
+    },
+    {
+      id: 2,
+      src: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&h=800&fit=crop&auto=format",
+      alt: "Classroom Learning"
+    },
+    {
+      id: 3,
+      src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=800&fit=crop&auto=format",
+      alt: "Science Laboratory"
+    },
+    {
+      id: 4,
+      src: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=800&fit=crop&auto=format",
+      alt: "Computer Lab"
+    },
+    {
+      id: 5,
+      src: "https://images.unsplash.com/photo-1524178234883-043d5c3f3cf4?w=1200&h=800&fit=crop&auto=format",
+      alt: "Library"
+    },
+    {
+      id: 6,
+      src: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=1200&h=800&fit=crop&auto=format",
+      alt: "Students Activity"
+    }
+  ];
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
-    const elements = document.querySelectorAll(".wow");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("animated");
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
+    setIsClient(true);
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+    }, 4000);
+    
+    return () => clearInterval(interval);
+  }, [carouselImages.length]);
 
-    elements.forEach((element) => observer.observe(element));
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+  };
 
-    return () => observer.disconnect();
-  }, []);
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
 
   return (
-    <div className="py-16 md:py-20" style={{ backgroundColor: colors.card }}>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-12 md:py-16 bg-white" style={{ backgroundColor: colors.card }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-          {/* Left Column - Image */}
-          <div
-            className="wow fadeInUp lg:w-1/2"
-            data-wow-delay="0.1s"
-            style={{ minHeight: "400px" }}
-          >
-            <div className="relative w-full h-[400px] lg:h-full rounded-2xl overflow-hidden shadow-xl">
-              <Image
-                src="/images/about-section.jpg"
-                alt="IBA Institute Campus"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent z-[1]"></div>
-
-              {/* Image overlay for better text contrast if needed */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent z-[1]"></div>
-
-              {/* Stats overlay */}
-              <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div
-                      className="text-2xl md:text-3xl font-bold"
-                      style={{ color: colors.primaryBlue }}
-                    >
-                      25+
+          {/* Left Column - Carousel */}
+          <div className="lg:w-1/2">
+            <div className="relative overflow-hidden rounded-2xl shadow-xl h-[400px] lg:h-[500px]">
+              {/* Carousel */}
+              <div 
+                className="flex transition-transform duration-500 ease-in-out h-full"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {carouselImages.map((image) => (
+                  <div key={image.id} className="w-full flex-shrink-0 h-full relative">
+                    <div className="w-full h-full bg-gray-100">
+                      <img 
+                        src={image.src} 
+                        alt={image.alt}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
+                                <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                                <span class="mt-2 text-gray-500 font-medium">${image.alt}</span>
+                              </div>
+                            `;
+                          }
+                        }}
+                      />
                     </div>
-                    <div
-                      className="text-xs md:text-sm"
-                      style={{ color: colors.textSecondary }}
-                    >
-                      Years Experience
-                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                   </div>
-                  <div className="text-center">
-                    <div
-                      className="text-2xl md:text-3xl font-bold"
-                      style={{ color: colors.secondaryTeal }}
-                    >
-                      5K+
-                    </div>
-                    <div
-                      className="text-xs md:text-sm"
-                      style={{ color: colors.textSecondary }}
-                    >
-                      Students
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div
-                      className="text-2xl md:text-3xl font-bold"
-                      style={{ color: colors.accentGreen }}
-                    >
-                      50+
-                    </div>
-                    <div
-                      className="text-xs md:text-sm"
-                      style={{ color: colors.textSecondary }}
-                    >
-                      Programs
-                    </div>
-                  </div>
-                </div>
+                ))}
+              </div>
+
+              {/* Carousel Controls */}
+              <button 
+                onClick={prevSlide}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all duration-300 z-10"
+                aria-label="Previous slide"
+              >
+                <svg className="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+              
+              <button 
+                onClick={nextSlide}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all duration-300 z-10"
+                aria-label="Next slide"
+              >
+                <svg className="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+
+              {/* Slide Indicators */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                {carouselImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === currentSlide 
+                        ? 'bg-white w-6' 
+                        : 'bg-white/60 hover:bg-white'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
           </div>
 
           {/* Right Column - Content */}
-          <div className="wow fadeInUp lg:w-1/2" data-wow-delay="0.3s">
+          <div className="lg:w-1/2">
             {/* Section Title */}
-            <div className="flex items-center mb-6">
-              <div
-                className="inline-flex items-center px-4 py-2 rounded-full"
+            <div className="mb-6">
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider mb-4"
                 style={{
                   backgroundColor: "rgba(37, 99, 235, 0.1)",
+                  color: colors.primaryBlue,
                 }}
               >
-                <span
-                  className="text-sm font-bold uppercase tracking-wider"
-                  style={{
-                    color: colors.primaryBlue,
-                    fontFamily: "var(--font-poppins)",
-                    letterSpacing: "0.1em",
-                  }}
-                >
-                  About Us
-                </span>
+                About Our School
+              </span>
+
+              {/* Main Heading */}
+              <h1 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: colors.textPrimary }}>
+                Welcome to <span className="text-blue-600">Islamia public higher secondary school</span>
+              </h1>
+
+              {/* Description Paragraphs */}
+              <div className="space-y-4 mb-8">
+                <p className="text-gray-600 leading-relaxed">
+                  Established as a premier educational institution, we are committed to providing 
+                  excellence in academics and holistic development for students from KG to 12th grade.
+                </p>
+                <p className="text-gray-600 leading-relaxed">
+                  With strong university backing and modern facilities, we prepare students for 
+                  success in higher education and beyond through innovative teaching methods and 
+                  comprehensive support systems.
+                </p>
+              </div>
+
+              {/* Features List with arrows at start (no boxes) */}
+              <div className="space-y-4 mb-8">
+                {features.map((feature, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-start gap-3 group"
+                  >
+                    {/* Arrow at start */}
+                    <div className="pt-1 flex-shrink-0">
+                      <svg 
+                        className="w-5 h-5 transform transition-transform duration-300 group-hover:translate-x-1" 
+                        style={{ color: feature.color }}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth="2" 
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </div>
+                    
+                    {/* Feature text */}
+                    <span 
+                      className="text-gray-800 font-medium transition-colors duration-300 group-hover:text-gray-900"
+                      style={{ color: colors.textPrimary }}
+                    >
+                      {feature.title}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Main Heading */}
-            <h1
-              className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6"
-              style={{
-                color: colors.textPrimary,
-                fontFamily: "var(--font-montserrat)",
-                lineHeight: "1.2",
-              }}
-            >
-              Welcome to IBA Institute
-            </h1>
-
-            {/* Description Paragraphs */}
-            <p
-              className="text-lg mb-4"
-              style={{
-                color: colors.textSecondary,
-                fontFamily: "var(--font-inter)",
-                lineHeight: "1.7",
-              }}
-            >
-              Established in 1995, IBA Institute has been at the forefront of
-              business education, nurturing future leaders with innovative
-              teaching methods and industry-relevant curriculum. We extend
-              excellence beyond academics by offering hands-on experience,
-              research opportunities, and global exposure to equip students for
-              successful business careers.
-            </p>
-
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-center group">
-                  <div className="mr-3 transition-transform duration-300 group-hover:translate-x-1">
-                    <svg
-                      className="w-5 h-5"
-                      style={{ color: colors.primaryBlue }}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
-                  </div>
-                  <span
-                    className="text-base transition-colors duration-300 group-hover:text-blue-600"
-                    style={{
-                      color: colors.textPrimary,
-                      fontFamily: "var(--font-inter)",
-                    }}
-                  >
-                    {feature}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Read More Button */}
-            <a
-              href="/about"
-              className="inline-flex items-center px-8 py-4 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-xl group"
-              style={{
-                backgroundColor: colors.primaryBlue,
-                fontFamily: "var(--font-poppins)",
-              }}
-            >
-              <span>Read More</span>
-              <svg
-                className="w-5 h-5 ml-3 transform transition-transform duration-300 group-hover:translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
-            </a>
           </div>
         </div>
       </div>
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translate3d(0, 30px, 0);
-          }
-          to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-          }
-        }
-
-        .wow {
-          visibility: hidden;
-        }
-
-        .wow.animated {
-          visibility: visible;
-          animation-name: fadeInUp;
-          animation-duration: 1s;
-          animation-fill-mode: both;
-        }
-
-        .fadeInUp {
-          animation-name: fadeInUp;
-        }
-
-        /* Hover effects */
-        .hover-lift:hover {
-          transform: translateY(-5px);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-          .container {
-            padding-left: 1rem;
-            padding-right: 1rem;
-          }
-
-          h1 {
-            font-size: 2rem !important;
-          }
-
-          .grid-cols-2 {
-            gap: 2rem;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .image-container {
-            min-height: 300px !important;
-          }
-
-          .stats-overlay {
-            bottom: 1rem;
-            left: 1rem;
-            right: 1rem;
-            padding: 0.75rem;
-          }
-        }
-
-        /* Smooth transitions */
-        * {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Container width matching original */
-        .container {
-          max-width: 1320px;
-          margin: 0 auto;
-        }
-
-        /* Original padding classes */
-        .py-5 {
-          padding-top: 3rem;
-          padding-bottom: 3rem;
-        }
-
-        @media (min-width: 768px) {
-          .py-5 {
-            padding-top: 5rem;
-            padding-bottom: 5rem;
-          }
-        }
-
-        /* Spacing matching original */
-        .gap-5 {
-          gap: 3rem;
-        }
-
-        .mb-4 {
-          margin-bottom: 1rem;
-        }
-
-        .mb-6 {
-          margin-bottom: 1.5rem;
-        }
-
-        .mb-8 {
-          margin-bottom: 2rem;
-        }
-
-        .mt-2 {
-          margin-top: 0.5rem;
-        }
-      `}</style>
     </div>
   );
 }

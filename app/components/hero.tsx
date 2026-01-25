@@ -1,328 +1,250 @@
-// components/HeroSection.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  schoolName?: string;
+}
+
+const HeroSection: React.FC<HeroSectionProps> = ({ 
+  schoolName = "Prestige Academy" 
+}) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-
-  // Color palette
-  const colors = {
-    primaryBlue: '#2563EB',
-    secondaryTeal: '#0D9488',
-    accentGreen: '#16A34A',
-    background: '#F9FAFB',
-    card: '#FFFFFF',
-    textPrimary: '#1F2937',
-    textSecondary: '#6B7280',
-    border: '#E5E7EB',
-  };
-
-  // Carousel slides data with new images
+  const [isClient, setIsClient] = useState(false);
+  
+  // Using reliable Unsplash images
   const slides = [
     {
       id: 1,
-      title: 'Excellence in Education Since 1995',
-      subtitle: 'Pioneering Academic Excellence',
-      description: 'At IBA, we nurture young minds with innovative teaching methods, state-of-the-art facilities, and a commitment to holistic development.',
-      cta1: 'Explore Programs',
-      cta2: 'Admissions Open',
-      image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8ZWR1Y2F0aW9ufGVufDB8fDB8fHww'
+      image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&h=800&fit=crop&auto=format",
+      alt: "School building",
     },
     {
       id: 2,
-      title: 'Shaping Future Leaders',
-      subtitle: 'Comprehensive Learning Environment',
-      description: 'Our dedicated faculty and modern curriculum empower students to excel academically while developing essential life skills for tomorrow\'s challenges.',
-      cta1: 'Meet Our Faculty',
-      cta2: 'View Campus',
-      image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1600&auto=format&fit=crop&q=80'
+      image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&h=800&fit=crop&auto=format",
+      alt: "Students learning",
     },
     {
       id: 3,
-      title: 'Where Curiosity Meets Innovation',
-      subtitle: 'STEM & Beyond',
-      description: 'From robotics labs to art studios, we provide diverse learning opportunities that inspire creativity and critical thinking in every student.',
-      cta1: 'STEM Programs',
-      cta2: 'Arts & Culture',
-      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'
+      image: "https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=1200&h=800&fit=crop&auto=format",
+      alt: "School library",
+    },
+    {
+      id: 4,
+      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=800&fit=crop&auto=format",
+      alt: "Classroom activity",
     }
   ];
 
-  // Auto-play functionality
+  const headlines = [
+    {
+      title: "Managed by IBA Sukkur University",
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z" />
+        </svg>
+      ),
+      color: "text-[#2563EB]",
+      bgColor: "bg-[#2563EB]/10"
+    },
+    {
+      title: "Sukkur & Aga Khan Board",
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+        </svg>
+      ),
+      color: "text-[#0D9488]",
+      bgColor: "bg-[#0D9488]/10"
+    },
+    {
+      title: "Computer & Science Labs",
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+        </svg>
+      ),
+      color: "text-[#16A34A]",
+      bgColor: "bg-[#16A34A]/10"
+    }
+  ];
+
   useEffect(() => {
-    if (!isAutoPlaying) return;
-
+    setIsClient(true);
+    
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-
+      setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
+    }, 4000);
+    
     return () => clearInterval(interval);
-  }, [isAutoPlaying, slides.length]);
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
-  };
+  }, [slides.length]);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+    setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+    setCurrentSlide((prevSlide) => (prevSlide - 1 + slides.length) % slides.length);
   };
 
-  return (
-    <section className="relative overflow-hidden h-screen">
-      {/* Carousel Container - Full height with padding for header */}
-      <div className="relative h-full w-full pt-20">
-        {slides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-              index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
-          >
-            {/* Background Image with subtle overlay */}
-            <div className="absolute inset-0">
-              <div className="relative w-full h-full">
-                <Image
-                  src={slide.image}
-                  alt={slide.title}
-                  fill
-                  className="object-cover"
-                  priority={index === 0}
-                  sizes="100vw"
-                />
-                {/* Subtle gradient overlay - reduced opacity */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/40 to-black/30"></div>
-              </div>
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex flex-col lg:flex-row">
+        {/* REVERSED: Carousel on LEFT side in loading state */}
+        <div className="lg:w-1/2 h-[50vh] lg:h-screen bg-gray-200 animate-pulse"></div>
+        
+        {/* REVERSED: Content on RIGHT side in loading state */}
+        <div className="lg:w-1/2 p-8 lg:p-12 bg-white flex flex-col justify-center">
+          <div className="space-y-6 max-w-md">
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded w-32"></div>
+              <div className="h-7 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-12 bg-gray-200 rounded w-full"></div>
             </div>
-
-            {/* Content Section */}
-            <div className="relative z-20 h-full flex items-center">
-              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="max-w-3xl">
-                  {/* Subtitle with white background */}
-                  <div 
-                    className="inline-flex items-center px-4 py-2 rounded-full mb-4 md:mb-6 bg-white animate-fadeInUp"
-                  >
-                    <span 
-                      className="text-xs sm:text-sm font-bold uppercase tracking-wider"
-                      style={{ 
-                        color: colors.primaryBlue,
-                        fontFamily: 'var(--font-poppins)',
-                        letterSpacing: '0.1em'
-                      }}
-                    >
-                      {slide.subtitle}
-                    </span>
-                  </div>
-
-                  {/* Main Title */}
-                  <h1 
-                    className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-white animate-fadeInUp leading-tight sm:leading-snug"
-                    style={{
-                      fontFamily: 'var(--font-montserrat)',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                    }}
-                  >
-                    {slide.title}
-                  </h1>
-
-                  {/* Description */}
-                  <p 
-                    className="text-base sm:text-lg md:text-xl mb-6 md:mb-8 max-w-2xl text-white animate-fadeInUp leading-relaxed"
-                    style={{
-                      fontFamily: 'var(--font-inter)',
-                      animationDelay: '200ms',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                    }}
-                  >
-                    {slide.description}
-                  </p>
-
-                  {/* Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4 animate-fadeInUp" style={{ animationDelay: '400ms' }}>
-                    <a
-                      href="/programs"
-                      className="inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 text-center"
-                      style={{
-                        backgroundColor: colors.primaryBlue,
-                        color: '#FFFFFF',
-                        fontFamily: 'var(--font-poppins)',
-                        minWidth: '180px',
-                      }}
-                    >
-                      <span className="text-sm sm:text-base md:text-lg">
-                        {slide.cta1}
-                      </span>
-                    </a>
-                    <a
-                      href="/admissions"
-                      className="inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 border-2 border-white text-white text-center hover:bg-white/10"
-                      style={{
-                        fontFamily: 'var(--font-poppins)',
-                        backgroundColor: 'transparent',
-                        minWidth: '180px',
-                      }}
-                    >
-                      <span className="text-sm sm:text-base md:text-lg">
-                        {slide.cta2}
-                      </span>
-                    </a>
-                  </div>
-                </div>
-              </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-10 bg-gray-100 rounded w-full"></div>
+              ))}
             </div>
           </div>
-        ))}
+        </div>
+      </div>
+    );
+  }
 
-        {/* Navigation Buttons */}
-        <button
+  return (
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* REVERSED: Carousel on LEFT side */}
+      <div className="lg:w-1/2 relative overflow-hidden h-[50vh] lg:h-screen">
+        <div 
+          className="flex transition-transform duration-500 ease-in-out h-full"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        >
+          {slides.map((slide) => (
+            <div 
+              key={slide.id} 
+              className="w-full flex-shrink-0 h-full relative"
+            >
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <img 
+                  src={slide.image} 
+                  alt={slide.alt}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
+                          <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                          </svg>
+                          <span class="mt-2 text-gray-500 font-medium">${slide.alt}</span>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              </div>
+              {/* Changed gradient direction for left placement */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent"></div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Carousel Controls */}
+        <button 
           onClick={prevSlide}
-          className="absolute left-4 sm:left-6 md:left-8 top-1/2 transform -translate-y-1/2 z-30 p-2 sm:p-3 rounded-full bg-black/30 hover:bg-black/50 transition-all duration-300 backdrop-blur-sm"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all duration-300 z-10"
           aria-label="Previous slide"
         >
-          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          <svg className="w-4 h-4 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
           </svg>
         </button>
-
-        <button
+        
+        <button 
           onClick={nextSlide}
-          className="absolute right-4 sm:right-6 md:right-8 top-1/2 transform -translate-y-1/2 z-30 p-2 sm:p-3 rounded-full bg-black/30 hover:bg-black/50 transition-all duration-300 backdrop-blur-sm"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-all duration-300 z-10"
           aria-label="Next slide"
         >
-          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+          <svg className="w-4 h-4 text-[#1F2937]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
           </svg>
         </button>
-
+        
         {/* Slide Indicators */}
-        <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2 sm:space-x-3">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
           {slides.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`transition-all duration-300 rounded-full ${
-                index === currentSlide ? 'scale-125' : 'scale-100'
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === currentSlide 
+                  ? 'bg-white w-6' 
+                  : 'bg-white/60 hover:bg-white'
               }`}
-              style={{
-                width: '12px',
-                height: '12px',
-                backgroundColor: index === currentSlide ? colors.primaryBlue : 'rgba(255, 255, 255, 0.5)',
-              }}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
+        
+        {/* Simple overlay - position remains same */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/50 to-transparent text-white">
+          <p className="text-xs opacity-90">Campus Life & Facilities</p>
+        </div>
       </div>
 
-      {/* Straight Bottom Transition */}
-      <div className="absolute bottom-0 left-0 right-0 z-20">
-        <div 
-          className="h-12 bg-gradient-to-t from-white to-transparent"
-        ></div>
-        <div className="h-4 bg-white"></div>
-      </div>
+      {/* REVERSED: Content on RIGHT side */}
+      <div className="lg:w-1/2 p-6 md:p-8 lg:p-12 bg-white flex flex-col justify-center">
+        <div className="max-w-md mx-auto lg:mx-0">
+          {/* Welcome Heading */}
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F2937] mb-3 leading-tight">
+              Welcome to <span className="text-[#2563EB]">{schoolName}</span>
+            </h1>
+          </div>
 
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fadeInUp {
-          animation: fadeInUp 0.8s ease-out forwards;
-          opacity: 0;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 640px) {
-          section {
-            height: 100vh;
-            max-height: 100vh;
-          }
-          
-          h1 {
-            font-size: 2rem !important;
-            line-height: 1.2 !important;
-          }
-          
-          p {
-            font-size: 1rem !important;
-            line-height: 1.5 !important;
-          }
-          
-          .container {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-          }
-          
-          .bottom-gradient {
-            height: 8px !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          h1 {
-            font-size: 1.75rem !important;
-          }
-          
-          .bottom-gradient {
-            height: 6px !important;
-          }
-        }
-        
-        @media (min-width: 641px) and (max-width: 768px) {
-          h1 {
-            font-size: 2.5rem !important;
-          }
-        }
-        
-        @media (min-width: 769px) and (max-width: 1024px) {
-          h1 {
-            font-size: 3.5rem !important;
-          }
-        }
-        
-        @media (min-width: 1025px) {
-          h1 {
-            font-size: 4rem !important;
-          }
-        }
-        
-        /* Smooth transitions */
-        * {
-          transition: all 0.3s ease;
-        }
-        
-        /* Image overlay adjustment */
-        .bg-gradient-overlay {
-          background: linear-gradient(
-            to right,
-            rgba(0, 0, 0, 0.5) 0%,
-            rgba(0, 0, 0, 0.4) 50%,
-            rgba(0, 0, 0, 0.3) 100%
-          );
-        }
-      `}</style>
-    </section>
+          {/* Increased Description */}
+          <div className="mb-8">
+            <p className="text-sm text-[#6B7280] leading-relaxed mb-3">
+              A premier educational institution committed to excellence in academics and holistic development.
+            </p>
+            <p className="text-sm text-[#6B7280] leading-relaxed">
+              We provide a nurturing environment that fosters intellectual growth, character building, and prepares students for success in higher education and beyond.
+            </p>
+          </div>
+
+          {/* Headlines List with shorter titles */}
+          <div className="space-y-3 mb-8">
+            {headlines.map((headline, index) => (
+              <div 
+                key={index} 
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors duration-200"
+              >
+                <div className={`${headline.bgColor} p-2 rounded-lg flex-shrink-0`}>
+                  <div className={headline.color}>
+                    {headline.icon}
+                  </div>
+                </div>
+                <span className="text-sm text-[#1F2937] font-medium leading-tight">
+                  {headline.title}
+                </span>
+              </div>
+            ))}
+          </div>
+
+         
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default HeroSection;
