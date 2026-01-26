@@ -1,0 +1,254 @@
+[
+  {
+    "id": 1,
+    "name": "Dr. Sarah Johnson",
+    "subject": "Mathematics & Physics",
+    "classLevels": [
+      "9th Grade",
+      "10th Grade",
+      "11th Grade",
+      "12th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "PhD in Mathematics, Stanford University",
+      "M.S. in Physics, MIT",
+      "B.S. in Mathematics, Harvard University"
+    ],
+    "experience": "15 years teaching experience",
+    "teachingExperience": [
+      "Head of Mathematics Department (2015-Present)",
+      "Senior Mathematics Teacher, Current School (2010-2015)",
+      "Mathematics Lecturer, University of California (2008-2010)"
+    ],
+    "bio": "Dr. Johnson specializes in making complex mathematical concepts accessible and engaging for all students. Her innovative teaching methods have helped hundreds of students excel in advanced mathematics.",
+    "achievements": [
+      "National Mathematics Teacher of the Year 2022",
+      "Published 5 research papers in mathematics education",
+      "Developed award-winning curriculum for advanced mathematics"
+    ],
+    "teachingPhilosophy": "Believes in creating an inclusive learning environment where every student can discover their mathematical potential through practical applications and real-world problem-solving.",
+    "officeHours": "Monday-Friday: 2:00 PM - 4:00 PM",
+    "roomNumber": "Room 302, Science Building",
+    "email": "s.johnson@school.edu"
+  },
+  {
+    "id": 3,
+    "name": "Ms. Maria Rodriguez",
+    "subject": "Literature & Languages",
+    "classLevels": [
+      "9th Grade",
+      "10th Grade",
+      "11th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "M.A. in English Literature, Cambridge University",
+      "B.A. in Comparative Literature, University of Oxford",
+      "TESOL Certification"
+    ],
+    "experience": "12 years teaching experience",
+    "teachingExperience": [
+      "Head of English Department (2017-Present)",
+      "English Teacher, International School (2012-2017)",
+      "ESL Instructor, Language Institute (2010-2012)"
+    ],
+    "bio": "Ms. Rodriguez fosters a love for literature through interactive discussions and creative writing workshops that inspire students to become lifelong readers.",
+    "achievements": [
+      "Published author of 2 poetry collections",
+      "State Literature Teacher Award 2021",
+      "Organizer of annual school literary festival"
+    ],
+    "teachingPhilosophy": "Emphasizes critical thinking and empathy through literary analysis, helping students connect classic works with contemporary issues.",
+    "officeHours": "Monday-Wednesday-Friday: 1:00 PM - 3:00 PM",
+    "roomNumber": "Room 101, Humanities Building",
+    "email": "m.rodriguez@school.edu"
+  },
+  {
+    "id": 4,
+    "name": "Mr. James Wilson",
+    "subject": "History & Social Studies",
+    "classLevels": [
+      "9th Grade",
+      "10th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "M.A. in History, University of Chicago",
+      "B.A. in Political Science, Columbia University",
+      "Teaching Credential in Social Studies"
+    ],
+    "experience": "18 years teaching experience",
+    "teachingExperience": [
+      "Social Studies Department Chair (2015-Present)",
+      "History Teacher, Current School (2006-2015)",
+      "Museum Educator, Smithsonian (2004-2006)"
+    ],
+    "bio": "Mr. Wilson makes history come alive through engaging storytelling and primary source analysis, connecting past events to current affairs.",
+    "achievements": [
+      "National History Day Teacher of the Year 2020",
+      "Published historical research on civil rights movement",
+      "Developed interactive history curriculum adopted statewide"
+    ],
+    "teachingPhilosophy": "Uses primary sources and debates to help students develop historical thinking skills and understand multiple perspectives.",
+    "officeHours": "Tuesday-Thursday: 2:30 PM - 4:30 PM",
+    "roomNumber": "Room 215, Social Studies Wing",
+    "email": "j.wilson@school.edu"
+  },
+  {
+    "id": 5,
+    "name": "Dr. Lisa Thompson",
+    "subject": "Biology & Chemistry",
+    "classLevels": [
+      "11th Grade",
+      "12th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1551836026-d5c2c5af78e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "PhD in Biochemistry, Johns Hopkins University",
+      "M.S. in Molecular Biology, UC Berkeley",
+      "B.S. in Chemistry, Stanford University"
+    ],
+    "experience": "14 years teaching + 6 years research",
+    "teachingExperience": [
+      "Science Department Head (2016-Present)",
+      "Research Scientist, Biotech Company (2008-2014)",
+      "University Lab Instructor (2006-2008)"
+    ],
+    "bio": "Dr. Thompson's hands-on laboratory approach helps students develop scientific inquiry skills while exploring the wonders of biological systems.",
+    "achievements": [
+      "Published 8 papers in peer-reviewed journals",
+      "NSF Grant recipient for science education",
+      "Lead organizer of school science fair for 8 years"
+    ],
+    "teachingPhilosophy": "Focuses on inquiry-based learning where students design and conduct experiments to discover scientific principles firsthand.",
+    "officeHours": "Monday-Wednesday-Friday: 8:00 AM - 10:00 AM",
+    "roomNumber": "Room 410, Science Laboratory",
+    "email": "l.thompson@school.edu"
+  },
+  {
+    "id": 6,
+    "name": "Mr. Robert Kim",
+    "subject": "Physical Education",
+    "classLevels": [
+      "9th Grade",
+      "10th Grade",
+      "11th Grade",
+      "12th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1545167622-3a6ac756afa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "M.S. in Sports Science, University of Michigan",
+      "B.S. in Kinesiology, UCLA",
+      "Certified Personal Trainer"
+    ],
+    "experience": "9 years coaching + 6 years teaching",
+    "teachingExperience": [
+      "Athletic Director (2018-Present)",
+      "Head Basketball Coach (2015-2018)",
+      "Strength and Conditioning Coach, College (2012-2015)"
+    ],
+    "bio": "Coach Kim focuses on developing physical fitness, teamwork, and sportsmanship while promoting lifelong healthy habits.",
+    "achievements": [
+      "State Championship Coach 2022",
+      "Developed award-winning fitness curriculum",
+      "Certified in multiple sports training methodologies"
+    ],
+    "teachingPhilosophy": "Promotes physical literacy and lifelong fitness through inclusive, varied, and enjoyable physical activities for all skill levels.",
+    "officeHours": "Daily: 7:30 AM - 8:30 AM",
+    "roomNumber": "Gymnasium Office",
+    "email": "r.kim@school.edu"
+  },
+  {
+    "id": 7,
+    "name": "Ms. Amina Hassan",
+    "subject": "Art & Creative Design",
+    "classLevels": [
+      "10th Grade",
+      "11th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "B.F.A. in Fine Arts, Rhode Island School of Design",
+      "M.F.A. in Visual Arts, School of the Art Institute of Chicago"
+    ],
+    "experience": "7 years teaching + 5 years professional artist",
+    "teachingExperience": [
+      "Art Department Coordinator (2019-Present)",
+      "Gallery Manager and Artist (2015-2019)",
+      "Art Instructor, Community Center (2013-2015)"
+    ],
+    "bio": "Ms. Hassan encourages creative expression through various media while teaching technical skills and art history fundamentals.",
+    "achievements": [
+      "Solo exhibitions in 3 major cities",
+      "Art Education Innovation Grant recipient",
+      "Student art showcased in national competitions"
+    ],
+    "teachingPhilosophy": "Fosters creative confidence and technical skill through exploration of diverse materials and art historical contexts.",
+    "officeHours": "Tuesday-Thursday: 4:00 PM - 6:00 PM",
+    "roomNumber": "Room 108, Art Studio",
+    "email": "a.hassan@school.edu"
+  },
+  {
+    "id": 8,
+    "name": "Mr. Thomas O'Reilly",
+    "subject": "Music & Performing Arts",
+    "classLevels": [
+      "9th Grade",
+      "10th Grade",
+      "11th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "M.M. in Music Education, Juilliard School",
+      "B.M. in Performance, Berklee College of Music"
+    ],
+    "experience": "11 years teaching + 8 years performing",
+    "teachingExperience": [
+      "Director of Performing Arts (2017-Present)",
+      "Professional Musician and Composer (2010-2017)",
+      "Music Teacher, Private School (2009-2010)"
+    ],
+    "bio": "Mr. O'Reilly directs award-winning music programs and teaches students to appreciate music theory, history, and performance.",
+    "achievements": [
+      "Grammy Music Educator Award nominee",
+      "Composed original score for school musical",
+      "Student ensembles won multiple state competitions"
+    ],
+    "teachingPhilosophy": "Combines technical mastery with creative expression to help students discover their unique musical voice.",
+    "officeHours": "Monday-Wednesday-Friday: 3:30 PM - 5:30 PM",
+    "roomNumber": "Room 201, Music Building",
+    "email": "t.oreilly@school.edu"
+  },
+  {
+    "id": 9,
+    "name": "Ms. Jennifer Park",
+    "subject": "Economics & Business",
+    "classLevels": [
+      "11th Grade",
+      "12th Grade"
+    ],
+    "image": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "MBA, Harvard Business School",
+      "B.A. in Economics, Wharton School",
+      "Certified Financial Analyst"
+    ],
+    "experience": "7 years teaching + 8 years corporate",
+    "teachingExperience": [
+      "Business Department Head (2019-Present)",
+      "Financial Analyst, Investment Bank (2014-2019)",
+      "Economics Consultant (2012-2014)"
+    ],
+    "bio": "With corporate experience, Ms. Park brings practical business knowledge to the classroom, preparing students for economic literacy.",
+    "achievements": [
+      "Developed school's first entrepreneurship program",
+      "Student investment club achieved 25% returns",
+      "Business plan competition state champion"
+    ],
+    "teachingPhilosophy": "Connects economic theory with real-world applications through case studies, simulations, and guest speakers.",
+    "officeHours": "Monday-Thursday: 1:00 PM - 3:00 PM",
+    "roomNumber": "Room 305, Business Wing",
+    "email": "j.park@school.edu"
+  }
+]

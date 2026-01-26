@@ -3,6 +3,25 @@
 
 import { useState, useEffect } from 'react';
 
+interface Resource {
+  id: number;
+  title: string;
+  type: 'Book' | 'Video' | 'Article' | 'Practice' | 'Exam';
+  link: string;
+  description: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: {
+    classes: string[];
+    subjectsByClass: Record<string, string[]>;
+    resources: Record<string, Record<string, Resource[]>>;
+  };
+  timestamp: string;
+  error?: string;
+}
+
 export default function StudentResources() {
   // Color palette
   const colors = {
@@ -19,143 +38,58 @@ export default function StudentResources() {
     sidebarBg: "#F8FAFC",
   };
 
-  // Classes data
-  const classes = [
-    "Class 6", "Class 7", "Class 8", "Class 9", 
-    "Class 10", "Class 11 Science", "Class 11 Commerce", 
-    "Class 11 Arts", "Class 12 Science", "Class 12 Commerce", 
-    "Class 12 Arts"
-  ];
-
-  // Subjects data for each class category
-  const subjectsByClass: Record<string, string[]> = {
-    "Class 6-8": [
-      "Mathematics", "Science", "English", "Social Studies", 
-      "Computer Science", "Urdu", "Islamiyat", "General Knowledge"
-    ],
-    "Class 9-10": [
-      "Mathematics", "Physics", "Chemistry", "Biology", 
-      "English", "Urdu", "Islamiyat", "Pakistan Studies",
-      "Computer Science"
-    ],
-    "Science": [
-      "Mathematics", "Physics", "Chemistry", "Biology",
-      "English", "Urdu", "Islamiyat", "Pakistan Studies",
-      "Computer Science"
-    ],
-    "Commerce": [
-      "Principles of Accounting", "Business Studies", "Economics",
-      "Mathematics", "Statistics", "English", "Urdu",
-      "Islamiyat", "Pakistan Studies"
-    ],
-    "Arts": [
-      "English Literature", "Urdu Literature", "Islamic Studies",
-      "Pakistan Studies", "Sociology", "Psychology", "Geography",
-      "History", "Political Science"
-    ]
-  };
-
-  // Resources data structure
-  const resources: Record<string, Record<string, Array<{
-    id: number;
-    title: string;
-    type: 'Book' | 'Video' | 'Article' | 'Practice' | 'Exam';
-    link: string;
-    description: string;
-  }>>> = {
-    "Class 6": {
-      "Mathematics": [
-        { id: 1, title: "Basic Algebra Guide", type: "Book", link: "https://example.com/math6-book", description: "Complete guide to algebra basics" },
-        { id: 2, title: "Fractions and Decimals", type: "Video", link: "https://khanacademy.org/fractions", description: "Video lessons on fractions" },
-        { id: 3, title: "Math Practice Problems", type: "Practice", link: "https://example.com/math-practice", description: "Interactive practice problems" },
-        { id: 4, title: "Geometry Basics", type: "Video", link: "https://khanacademy.org/geometry", description: "Introduction to geometry" },
-      ],
-      "Science": [
-        { id: 5, title: "Science Textbook", type: "Book", link: "https://example.com/science6-book", description: "Full science curriculum" },
-        { id: 6, title: "Biology Basics", type: "Video", link: "https://khanacademy.org/biology-basics", description: "Introduction to biology" },
-        { id: 7, title: "Science Experiments", type: "Article", link: "https://example.com/science-experiments", description: "Fun science experiments" },
-      ],
-      "English": [
-        { id: 8, title: "English Grammar", type: "Book", link: "https://example.com/english-grammar", description: "Complete grammar guide" },
-        { id: 9, title: "Vocabulary Builder", type: "Practice", link: "https://example.com/vocabulary", description: "Interactive vocabulary exercises" },
-      ],
-    },
-    "Class 7": {
-      "Mathematics": [
-        { id: 10, title: "Algebra Fundamentals", type: "Book", link: "https://example.com/algebra7-book", description: "Algebra concepts for Class 7" },
-        { id: 11, title: "Geometry Advanced", type: "Video", link: "https://khanacademy.org/geometry-advanced", description: "Advanced geometry topics" },
-      ],
-      "Science": [
-        { id: 12, title: "Physics Basics", type: "Book", link: "https://example.com/physics7-book", description: "Introduction to physics" },
-        { id: 13, title: "Chemistry Experiments", type: "Video", link: "https://example.com/chemistry-videos", description: "Chemistry lab experiments" },
-      ],
-    },
-    "Class 8": {
-      "Mathematics": [
-        { id: 14, title: "Advanced Mathematics", type: "Book", link: "https://example.com/math8-book", description: "Complete Class 8 math" },
-        { id: 15, title: "Algebra Practice", type: "Practice", link: "https://example.com/algebra-practice", description: "Algebra practice problems" },
-      ],
-      "Science": [
-        { id: 16, title: "General Science", type: "Book", link: "https://example.com/science8-book", description: "Science textbook Class 8" },
-      ],
-    },
-    "Class 9": {
-      "Physics": [
-        { id: 17, title: "Physics Concepts", type: "Book", link: "https://example.com/physics9-book", description: "Complete physics guide" },
-        { id: 18, title: "Motion and Force", type: "Video", link: "https://khanacademy.org/physics-motion", description: "Video lectures on motion" },
-        { id: 19, title: "Past Papers 2023", type: "Exam", link: "https://example.com/past-papers", description: "Previous year exam papers" },
-        { id: 20, title: "Physics Formulas", type: "Article", link: "https://example.com/physics-formulas", description: "Important formulas sheet" },
-      ],
-      "Chemistry": [
-        { id: 21, title: "Chemistry Textbook", type: "Book", link: "https://example.com/chemistry9-book", description: "Official chemistry textbook" },
-        { id: 22, title: "Chemical Reactions", type: "Video", link: "https://khanacademy.org/chemical-reactions", description: "Chemical reactions explained" },
-      ],
-      "Mathematics": [
-        { id: 23, title: "Mathematics Class 9", type: "Book", link: "https://example.com/math9-book", description: "Complete math textbook" },
-        { id: 24, title: "Algebra Tutorials", type: "Video", link: "https://khanacademy.org/algebra", description: "Algebra video lessons" },
-      ],
-    },
-    "Class 10": {
-      "Physics": [
-        { id: 25, title: "Physics Class 10", type: "Book", link: "https://example.com/physics10-book", description: "Complete physics guide" },
-        { id: 26, title: "Electricity Tutorials", type: "Video", link: "https://khanacademy.org/electricity", description: "Electricity and circuits" },
-      ],
-    },
-    "Class 11 Science": {
-      "Physics": [
-        { id: 27, title: "Advanced Physics", type: "Book", link: "https://example.com/physics11-book", description: "FSC Part 1 Physics" },
-        { id: 28, title: "Mechanics Videos", type: "Video", link: "https://khanacademy.org/mechanics", description: "Complete mechanics course" },
-      ],
-      "Chemistry": [
-        { id: 29, title: "Organic Chemistry", type: "Book", link: "https://example.com/organic-chem", description: "Organic chemistry guide" },
-        { id: 30, title: "Chemical Bonding", type: "Video", link: "https://khanacademy.org/chemical-bonding", description: "Video lessons on bonding" },
-      ],
-    },
-    "Class 12 Science": {
-      "Mathematics": [
-        { id: 31, title: "Calculus Complete", type: "Book", link: "https://example.com/calculus-book", description: "Advanced calculus topics" },
-        { id: 32, title: "Integration Tutorials", type: "Video", link: "https://khanacademy.org/integration", description: "Step-by-step integration" },
-      ],
-    },
-  };
-
   // State
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<ApiResponse['data'] | null>(null);
   const [selectedClass, setSelectedClass] = useState("Class 9");
   const [selectedSubject, setSelectedSubject] = useState("Physics");
   const [currentSubjects, setCurrentSubjects] = useState<string[]>([]);
 
+  // Fetch data from API
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/resources');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status}`);
+        }
+        
+        const result: ApiResponse = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load resources data');
+        }
+        
+        setData(result.data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load resources data');
+        console.error('Error fetching resources:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResources();
+  }, []);
+
   // Update subjects based on selected class
   useEffect(() => {
+    if (!data) return;
+
     if (selectedClass.includes("6") || selectedClass.includes("7") || selectedClass.includes("8")) {
-      setCurrentSubjects(subjectsByClass["Class 6-8"]);
+      setCurrentSubjects(data.subjectsByClass["Class 6-8"] || []);
     } else if (selectedClass.includes("9") || selectedClass.includes("10")) {
-      setCurrentSubjects(subjectsByClass["Class 9-10"]);
+      setCurrentSubjects(data.subjectsByClass["Class 9-10"] || []);
     } else if (selectedClass.includes("Science")) {
-      setCurrentSubjects(subjectsByClass["Science"]);
+      setCurrentSubjects(data.subjectsByClass["Science"] || []);
     } else if (selectedClass.includes("Commerce")) {
-      setCurrentSubjects(subjectsByClass["Commerce"]);
+      setCurrentSubjects(data.subjectsByClass["Commerce"] || []);
     } else if (selectedClass.includes("Arts")) {
-      setCurrentSubjects(subjectsByClass["Arts"]);
+      setCurrentSubjects(data.subjectsByClass["Arts"] || []);
     }
     
     // Reset to first subject when class changes
@@ -170,14 +104,16 @@ export default function StudentResources() {
     } else if (selectedClass.includes("Arts")) {
       setSelectedSubject("English Literature");
     }
-  }, [selectedClass]);
+  }, [selectedClass, data]);
 
   // Get resources for selected class and subject
   const getResources = () => {
-    const classResources = resources[selectedClass];
+    if (!data || !data.resources) return [];
+    
+    const classResources = data.resources[selectedClass];
     if (!classResources) {
       // Fallback to Class 9 if no resources for selected class
-      return resources["Class 9"]?.[selectedSubject] || [];
+      return data.resources["Class 9"]?.[selectedSubject] || [];
     }
     return classResources[selectedSubject] || [];
   };
@@ -232,10 +168,157 @@ export default function StudentResources() {
     }
   };
 
+  // Skeleton Card Component
+  const SkeletonCard = () => (
+    <div 
+      className="bg-white rounded-xl p-5 animate-pulse"
+      style={{ border: `1px solid ${colors.border}` }}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3"></div>
+          <div className="w-16 h-6 bg-gray-200 rounded-full"></div>
+        </div>
+      </div>
+      
+      <div className="h-6 bg-gray-200 rounded mb-2"></div>
+      <div className="h-4 bg-gray-200 rounded mb-4 w-3/4"></div>
+      
+      <div className="h-10 bg-gray-200 rounded-lg"></div>
+    </div>
+  );
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen py-8 md:py-12" suppressHydrationWarning style={{ backgroundColor: colors.background }}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section - Always visible */}
+          <div className="text-center mb-8 md:mb-12">
+            <h1 
+              className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
+              style={{ 
+                color: colors.textPrimary,
+                fontFamily: "var(--font-montserrat)",
+                lineHeight: "1.2"
+              }}
+            >
+              Student Resources Hub
+            </h1>
+            <p className="text-lg md:text-xl max-w-3xl mx-auto" style={{ color: colors.textSecondary }}>
+              Access study materials, videos, and practice resources for your subjects
+            </p>
+          </div>
+
+          {/* Class Selection Skeleton */}
+          <div className="mb-8 md:mb-12">
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="mb-6">
+                <div className="h-6 bg-gray-200 rounded w-48 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-64"></div>
+              </div>
+              <div className="h-14 bg-gray-200 rounded-xl max-w-md"></div>
+            </div>
+          </div>
+
+          {/* Desktop Layout Skeleton */}
+          <div className="hidden lg:flex lg:flex-row gap-8">
+            {/* Subjects Sidebar Skeleton */}
+            <div className="w-1/4">
+              <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-12 bg-gray-200 rounded-lg"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Resources Main Content Skeleton */}
+            <div className="w-3/4">
+              <div className="bg-white rounded-2xl shadow-lg p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
+                    <div className="h-5 bg-gray-200 rounded w-32"></div>
+                  </div>
+                  <div className="w-32 h-10 bg-gray-200 rounded-lg"></div>
+                </div>
+
+                {/* Resources Grid Skeleton - 2 columns on desktop */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Layout Skeleton */}
+          <div className="block lg:hidden">
+            {/* Mobile Subject Selection Skeleton */}
+            <div className="mb-6">
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                <div className="flex overflow-x-auto pb-4 space-x-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="h-12 bg-gray-200 rounded-xl w-32 flex-shrink-0"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Resources Skeleton */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="mb-6">
+                <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
+                <div className="h-5 bg-gray-200 rounded w-32"></div>
+              </div>
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-40 bg-gray-200 rounded-xl"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !data) {
+    return (
+      <div className="min-h-screen py-12 md:py-16 flex items-center justify-center" style={{ backgroundColor: colors.background }}>
+        <div className="text-center max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.998-.833-2.732 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold mb-2" style={{ color: colors.textPrimary }}>Error Loading Resources</h3>
+          <p className="mb-4" style={{ color: colors.textSecondary }}>{error || 'Failed to load resources'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 rounded-lg font-medium transition-colors"
+            style={{ 
+              backgroundColor: colors.primaryBlue,
+              color: 'white'
+            }}
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen py-8 md:py-12" style={{ backgroundColor: colors.background }}>
+    <div className="min-h-screen py-8 md:py-12" suppressHydrationWarning style={{ backgroundColor: colors.background }}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
+        {/* Header Section - Always visible */}
         <div className="text-center mb-8 md:mb-12">
           <h1 
             className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
@@ -277,7 +360,7 @@ export default function StudentResources() {
                   fontSize: '16px',
                 }}
               >
-                {classes.map((className) => (
+                {data.classes.map((className) => (
                   <option key={className} value={className}>
                     {className}
                   </option>
@@ -513,7 +596,7 @@ export default function StudentResources() {
                 </div>
               </div>
 
-              {/* Resources Grid */}
+              {/* Resources Grid - 2 columns on desktop */}
               {getResources().length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {getResources().map((resource) => (

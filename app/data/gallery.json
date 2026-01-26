@@ -1,0 +1,186 @@
+{
+  "academicYear": "2024-2025",
+  "lastUpdated": "2024-12-15",
+  "images": [
+    {
+      "id": 1,
+      "src": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["campus-life"],
+      "alt": "School campus aerial view"
+    },
+    {
+      "id": 2,
+      "src": "https://images.unsplash.com/photo-1562774053-701939374585?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["campus-life", "academics"],
+      "alt": "Students walking on campus"
+    },
+    {
+      "id": 3,
+      "src": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["campus-life"],
+      "alt": "Modern school building"
+    },
+    {
+      "id": 4,
+      "src": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["campus-life"],
+      "alt": "Campus courtyard"
+    },
+    {
+      "id": 5,
+      "src": "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["campus-life"],
+      "alt": "School library interior"
+    },
+    {
+      "id": 6,
+      "src": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["campus-life", "academics"],
+      "alt": "Student cafeteria"
+    },
+    {
+      "id": 7,
+      "src": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["events"],
+      "alt": "Graduation ceremony"
+    },
+    {
+      "id": 8,
+      "src": "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["events", "cultural"],
+      "alt": "School festival"
+    },
+    {
+      "id": 9,
+      "src": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["events"],
+      "alt": "Science fair exhibition"
+    },
+    {
+      "id": 10,
+      "src": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["events"],
+      "alt": "School assembly"
+    },
+    {
+      "id": 11,
+      "src": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["events"],
+      "alt": "Award ceremony"
+    },
+    {
+      "id": 12,
+      "src": "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["events"],
+      "alt": "Parent-teacher meeting"
+    },
+    {
+      "id": 13,
+      "src": "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["sports"],
+      "alt": "Basketball tournament"
+    },
+    {
+      "id": 14,
+      "src": "https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["sports"],
+      "alt": "Football practice"
+    },
+    {
+      "id": 15,
+      "src": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["sports"],
+      "alt": "Swimming competition"
+    },
+    {
+      "id": 16,
+      "src": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["sports"],
+      "alt": "Track and field event"
+    },
+    {
+      "id": 17,
+      "src": "https://images.unsplash.com/photo-1562778612-e1e0cda9915c?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["sports"],
+      "alt": "Volleyball match"
+    },
+    {
+      "id": 18,
+      "src": "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["sports"],
+      "alt": "Cricket practice"
+    },
+    {
+      "id": 19,
+      "src": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["academics"],
+      "alt": "Chemistry lab experiment"
+    },
+    {
+      "id": 20,
+      "src": "https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["academics"],
+      "alt": "Library study session"
+    },
+    {
+      "id": 21,
+      "src": "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["academics"],
+      "alt": "Computer programming class"
+    },
+    {
+      "id": 22,
+      "src": "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["academics"],
+      "alt": "Physics demonstration"
+    },
+    {
+      "id": 23,
+      "src": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["academics"],
+      "alt": "Art class workshop"
+    },
+    {
+      "id": 24,
+      "src": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["academics"],
+      "alt": "Math classroom"
+    },
+    {
+      "id": 25,
+      "src": "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["cultural"],
+      "alt": "Music concert"
+    },
+    {
+      "id": 26,
+      "src": "https://images.unsplash.com/photo-1504384764586-bb4cdc1707b0?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["cultural"],
+      "alt": "Dance performance"
+    },
+    {
+      "id": 27,
+      "src": "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["cultural"],
+      "alt": "Drama rehearsal"
+    },
+    {
+      "id": 28,
+      "src": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["cultural"],
+      "alt": "Art exhibition"
+    },
+    {
+      "id": 29,
+      "src": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["cultural"],
+      "alt": "Poetry reading"
+    },
+    {
+      "id": 30,
+      "src": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&h=600&fit=crop&auto=format&q=80",
+      "tags": ["cultural"],
+      "alt": "Cultural festival"
+    }
+  ]
+}

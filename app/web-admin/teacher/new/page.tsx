@@ -10,13 +10,14 @@ interface TeacherData {
   subject: string;
   classLevels: string[];
   image: string;
-  imageFile: File | null;
   education: string[];
   experience: string;
   teachingExperience: string[];
   bio: string;
   achievements: string[];
   teachingPhilosophy: string;
+  officeHours: string;
+  roomNumber: string;
   email: string;
 }
 
@@ -28,20 +29,20 @@ interface Notification {
 
 const AddTeacherPage = () => {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const initialTeacherData: TeacherData = {
     name: '',
     subject: '',
     classLevels: [],
     image: '',
-    imageFile: null,
     education: [''],
     experience: '',
     teachingExperience: [''],
     bio: '',
     achievements: [''],
     teachingPhilosophy: '',
+    officeHours: '',
+    roomNumber: '',
     email: ''
   };
 
@@ -49,7 +50,6 @@ const AddTeacherPage = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>([]);
   const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: '' });
-  const [imagePreview, setImagePreview] = useState<string>('');
   
   const classLevelOptions = [
     'Primary Teacher (1-5)',
@@ -73,56 +73,6 @@ const AddTeacherPage = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  // Handle file input change
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      showNotification('Please select a valid image file (JPEG, PNG, GIF, WebP)', 'error');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showNotification('Image size should be less than 5MB', 'error');
-      return;
-    }
-
-    setTeacherData(prev => ({
-      ...prev,
-      imageFile: file,
-      image: URL.createObjectURL(file) // For preview
-    }));
-
-    // Create preview URL
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Trigger file input click
-  const handleImageUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Remove selected image
-  const handleRemoveImage = () => {
-    setTeacherData(prev => ({
-      ...prev,
-      imageFile: null,
-      image: ''
-    }));
-    setImagePreview('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   // Handle array input change
@@ -196,10 +146,18 @@ const AddTeacherPage = () => {
       showNotification('Please enter teaching philosophy', 'error');
       return false;
     }
+    
+    // Validate education array has at least one non-empty entry
+    const validEducation = teacherData.education.filter(edu => edu.trim() !== '');
+    if (validEducation.length === 0) {
+      showNotification('Please enter at least one education background', 'error');
+      return false;
+    }
+    
     return true;
   };
 
-  // Handle form submission
+  // Handle form submission to API
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -207,37 +165,52 @@ const AddTeacherPage = () => {
     
     setIsSubmitting(true);
 
-    // Prepare data for submission
+    // Prepare data for API submission
     const submissionData = {
       ...teacherData,
       classLevels: selectedClassLevels,
-      id: Date.now() // Generate a temporary ID
+      education: teacherData.education.filter(edu => edu.trim() !== ''),
+      teachingExperience: teacherData.teachingExperience.filter(exp => exp.trim() !== ''),
+      achievements: teacherData.achievements.filter(ach => ach.trim() !== ''),
+      // Default values if not provided
+      officeHours: teacherData.officeHours || 'Monday-Friday: 9:00 AM - 4:00 PM',
+      roomNumber: teacherData.roomNumber || 'To be assigned',
+      image: teacherData.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
     };
 
-    // In a real app, you would upload the image file here
-    // and get back a URL to store in your database
-
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       console.log('Submitting teacher data:', submissionData);
       
+      // Call the API
+      const response = await fetch('/api/admin/teacher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to add teacher');
+      }
+
       showNotification('Teacher added successfully! Redirecting...', 'success');
       
       // Reset form
       setTimeout(() => {
         setTeacherData(initialTeacherData);
         setSelectedClassLevels([]);
-        setImagePreview('');
         
         // Redirect to teachers list
         router.push('/web-admin/teachers');
+        router.refresh(); // Refresh to show new data
       }, 1500);
       
     } catch (error) {
       console.error('Error adding teacher:', error);
-      showNotification('Failed to add teacher. Please try again.', 'error');
+      showNotification(error instanceof Error ? error.message : 'Failed to add teacher. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -327,22 +300,15 @@ const AddTeacherPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    name="name"
-                    value={teacherData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Enter teacher's full name"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="name"
+                  value={teacherData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="Enter teacher's full name"
+                />
               </div>
               
               {/* Subject */}
@@ -350,22 +316,15 @@ const AddTeacherPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Subject Area <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    name="subject"
-                    value={teacherData.subject}
-                    onChange={handleInputChange}
-                    required
-                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="e.g., Mathematics & Physics"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="subject"
+                  value={teacherData.subject}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., Mathematics & Physics"
+                />
               </div>
               
               {/* Email */}
@@ -373,23 +332,15 @@ const AddTeacherPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={teacherData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="teacher@school.edu"
-                  />
-                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={teacherData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="teacher@school.edu"
+                />
               </div>
               
               {/* Experience */}
@@ -397,103 +348,80 @@ const AddTeacherPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Years of Experience <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    name="experience"
-                    value={teacherData.experience}
-                    onChange={handleInputChange}
-                    required
-                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="e.g., 15 years teaching experience"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="experience"
+                  value={teacherData.experience}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., 15 years teaching experience"
+                />
               </div>
               
-              {/* Profile Image Upload */}
+              {/* Office Hours */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Office Hours
+                </label>
+                <input
+                  type="text"
+                  name="officeHours"
+                  value={teacherData.officeHours}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., Monday-Friday: 2:00 PM - 4:00 PM"
+                />
+              </div>
+              
+              {/* Room Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Room Number
+                </label>
+                <input
+                  type="text"
+                  name="roomNumber"
+                  value={teacherData.roomNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., Room 302, Science Building"
+                />
+              </div>
+              
+              {/* Profile Image URL */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profile Photo
+                  Profile Photo URL
                 </label>
-                <div className="mt-1 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                  {/* Image Preview */}
-                  <div className="relative">
-                    <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
-                      {imagePreview || teacherData.image ? (
-                        <img 
-                          src={imagePreview || teacherData.image} 
-                          alt="Preview" 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-center p-4">
-                          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <p className="mt-1 text-xs text-gray-500">No image selected</p>
-                        </div>
-                      )}
-                    </div>
-                    {(imagePreview || teacherData.image) && (
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Upload Controls */}
-                  <div className="flex-1">
-                    <div className="space-y-4">
-                      <div>
-                        <button
-                          type="button"
-                          onClick={handleImageUploadClick}
-                          className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                        >
-                          <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                          </svg>
-                          Upload Photo
-                        </button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="hidden"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">
-                          JPEG, PNG, GIF or WebP. Max 5MB.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Or enter image URL
-                        </label>
-                        <input
-                          type="url"
-                          name="image"
-                          value={teacherData.image}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="https://example.com/image.jpg"
-                        />
-                      </div>
+                <input
+                  type="url"
+                  name="image"
+                  value={teacherData.image}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="https://images.unsplash.com/photo-..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave blank for default image. Use Unsplash or other image hosting service.
+                </p>
+                
+                {/* Image Preview */}
+                {teacherData.image && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Image Preview:</label>
+                    <div className="w-32 h-32 rounded-lg border border-gray-300 overflow-hidden">
+                      <img 
+                        src={teacherData.image} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+                        }}
+                      />
                     </div>
                   </div>
-                </div>
+                )}
               </div>
               
               {/* Class Levels */}
@@ -533,7 +461,7 @@ const AddTeacherPage = () => {
                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                   </svg>
                 </span>
-                Education Background
+                Education Background <span className="text-red-500">*</span>
               </h2>
               <button
                 type="button"
@@ -551,15 +479,13 @@ const AddTeacherPage = () => {
               {teacherData.education.map((edu, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500">{index + 1}.</span>
-                    </div>
                     <input
                       type="text"
                       value={edu}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayInputChange('education', index, e.target.value)}
-                      className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                       placeholder="e.g., PhD in Mathematics, Stanford University"
+                      required={index === 0}
                     />
                   </div>
                   {teacherData.education.length > 1 && (
@@ -607,14 +533,11 @@ const AddTeacherPage = () => {
               {teacherData.teachingExperience.map((exp, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500">{index + 1}.</span>
-                    </div>
                     <input
                       type="text"
                       value={exp}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayInputChange('teachingExperience', index, e.target.value)}
-                      className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                       placeholder="e.g., Head of Mathematics Department (2015-Present)"
                     />
                   </div>
@@ -662,14 +585,11 @@ const AddTeacherPage = () => {
               {teacherData.achievements.map((achievement, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500">{index + 1}.</span>
-                    </div>
                     <input
                       type="text"
                       value={achievement}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayInputChange('achievements', index, e.target.value)}
-                      className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
                       placeholder="e.g., National Mathematics Teacher of the Year 2022"
                     />
                   </div>
@@ -746,88 +666,6 @@ const AddTeacherPage = () => {
             </div>
           </div>
 
-          {/* Preview Section */}
-          <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <svg className="w-5 h-5 text-gray-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-              </svg>
-              Quick Preview
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-700">Basic Info:</h4>
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
-                      {imagePreview || teacherData.image ? (
-                        <img 
-                          src={imagePreview || teacherData.image} 
-                          alt="Preview" 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{teacherData.name || "Not provided"}</p>
-                      <p className="text-sm text-gray-600">{teacherData.subject || "Not provided"}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex">
-                      <span className="text-sm font-medium text-gray-700 w-24">Email:</span>
-                      <span className="text-sm text-gray-600">{teacherData.email || "Not provided"}</span>
-                    </div>
-                    <div className="flex">
-                      <span className="text-sm font-medium text-gray-700 w-24">Experience:</span>
-                      <span className="text-sm text-gray-600">{teacherData.experience || "Not provided"}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-700">Details:</h4>
-                <div className="bg-white rounded-lg p-4 border border-gray-200 space-y-3">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Teacher Levels:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedClassLevels.length > 0 ? (
-                        selectedClassLevels.map((level) => (
-                          <span key={level} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {level}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-400">None selected</span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Education:</span>
-                    <p className="text-sm text-gray-600">{teacherData.education.length} item(s)</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Experience:</span>
-                    <p className="text-sm text-gray-600">{teacherData.teachingExperience.length} item(s)</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Achievements:</span>
-                    <p className="text-sm text-gray-600">{teacherData.achievements.length} item(s)</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Form Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t border-gray-200">
             <button
@@ -836,10 +674,6 @@ const AddTeacherPage = () => {
                 if (window.confirm('Are you sure you want to clear all fields?')) {
                   setTeacherData(initialTeacherData);
                   setSelectedClassLevels([]);
-                  setImagePreview('');
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                  }
                   showNotification('Form cleared successfully', 'success');
                 }
               }}

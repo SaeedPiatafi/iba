@@ -1,7 +1,6 @@
-// app/gallery/page.tsx
 'use client';
 
-import { useState, useMemo, Suspense, lazy } from 'react';
+import { useState, useMemo, Suspense, lazy, useEffect, useRef } from 'react';
 
 // Define types
 interface ImageType {
@@ -17,23 +16,50 @@ interface FilterType {
   color: string;
 }
 
-// Lazy load the image component with proper TypeScript typing
+interface GalleryData {
+  academicYear: string;
+  lastUpdated: string;
+  images: ImageType[];
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: GalleryData;
+  count: number;
+  total: number;
+  tagCounts: { [key: string]: number };
+  timestamp: string;
+}
+
+// Skeleton Loading Components
+function GalleryCardSkeleton() {
+  return (
+    <div className="relative aspect-square overflow-hidden rounded-lg md:rounded-xl bg-gray-200">
+      <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 animate-pulse"></div>
+    </div>
+  );
+}
+
+// Lazy load the image component
 const LazyImage = lazy(() => 
   Promise.resolve({
-    default: ({ src, alt, className, ...props }: { 
+    default: ({ src, alt, className, onClick, ...props }: { 
       src: string; 
       alt: string; 
       className?: string; 
+      onClick?: () => void;
       loading?: 'lazy' | 'eager';
       decoding?: 'async' | 'auto' | 'sync';
       width?: string | number;
       height?: string | number;
       onError?: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
+      onLoad?: () => void;
     }) => (
       <img
         src={src}
         alt={alt}
         className={className}
+        onClick={onClick}
         loading="lazy"
         decoding="async"
         {...props}
@@ -51,8 +77,20 @@ const ImageFallback = () => (
 
 export default function GalleryPage() {
   const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [visibleCount, setVisibleCount] = useState<number>(12); // Initially show 12 images
+  const [visibleCount, setVisibleCount] = useState<number>(12);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [galleryData, setGalleryData] = useState<GalleryData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Popup carousel state
+  const [isPopupOpen, setIsPopupOpen] = useState<boolean>(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
+  
+  // Refs for smooth transitions
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const popupImageRef = useRef<HTMLImageElement>(null);
   
   // Gallery categories as requested
   const filters = useMemo<FilterType[]>(() => [
@@ -63,72 +101,79 @@ export default function GalleryPage() {
     { id: 'academics', name: 'Academics', color: 'bg-indigo-600' },
     { id: 'cultural', name: 'Cultural', color: 'bg-pink-600' },
   ], []);
-  
-  // 30 Optimized School Images (using smaller Unsplash sizes for faster loading)
-  const galleryImages = useMemo<ImageType[]>(() => [
-    // Campus Life (6 images)
-    { id: 1, src: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life'], alt: 'School campus aerial view' },
-    { id: 2, src: 'https://images.unsplash.com/photo-1562774053-701939374585?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life', 'academics'], alt: 'Students walking on campus' },
-    { id: 3, src: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life'], alt: 'Modern school building' },
-    { id: 4, src: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life'], alt: 'Campus courtyard' },
-    { id: 5, src: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life'], alt: 'School library interior' },
-    { id: 6, src: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=500&h=500&fit=crop&auto=format&q=80', tags: ['campus-life', 'academics'], alt: 'Student cafeteria' },
-    
-    // Events (6 images)
-    { id: 7, src: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&h=500&fit=crop&auto=format&q=80', tags: ['events'], alt: 'Graduation ceremony' },
-    { id: 8, src: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=500&h=500&fit=crop&auto=format&q=80', tags: ['events', 'cultural'], alt: 'School festival' },
-    { id: 9, src: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&h=500&fit=crop&auto=format&q=80', tags: ['events'], alt: 'Science fair exhibition' },
-    { id: 10, src: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&h=500&fit=crop&auto=format&q=80', tags: ['events'], alt: 'School assembly' },
-    { id: 11, src: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&h=500&fit=crop&auto=format&q=80', tags: ['events'], alt: 'Award ceremony' },
-    { id: 12, src: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=500&h=500&fit=crop&auto=format&q=80', tags: ['events'], alt: 'Parent-teacher meeting' },
-    
-    // Sports (6 images)
-    { id: 13, src: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=500&h=500&fit=crop&auto=format&q=80', tags: ['sports'], alt: 'Basketball tournament' },
-    { id: 14, src: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=500&h=500&fit=crop&auto=format&q=80', tags: ['sports'], alt: 'Football practice' },
-    { id: 15, src: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&h=500&fit=crop&auto=format&q=80', tags: ['sports'], alt: 'Swimming competition' },
-    { id: 16, src: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&h=500&fit=crop&auto=format&q=80', tags: ['sports'], alt: 'Track and field event' },
-    { id: 17, src: 'https://images.unsplash.com/photo-1562778612-e1e0cda9915c?w=500&h=500&fit=crop&auto=format&q=80', tags: ['sports'], alt: 'Volleyball match' },
-    { id: 18, src: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&h=500&fit=crop&auto=format&q=80', tags: ['sports'], alt: 'Cricket practice' },
-    
-    // Academics (6 images)
-    { id: 19, src: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&h=500&fit=crop&auto=format&q=80', tags: ['academics'], alt: 'Chemistry lab experiment' },
-    { id: 20, src: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=500&h=500&fit=crop&auto=format&q=80', tags: ['academics'], alt: 'Library study session' },
-    { id: 21, src: 'https://images.unsplash.com/photo-1561154464-82e9adf32764?w=500&h=500&fit=crop&auto=format&q=80', tags: ['academics'], alt: 'Computer programming class' },
-    { id: 22, src: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&h=500&fit=crop&auto=format&q=80', tags: ['academics'], alt: 'Physics demonstration' },
-    { id: 23, src: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=500&h=500&fit=crop&auto=format&q=80', tags: ['academics'], alt: 'Art class workshop' },
-    { id: 24, src: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=500&h=500&fit=crop&auto=format&q=80', tags: ['academics'], alt: 'Math classroom' },
-    
-    // Cultural (6 images)
-    { id: 25, src: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=500&h=500&fit=crop&auto=format&q=80', tags: ['cultural'], alt: 'Music concert' },
-    { id: 26, src: 'https://images.unsplash.com/photo-1504384764586-bb4cdc1707b0?w=500&h=500&fit=crop&auto=format&q=80', tags: ['cultural'], alt: 'Dance performance' },
-    { id: 27, src: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&h=500&fit=crop&auto=format&q=80', tags: ['cultural'], alt: 'Drama rehearsal' },
-    { id: 28, src: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&h=500&fit=crop&auto=format&q=80', tags: ['cultural'], alt: 'Art exhibition' },
-    { id: 29, src: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&h=500&fit=crop&auto=format&q=80', tags: ['cultural'], alt: 'Poetry reading' },
-    { id: 30, src: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=500&h=500&fit=crop&auto=format&q=80', tags: ['cultural'], alt: 'Cultural festival' },
-  ], []);
+
+  // Fetch gallery data from API
+  useEffect(() => {
+    fetchGalleryData();
+  }, []);
+
+  const fetchGalleryData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/gallery');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (!result.success) {
+        throw new Error('Failed to fetch gallery data');
+      }
+      
+      setGalleryData(result.data);
+    } catch (error) {
+      console.error('Error fetching gallery data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load gallery');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter images based on active filter
-  const filteredImages = useMemo(() => 
-    activeFilter === 'all' 
-      ? galleryImages.slice(0, visibleCount) // Only show visible images
-      : galleryImages.filter(image => image.tags.includes(activeFilter)).slice(0, visibleCount),
-    [activeFilter, galleryImages, visibleCount]
-  );
+  const filteredImages = useMemo(() => {
+    if (!galleryData) return [];
+    
+    if (activeFilter === 'all') {
+      return galleryData.images.slice(0, visibleCount);
+    }
+    
+    return galleryData.images
+      .filter(image => image.tags.includes(activeFilter))
+      .slice(0, visibleCount);
+  }, [activeFilter, galleryData, visibleCount]);
+
+  // All filtered images for carousel (not limited by visibleCount)
+  const allFilteredImages = useMemo(() => {
+    if (!galleryData) return [];
+    
+    if (activeFilter === 'all') {
+      return galleryData.images;
+    }
+    
+    return galleryData.images.filter(image => image.tags.includes(activeFilter));
+  }, [activeFilter, galleryData]);
 
   // Check if there are more images to load
-  const totalFiltered = useMemo(() => 
-    activeFilter === 'all' 
-      ? galleryImages.length 
-      : galleryImages.filter(image => image.tags.includes(activeFilter)).length,
-    [activeFilter, galleryImages]
-  );
+  const totalFiltered = useMemo(() => {
+    if (!galleryData) return 0;
+    
+    if (activeFilter === 'all') {
+      return galleryData.images.length;
+    }
+    
+    return galleryData.images.filter(image => image.tags.includes(activeFilter)).length;
+  }, [activeFilter, galleryData]);
 
   const hasMoreImages = visibleCount < totalFiltered;
   
   // Handle filter change
   const handleFilterChange = (filterId: string) => {
     setActiveFilter(filterId);
-    setVisibleCount(12); // Reset to initial count when filter changes
+    setVisibleCount(12);
   };
 
   // Load more images
@@ -155,12 +200,104 @@ export default function GalleryPage() {
     }
   };
 
+  // Handle image load
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
+
+  // Open popup with selected image
+  const openPopup = (index: number) => {
+    setCurrentImageIndex(index);
+    setIsImageLoading(true);
+    setIsPopupOpen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  // Close popup
+  const closePopup = () => {
+    setIsPopupOpen(false);
+    document.body.style.overflow = 'auto';
+  };
+
+  // Navigate to next image in carousel
+  const nextImage = () => {
+    setIsImageLoading(true);
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === allFilteredImages.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  // Navigate to previous image in carousel
+  const prevImage = () => {
+    setIsImageLoading(true);
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? allFilteredImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isPopupOpen) return;
+      
+      if (e.key === 'Escape') {
+        closePopup();
+      } else if (e.key === 'ArrowRight') {
+        nextImage();
+      } else if (e.key === 'ArrowLeft') {
+        prevImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPopupOpen]);
+
+  // Find the index in allFilteredImages for a clicked image
+  const findImageIndex = (imageId: number) => {
+    return allFilteredImages.findIndex(img => img.id === imageId);
+  };
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+          <div className="text-red-600 mb-4">
+            <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={fetchGalleryData}
+              className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      
+      {/* Header - Always visible */}
+      <div className="pt-8 md:pt-12 pb-4 md:pb-6">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 text-center">
+            Gallery
+          </h1>
+          <p className="text-gray-600 text-center mt-4 text-lg md:text-xl max-w-2xl mx-auto">
+            Explore our collection of school memories, events, and activities
+          </p>
+        </div>
+      </div>
+
       {/* Gallery Content */}
-      <main className="container mx-auto px-4 py-8 md:py-12">
+      <main className="container mx-auto px-4 pb-8 md:pb-12">
         {/* Filter Section */}
         <div className="mb-8 md:mb-12">
           <div className="flex flex-wrap justify-center gap-2 md:gap-3">
@@ -173,6 +310,7 @@ export default function GalleryPage() {
                     ? `${filter.color} text-white shadow-md transform scale-105` 
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
                 }`}
+                disabled={loading}
               >
                 {filter.name}
               </button>
@@ -180,23 +318,31 @@ export default function GalleryPage() {
           </div>
           
           {/* Active Filter Info */}
-          <div className="mt-4 text-center">
-            <p className="text-gray-600 text-sm md:text-base">
-              Showing <span className="font-semibold text-blue-600">{filteredImages.length}</span> of{' '}
-              <span className="font-semibold text-gray-800">{totalFiltered}</span> photos
-              {activeFilter !== 'all' && (
-                <> in <span className="font-semibold" style={{
-                  color: `var(--${filters.find(f => f.id === activeFilter)?.color.replace('bg-', '').replace('-600', '-700')})`
-                }}>
-                  {filters.find(f => f.id === activeFilter)?.name}
-                </span></>
-              )}
-            </p>
-          </div>
+          {!loading && galleryData && (
+            <div className="mt-4 text-center">
+              <p className="text-gray-600 text-sm md:text-base">
+                Showing <span className="font-semibold text-blue-600">{filteredImages.length}</span> of{' '}
+                <span className="font-semibold text-gray-800">{totalFiltered}</span> photos
+                {activeFilter !== 'all' && (
+                  <> in <span className="font-semibold" style={{
+                    color: `var(--${filters.find(f => f.id === activeFilter)?.color.replace('bg-', '').replace('-600', '-700')})`
+                  }}>
+                    {filters.find(f => f.id === activeFilter)?.name}
+                  </span></>
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Gallery Grid - Images Only */}
-        {filteredImages.length === 0 ? (
+        {/* Gallery Grid */}
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3 lg:gap-4">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <GalleryCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : filteredImages.length === 0 ? (
           <div className="text-center py-12 md:py-16">
             <div className="text-5xl md:text-6xl mb-4">📷</div>
             <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">No photos found</h3>
@@ -209,21 +355,23 @@ export default function GalleryPage() {
                 <div 
                   key={image.id}
                   className="relative aspect-square overflow-hidden rounded-lg md:rounded-xl bg-gray-200 group cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  onClick={() => openPopup(findImageIndex(image.id))}
                 >
                   <Suspense fallback={<ImageFallback />}>
                     <LazyImage
-                      src={image.src}
+                      src={image.src.replace('w=800', 'w=500')}
                       alt={image.alt}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      loading={index < 6 ? "eager" : "lazy"} // First 6 images eager load
+                      loading={index < 6 ? "eager" : "lazy"}
                       decoding="async"
                       width="500"
                       height="500"
                       onError={handleImageError}
+                      onLoad={handleImageLoad}
                     />
                   </Suspense>
                   
-                  {/* Simple Hover Overlay */}
+                  {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-3">
                     <p className="text-white text-xs font-medium truncate opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                       {image.alt}
@@ -240,6 +388,15 @@ export default function GalleryPage() {
                         {tag.split('-')[0]}
                       </span>
                     ))}
+                  </div>
+
+                  {/* Click indicator */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="bg-black/50 rounded-full p-2">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                      </svg>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -271,46 +428,161 @@ export default function GalleryPage() {
             )}
             
             {/* Image Count */}
-            <div className="mt-6 md:mt-8 pt-4 border-t border-gray-200">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <p className="text-gray-600 text-sm md:text-base">
-                  <span className="font-semibold text-gray-800">{filteredImages.length}</span> of{' '}
-                  <span className="font-semibold text-gray-800">{totalFiltered}</span> images displayed
-                </p>
-                
-                {/* Category Breakdown */}
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {filters.slice(1).map(filter => {
-                    const count = galleryImages.filter(img => img.tags.includes(filter.id)).length;
-                    return count > 0 ? (
-                      <span 
-                        key={filter.id}
-                        className={`text-xs px-3 py-1 rounded-full ${filter.color} text-white`}
-                      >
-                        {filter.name.split(' ')[0]}: {count}
-                      </span>
-                    ) : null;
-                  })}
+            {!loading && galleryData && (
+              <div className="mt-6 md:mt-8 pt-4 border-t border-gray-200">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                  <p className="text-gray-600 text-sm md:text-base">
+                    <span className="font-semibold text-gray-800">{filteredImages.length}</span> of{' '}
+                    <span className="font-semibold text-gray-800">{totalFiltered}</span> images displayed
+                  </p>
+                  
+                  {/* Category Breakdown */}
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {filters.slice(1).map(filter => {
+                      const count = galleryData.images.filter(img => img.tags.includes(filter.id)).length;
+                      return count > 0 ? (
+                        <span 
+                          key={filter.id}
+                          className={`text-xs px-3 py-1 rounded-full ${filter.color} text-white`}
+                        >
+                          {filter.name.split(' ')[0]}: {count}
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </main>
 
-      {/* Simple Footer */}
-      <footer className="bg-gray-800 text-white py-8 text-center mt-12">
-        <div className="container mx-auto px-4">
-          <p className="text-gray-300 text-lg font-medium">School Gallery</p>
-          <p className="text-gray-400 mt-2">Documenting educational journeys since 2024</p>
-          <p className="text-gray-500 text-sm mt-4">Contact: gallery@school.edu • 📞 (123) 456-7890</p>
-          <div className="mt-6 flex justify-center space-x-4">
-            <button className="text-gray-400 hover:text-white transition-colors">Facebook</button>
-            <button className="text-gray-400 hover:text-white transition-colors">Instagram</button>
-            <button className="text-gray-400 hover:text-white transition-colors">Twitter</button>
+      {/* Popup Carousel Modal */}
+      {isPopupOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300"
+          onClick={closePopup}
+        >
+          <div 
+            className="relative w-full h-full max-w-7xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={closePopup}
+              className="absolute top-4 right-4 z-20 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-all duration-300 hover:scale-110"
+              aria-label="Close"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Previous button */}
+            <button
+              onClick={prevImage}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white rounded-full p-4 transition-all duration-300 hover:scale-110"
+              aria-label="Previous image"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Next button */}
+            <button
+              onClick={nextImage}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 text-white rounded-full p-4 transition-all duration-300 hover:scale-110"
+              aria-label="Next image"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {/* Main image container */}
+            <div className="flex flex-col items-center justify-center h-full p-4">
+              <div className="relative w-full h-full max-h-[70vh] flex items-center justify-center">
+                {/* Loading indicator */}
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+                
+                {/* Main image */}
+                <img
+                  ref={popupImageRef}
+                  src={allFilteredImages[currentImageIndex]?.src}
+                  alt={allFilteredImages[currentImageIndex]?.alt}
+                  className={`max-w-full max-h-full object-contain rounded-lg transition-opacity duration-300 ${
+                    isImageLoading ? 'opacity-0' : 'opacity-100'
+                  }`}
+                  onLoad={handleImageLoad}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwMCIgaGVpZ2h0PSI2MDAiIGZpbGw9IiMxRjJGM0YiLz48dGV4dCB4PSI0MDAiIHk9IjMwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSIjODg4QThDIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2UgTm90IEF2YWlsYWJsZTwvdGV4dD48L3N2Zz4=';
+                    setIsImageLoading(false);
+                  }}
+                />
+                
+                {/* Image info overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 rounded-b-lg">
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                      <h3 className="text-white text-xl md:text-2xl font-bold mb-2">
+                        {allFilteredImages[currentImageIndex]?.alt}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {allFilteredImages[currentImageIndex]?.tags.map(tag => (
+                          <span 
+                            key={tag} 
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              filters.find(f => f.id === tag)?.color || 'bg-gray-600'
+                            }`}
+                          >
+                            {filters.find(f => f.id === tag)?.name || tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-white text-lg font-medium">
+                      {currentImageIndex + 1} / {allFilteredImages.length}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Thumbnail navigation */}
+              <div className="mt-8 overflow-x-auto max-w-full">
+                <div className="flex gap-3 px-4 pb-2">
+                  {allFilteredImages.map((image, index) => (
+                    <button
+                      key={image.id}
+                      onClick={() => {
+                        setIsImageLoading(true);
+                        setCurrentImageIndex(index);
+                      }}
+                      className={`flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border-3 transition-all duration-300 ${
+                        index === currentImageIndex 
+                          ? 'border-white scale-110 shadow-lg' 
+                          : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
+                      }`}
+                    >
+                      <img
+                        src={image.src.replace('w=800', 'w=200')}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
+      )}
     </div>
   );
 }

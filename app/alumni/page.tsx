@@ -1,4 +1,3 @@
-// app/alumni/page.tsx
 "use client";
 
 import { useState, useEffect, ReactNode } from 'react';
@@ -73,139 +72,49 @@ interface AlumniType {
   skills: string[];
 }
 
-// Alumni data with updated structure
-const alumniData: AlumniType[] = [
-  {
-    id: 1,
-    name: "Alexandra Rodriguez",
-    graduationYear: "2018",
-    profession: "Senior Software Engineer",
-    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Specializes in machine learning and cloud computing. Passionate about creating scalable solutions and mentoring junior developers.",
-    achievements: ["Published 3 research papers in AI", "Open source contributor", "Speaker at TechCon 2023", "Google Developer Expert"],
-    education: ["B.S. Computer Science, Class of 2018", "M.S. Computer Science, Stanford University"],
-    location: "San Francisco, CA",
-    email: "alexandra@example.com",
-    skills: ["Machine Learning", "Cloud Computing", "Python", "TensorFlow"]
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    graduationYear: "2019",
-    profession: "English Professor",
-    image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Dedicated educator with a passion for 19th-century literature. Currently teaching at a prestigious university and conducting research on Victorian novels.",
-    achievements: ["Published author of 2 books", "National Teaching Excellence Award 2022", "Editor of Literary Review Journal"],
-    education: ["B.A. English Literature, Class of 2019", "M.A. English, Cambridge University", "PhD in Literature, Oxford University"],
-    location: "Boston, MA",
-    email: "sarah.johnson@university.edu",
-    skills: ["Literary Analysis", "Academic Writing", "Curriculum Development", "Research Methodology"]
-  },
-  {
-    id: 3,
-    name: "Michael Chen",
-    graduationYear: "2020",
-    profession: "Software Developer",
-    image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Full-stack developer specializing in web applications and mobile development. Enjoys solving complex problems and building user-friendly interfaces.",
-    achievements: ["Built award-winning mobile app", "Contributor to major open-source projects", "Tech innovation award winner"],
-    education: ["B.S. Software Engineering, Class of 2020", "Certified Full-Stack Developer"],
-    location: "New York, NY",
-    email: "michael.chen@example.com",
-    skills: ["JavaScript", "React", "Node.js", "Mobile Development"]
-  },
-  {
-    id: 4,
-    name: "Jessica Williams",
-    graduationYear: "2017",
-    profession: "English Professor",
-    image: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Focuses on post-colonial literature and creative writing. Leads writing workshops and mentors aspiring authors.",
-    achievements: ["Poetry collection published", "Creative Writing Award 2021", "Featured in literary magazines"],
-    education: ["B.A. English Literature, Class of 2017", "MFA Creative Writing, Iowa Writers' Workshop"],
-    location: "Chicago, IL",
-    email: "jessica.williams@college.edu",
-    skills: ["Creative Writing", "Poetry", "Literary Criticism", "Workshop Facilitation"]
-  },
-  {
-    id: 5,
-    name: "David Park",
-    graduationYear: "2019",
-    profession: "Software Developer",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Backend developer with expertise in distributed systems and database architecture. Enjoys optimizing performance and scalability.",
-    achievements: ["Database optimization expert", "System architecture design award", "Conference speaker"],
-    education: ["B.S. Computer Science, Class of 2019", "Advanced Database Management Certification"],
-    location: "Seattle, WA",
-    email: "david.park@example.com",
-    skills: ["Database Design", "System Architecture", "Python", "DevOps"]
-  },
-  {
-    id: 6,
-    name: "Robert Kim",
-    graduationYear: "2016",
-    profession: "Software Developer",
-    image: "https://images.unsplash.com/photo-1545167622-3a6ac756afa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Mobile app developer with expertise in iOS and Android platforms. Has published multiple successful apps with millions of downloads.",
-    achievements: ["App Store featured developer", "Mobile innovation award", "Published technical articles"],
-    education: ["B.S. Software Engineering, Class of 2016", "Mobile Development Certification"],
-    location: "Austin, TX",
-    email: "robert.kim@example.com",
-    skills: ["iOS Development", "Android Development", "Swift", "Kotlin"]
-  },
-  {
-    id: 7,
-    name: "Amanda Thompson",
-    graduationYear: "2018",
-    profession: "English Professor",
-    image: "https://images.unsplash.com/photo-1551836026-d5c2c5af78e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Specializes in Shakespearean literature and drama. Director of university theater productions and literary festivals.",
-    achievements: ["Shakespeare research grant recipient", "Theater production awards", "Academic journal editor"],
-    education: ["B.A. English Literature, Class of 2018", "PhD in Renaissance Literature, University of London"],
-    location: "London, UK",
-    email: "amanda.thompson@university.edu",
-    skills: ["Shakespeare Studies", "Drama", "Theater Production", "Academic Research"]
-  },
-  {
-    id: 8,
-    name: "Daniel Garcia",
-    graduationYear: "2021",
-    profession: "Software Developer",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Frontend developer passionate about creating beautiful, accessible user interfaces. Focuses on user experience and modern web technologies.",
-    achievements: ["UI/UX design awards", "Accessibility compliance expert", "Open-source UI library maintainer"],
-    education: ["B.S. Computer Science, Class of 2021", "UI/UX Design Certification"],
-    location: "Portland, OR",
-    email: "daniel.garcia@example.com",
-    skills: ["React", "TypeScript", "UI/UX Design", "Accessibility"]
-  },
-  {
-    id: 9,
-    name: "Olivia Martinez",
-    graduationYear: "2019",
-    profession: "English Professor",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "Focuses on contemporary American literature and cultural studies. Editor of academic publications and mentor to graduate students.",
-    achievements: ["Cultural studies research award", "Published critical essays", "Conference organizer"],
-    education: ["B.A. English Literature, Class of 2019", "PhD in American Literature, Columbia University"],
-    location: "Philadelphia, PA",
-    email: "olivia.martinez@college.edu",
-    skills: ["Cultural Studies", "Critical Theory", "Academic Editing", "Mentoring"]
-  },
-  {
-    id: 10,
-    name: "Christopher Lee",
-    graduationYear: "2020",
-    profession: "Software Developer",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    bio: "DevOps engineer specializing in cloud infrastructure and CI/CD pipelines. Enjoys automating processes and improving development workflows.",
-    achievements: ["Cloud architecture certifications", "Infrastructure as code expert", "Technical blog writer"],
-    education: ["B.S. Software Engineering, Class of 2020", "AWS Solutions Architect Certification"],
-    location: "Denver, CO",
-    email: "chris.lee@example.com",
-    skills: ["DevOps", "Cloud Computing", "CI/CD", "Infrastructure"]
-  }
-];
+// API Response Type
+interface ApiResponse {
+  success: boolean;
+  data: AlumniType[];
+  count: number;
+  total: number;
+  timestamp: string;
+  processingTime: number;
+  cacheStatus: string;
+  requestId: string;
+  error?: string;
+}
+
+// Error Display Component
+function ErrorDisplay({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+        <div className="text-red-600 mb-4">
+          <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
+        <p className="text-gray-600 mb-6">{message}</p>
+        <div className="space-y-3">
+          <button
+            onClick={onRetry}
+            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 transition-all duration-300"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Props for AlumniCard component
 interface AlumniCardProps {
@@ -213,7 +122,7 @@ interface AlumniCardProps {
   onViewProfile: (id: number) => void;
 }
 
-// Alumni Card Component (Simplified)
+// Alumni Card Component
 function AlumniCard({ alumni, onViewProfile }: AlumniCardProps) {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement;
@@ -247,7 +156,10 @@ function AlumniCard({ alumni, onViewProfile }: AlumniCardProps) {
       {/* Alumni Info */}
       <div className="p-4 flex flex-col flex-grow">
         <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">{alumni.name}</h3>
-        <p className="text-blue-600 font-semibold mb-4 line-clamp-1">{alumni.profession}</p>
+        <div className="mb-3">
+          <p className="text-blue-600 font-semibold line-clamp-1">{alumni.profession}</p>
+          <p className="text-gray-600 text-sm mt-1">Class of {alumni.graduationYear}</p>
+        </div>
         
         {/* View Profile Button */}
         <div className="mt-auto">
@@ -263,15 +175,30 @@ function AlumniCard({ alumni, onViewProfile }: AlumniCardProps) {
   );
 }
 
+// Alumni Card Skeleton Component
+function AlumniCardSkeleton() {
+  return (
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 h-full flex flex-col">
+      <div className="h-48 bg-gray-300 animate-pulse"></div>
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="h-6 bg-gray-300 rounded mb-2 animate-pulse"></div>
+        <div className="h-4 bg-gray-300 rounded mb-3 animate-pulse w-3/4"></div>
+        <div className="mt-auto">
+          <div className="h-10 bg-gray-300 rounded animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Props for AlumniProfile component
 interface AlumniProfileProps {
   alumni: AlumniType;
   onBack: () => void;
 }
 
-// Detailed Alumni Profile Component (Responsive)
+// Detailed Alumni Profile Component
 function AlumniProfile({ alumni, onBack }: AlumniProfileProps) {
-  // Scroll to top when profile opens
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -289,24 +216,24 @@ function AlumniProfile({ alumni, onBack }: AlumniProfileProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 md:py-8 px-3 sm:px-4">
+    <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Back Button */}
         <button
           onClick={onBack}
-          className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4 md:mb-6 font-medium text-sm md:text-base transition-colors"
+          className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6 md:mb-8 font-medium text-sm md:text-base transition-colors"
         >
-          <BackIcon className="w-4 h-4 md:w-5 md:h-5 mr-1 md:mr-2" />
+          <BackIcon />
           Back to All Alumni
         </button>
         
-        {/* Alumni Profile Card - Responsive */}
-        <div className="bg-white rounded-lg md:rounded-xl lg:rounded-2xl shadow-lg md:shadow-xl overflow-hidden border border-gray-200">
-          {/* Profile Header - Responsive */}
-          <div className="p-4 sm:p-5 md:p-6 lg:p-8 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-teal-50">
-            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 lg:gap-8">
-              {/* Alumni Image - Responsive */}
-              <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-lg mx-auto md:mx-0">
+        {/* Alumni Profile Card */}
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+          {/* Profile Header */}
+          <div className="p-6 md:p-8 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-teal-50">
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              {/* Alumni Image */}
+              <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-lg mx-auto md:mx-0">
                 <img 
                   src={alumni.image}
                   alt={alumni.name}
@@ -315,72 +242,72 @@ function AlumniProfile({ alumni, onBack }: AlumniProfileProps) {
                 />
               </div>
               
-              {/* Basic Info - Responsive */}
+              {/* Basic Info */}
               <div className="flex-1 text-center md:text-left">
-                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">{alumni.name}</h1>
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 mb-3 md:mb-4">
-                  <span className="bg-blue-100 text-blue-800 px-3 py-1 sm:px-4 sm:py-2 rounded-full font-semibold text-xs sm:text-sm md:text-base">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{alumni.name}</h1>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
+                  <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-semibold text-sm md:text-base">
                     {alumni.profession}
                   </span>
-                  <span className="bg-teal-100 text-teal-800 px-3 py-1 sm:px-4 sm:py-2 rounded-full font-semibold text-xs sm:text-sm md:text-base">
+                  <span className="bg-teal-100 text-teal-800 px-4 py-2 rounded-full font-semibold text-sm md:text-base">
                     Class of {alumni.graduationYear}
                   </span>
                 </div>
-                <div className="space-y-1 sm:space-y-2">
+                <div className="space-y-2">
                   <div className="flex items-center justify-center md:justify-start gap-2">
-                    <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                       <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                     </svg>
-                    <span className="text-gray-800 text-sm sm:text-base break-all">{alumni.email}</span>
+                    <span className="text-gray-800">{alumni.email}</span>
                   </div>
                   <div className="flex items-center justify-center md:justify-start gap-2">
-                    <LocationIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
-                    <span className="text-gray-800 text-sm sm:text-base">{alumni.location}</span>
+                    <LocationIcon className="w-5 h-5 text-gray-600" />
+                    <span className="text-gray-800">{alumni.location}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           
-          {/* Details Section - Responsive */}
-          <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 lg:gap-8">
+          {/* Details Section */}
+          <div className="p-6 md:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
               {/* Left Column */}
-              <div className="lg:col-span-2 space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-8">
+              <div className="lg:col-span-2 space-y-6 md:space-y-8">
                 {/* Bio Section */}
                 <section>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 lg:mb-6 flex items-center gap-2 md:gap-3">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
                     <div className="text-blue-600">
-                      <UserIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <UserIcon />
                     </div>
                     Professional Bio
                   </h2>
-                  <div className="bg-gray-50 p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg md:rounded-xl border border-gray-200">
-                    <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">{alumni.bio}</p>
+                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
+                    <p className="text-gray-800 text-base md:text-lg leading-relaxed">{alumni.bio}</p>
                   </div>
                 </section>
                 
                 {/* Education Section */}
                 <section>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 lg:mb-6 flex items-center gap-2 md:gap-3">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
                     <div className="text-teal-600">
-                      <GraduationCapIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <GraduationCapIcon />
                     </div>
                     Education Background
                   </h2>
-                  <div className="bg-gray-50 p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg md:rounded-xl border border-gray-200">
-                    <div className="space-y-3 sm:space-y-4">
+                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
+                    <div className="space-y-4">
                       {alumni.education.map((edu, index) => (
-                        <div key={index} className="flex items-start gap-3 sm:gap-4">
-                          <div className={`${index === 0 ? 'bg-teal-600' : 'bg-blue-600'} text-white p-2 sm:p-3 rounded-full`}>
-                            <GraduationCapIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <div key={index} className="flex items-start gap-4">
+                          <div className={`${index === 0 ? 'bg-teal-600' : 'bg-blue-600'} text-white p-3 rounded-full`}>
+                            <GraduationCapIcon />
                           </div>
                           <div>
-                            <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
                               {index === 0 ? 'Primary Degree' : 'Additional Education'}
                             </h3>
-                            <p className="text-gray-800 text-sm sm:text-base">{edu}</p>
+                            <p className="text-gray-800">{edu}</p>
                           </div>
                         </div>
                       ))}
@@ -390,18 +317,18 @@ function AlumniProfile({ alumni, onBack }: AlumniProfileProps) {
                 
                 {/* Skills Section */}
                 <section>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 lg:mb-6 flex items-center gap-2 md:gap-3">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
                     <div className="text-purple-600">
-                      <BriefcaseIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <BriefcaseIcon />
                     </div>
                     Skills & Expertise
                   </h2>
-                  <div className="bg-gray-50 p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg md:rounded-xl border border-gray-200">
+                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
                     <div className="flex flex-wrap gap-2">
                       {alumni.skills.map((skill, index) => (
                         <span 
                           key={index} 
-                          className="bg-purple-100 text-purple-800 px-3 py-1 sm:px-4 sm:py-2 rounded-full font-medium text-xs sm:text-sm"
+                          className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-medium text-sm"
                         >
                           {skill}
                         </span>
@@ -412,48 +339,25 @@ function AlumniProfile({ alumni, onBack }: AlumniProfileProps) {
               </div>
               
               {/* Right Column */}
-              <div className="space-y-4 sm:space-y-5 md:space-y-6 lg:space-y-8">
+              <div className="space-y-6 md:space-y-8">
                 {/* Achievements Section */}
                 <section>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 lg:mb-6 flex items-center gap-2 md:gap-3">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
                     <div className="text-yellow-600">
-                      <AwardIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <AwardIcon />
                     </div>
                     Awards & Achievements
                   </h2>
-                  <div className="bg-gray-50 p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg md:rounded-xl border border-gray-200">
-                    <div className="space-y-2 sm:space-y-3">
+                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
+                    <div className="space-y-3">
                       {alumni.achievements.map((achievement, index) => (
-                        <div key={index} className="flex items-center gap-2 sm:gap-3 bg-white p-2 sm:p-3 rounded-lg border border-gray-200">
-                          <div className="bg-yellow-100 text-yellow-600 p-1 sm:p-2 rounded-full">
-                            <AwardIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
+                          <div className="bg-yellow-100 text-yellow-600 p-2 rounded-full">
+                            <AwardIcon />
                           </div>
-                          <span className="text-gray-900 font-medium text-xs sm:text-sm md:text-base">{achievement}</span>
+                          <span className="text-gray-900 font-medium">{achievement}</span>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                </section>
-                
-                {/* Alumni Info Section */}
-                <section>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4 lg:mb-6 flex items-center gap-2 md:gap-3">
-                    <div className="text-pink-600">
-                      <BookIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    Alumni Information
-                  </h2>
-                  <div className="bg-gray-50 p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg md:rounded-xl border border-gray-200">
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-2 sm:gap-3 bg-white p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-                        <div className="bg-pink-100 text-pink-600 p-1 sm:p-2 rounded-full">
-                          <BookIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </div>
-                        <div>
-                          <span className="text-gray-900 font-medium text-xs sm:text-sm md:text-base block">Graduation Year</span>
-                          <span className="text-gray-600 text-xs sm:text-sm">Class of {alumni.graduationYear}</span>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </section>
@@ -470,33 +374,69 @@ function AlumniProfile({ alumni, onBack }: AlumniProfileProps) {
 export default function AlumniPage() {
   const [selectedAlumni, setSelectedAlumni] = useState<AlumniType | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [filteredAlumni, setFilteredAlumni] = useState<AlumniType[]>(alumniData);
+  const [alumni, setAlumni] = useState<AlumniType[]>([]);
+  const [filteredAlumni, setFilteredAlumni] = useState<AlumniType[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const alumniPerPage = 8;
 
+  // Fetch alumni data from API
+  useEffect(() => {
+    fetchAlumni();
+  }, []);
+
+  const fetchAlumni = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/alumni');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch alumni');
+      }
+      
+      setAlumni(result.data);
+      setFilteredAlumni(result.data);
+    } catch (error) {
+      console.error('Error fetching alumni:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load alumni');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle search
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredAlumni(alumni);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = alumni.filter(alum =>
+        alum.name.toLowerCase().includes(query) ||
+        alum.profession.toLowerCase().includes(query) ||
+        alum.education.some(edu => edu.toLowerCase().includes(query))
+      );
+      setFilteredAlumni(filtered);
+    }
+    setCurrentPage(1);
+  }, [searchQuery, alumni]);
+
   const handleViewProfile = (alumniId: number) => {
-    const foundAlumni = alumniData.find(a => a.id === alumniId);
+    const foundAlumni = alumni.find(a => a.id === alumniId);
     setSelectedAlumni(foundAlumni || null);
   };
 
   const handleBackToList = () => {
     setSelectedAlumni(null);
   };
-
-  // Handle search
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredAlumni(alumniData);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = alumniData.filter(alum =>
-        alum.name.toLowerCase().includes(query) ||
-        alum.profession.toLowerCase().includes(query)
-      );
-      setFilteredAlumni(filtered);
-    }
-    setCurrentPage(1);
-  }, [searchQuery]);
 
   // Pagination logic
   const indexOfLastAlumni = currentPage * alumniPerPage;
@@ -509,6 +449,11 @@ export default function AlumniPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Show error state
+  if (error) {
+    return <ErrorDisplay message={error} onRetry={fetchAlumni} />;
+  }
+
   // If an alumni is selected, show their detailed profile
   if (selectedAlumni) {
     return <AlumniProfile alumni={selectedAlumni} onBack={handleBackToList} />;
@@ -516,37 +461,39 @@ export default function AlumniPage() {
 
   // Main alumni list view
   return (
-    <div className="min-h-screen bg-gray-50 py-6 md:py-8 lg:py-12 px-3 sm:px-4">
+    <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Heading - Responsive */}
-        <div className="mb-6 md:mb-8 text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
+        {/* Heading - Always visible */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Our Distinguished Alumni
           </h1>
-          <p className="text-gray-600 max-w-3xl mx-auto text-sm sm:text-base md:text-lg px-2">
+          <p className="text-gray-600 max-w-3xl mx-auto text-base sm:text-lg">
             Meet our successful alumni making a difference in various professional fields
           </p>
         </div>
 
-        {/* Search Bar - Responsive */}
-        <div className="max-w-xl sm:max-w-2xl mx-auto mb-8 md:mb-12 px-2">
+        {/* Search Bar - Always visible */}
+        <div className="max-w-2xl mx-auto mb-12">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon className="text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+              <SearchIcon className="text-gray-400" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search alumni by name or profession..."
-              className="w-full pl-10 pr-10 py-2 sm:py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all text-sm sm:text-base"
+              placeholder="Search alumni by name, profession, or education..."
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+              disabled={loading}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                disabled={loading}
               >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -554,91 +501,98 @@ export default function AlumniPage() {
           </div>
         </div>
 
-        {/* Alumni Grid - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 mb-8 md:mb-12 px-2">
-          {currentAlumni.map((alum) => (
-            <AlumniCard 
-              key={alum.id} 
-              alumni={alum} 
-              onViewProfile={handleViewProfile}
-            />
-          ))}
-        </div>
+        {/* Alumni Grid - Shows skeleton while loading */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <AlumniCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : currentAlumni.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+              {currentAlumni.map((alum) => (
+                <AlumniCard 
+                  key={alum.id} 
+                  alumni={alum} 
+                  onViewProfile={handleViewProfile}
+                />
+              ))}
+            </div>
 
-        {/* No Results Message */}
-        {filteredAlumni.length === 0 && (
-          <div className="text-center py-8 md:py-12 px-2">
-            <div className="text-gray-600 text-lg sm:text-xl md:text-2xl mb-3 md:mb-6">
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col items-center gap-4 mb-12">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        currentPage === page
+                          ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Page Info */}
+                <p className="text-gray-600 text-sm">
+                  Showing {indexOfFirstAlumni + 1}-{Math.min(indexOfLastAlumni, filteredAlumni.length)} of {filteredAlumni.length} alumni
+                </p>
+              </div>
+            )}
+
+            {/* Results Count */}
+            <div className="pt-6 border-t border-gray-200 text-center">
+              <p className="text-gray-600">
+                Found <span className="font-semibold text-blue-600">{filteredAlumni.length}</span> alumni
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-gray-600 text-xl mb-4">
               No alumni found matching "{searchQuery}"
             </div>
             <button
               onClick={() => setSearchQuery("")}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-all duration-300 text-sm sm:text-base"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-all duration-300"
             >
               Clear Search
             </button>
           </div>
         )}
-
-        {/* Pagination - Responsive */}
-        {totalPages > 1 && (
-          <div className="flex flex-col items-center gap-3 sm:gap-4 mb-8 md:mb-12 px-2">
-            <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-2">
-              {/* Previous Button */}
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                  currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                Previous
-              </button>
-
-              {/* Page Numbers */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                    currentPage === page
-                      ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-
-              {/* Next Button */}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                  currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                Next
-              </button>
-            </div>
-
-            {/* Page Info */}
-            <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-              Showing {indexOfFirstAlumni + 1}-{Math.min(indexOfLastAlumni, filteredAlumni.length)} of {filteredAlumni.length} alumni
-            </p>
-          </div>
-        )}
-
-        {/* Results Count */}
-        <div className="pt-4 sm:pt-6 border-t border-gray-200 text-center px-2">
-          <p className="text-gray-600 text-sm sm:text-base">
-            Found <span className="font-semibold text-blue-600">{filteredAlumni.length}</span> alumni
-          </p>
-        </div>
       </div>
     </div>
   );

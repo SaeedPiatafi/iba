@@ -1,4 +1,3 @@
-// app/web-admin/teacher/page.tsx
 "use client";
 
 import { useState, useEffect, ChangeEvent } from 'react';
@@ -9,13 +8,28 @@ interface Teacher {
   id: number;
   name: string;
   subject: string;
+  classLevels: string[];
   image: string;
-  isActive: boolean;
+  education: string[];
+  experience: string;
+  teachingExperience: string[];
+  bio: string;
+  achievements: string[];
+  teachingPhilosophy: string;
+  officeHours: string;
+  roomNumber: string;
   email: string;
-  phone: string;
 }
 
-// Icons components with proper typing
+interface ApiResponse {
+  success: boolean;
+  data: Teacher[];
+  count: number;
+  timestamp: string;
+  error?: string;
+}
+
+// Icons components
 const SearchIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -46,9 +60,33 @@ const UserIcon = () => (
   </svg>
 );
 
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center py-8">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+// Skeleton Loading Components
+const SkeletonTeacherCard = () => (
+  <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden animate-pulse">
+    {/* Image Skeleton */}
+    <div className="relative h-48 bg-gray-300">
+      <div className="absolute top-3 right-3">
+        <div className="w-16 h-6 bg-gray-400 rounded-full"></div>
+      </div>
+    </div>
+
+    {/* Info Skeleton */}
+    <div className="p-5">
+      <div className="h-6 bg-gray-300 rounded mb-2 w-3/4"></div>
+      <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
+      
+      {/* Additional Info Skeleton */}
+      <div className="space-y-2 mb-4">
+        <div className="h-3 bg-gray-200 rounded w-full"></div>
+        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+      </div>
+
+      {/* Action Buttons Skeleton */}
+      <div className="flex space-x-2">
+        <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
+        <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
+      </div>
+    </div>
   </div>
 );
 
@@ -61,73 +99,40 @@ export default function AdminTeachersPage() {
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Mock API call to fetch teachers
+  // Fetch teachers from API
   useEffect(() => {
-    const fetchTeachers = async () => {
-      try {
-        setLoading(true);
-        // In real app, this would be an API call
-        setTimeout(() => {
-          const mockTeachers: Teacher[] = [
-            {
-              id: 1,
-              name: "Dr. Sarah Johnson",
-              subject: "Mathematics & Physics",
-              image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-              isActive: true,
-              email: "s.johnson@school.edu",
-              phone: "+1 (555) 123-4567"
-            },
-            {
-              id: 2,
-              name: "Mr. David Chen",
-              subject: "Computer Science",
-              image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-              isActive: true,
-              email: "d.chen@school.edu",
-              phone: "+1 (555) 234-5678"
-            },
-            {
-              id: 3,
-              name: "Ms. Maria Rodriguez",
-              subject: "Literature & Languages",
-              image: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-              isActive: true,
-              email: "m.rodriguez@school.edu",
-              phone: "+1 (555) 345-6789"
-            },
-            {
-              id: 4,
-              name: "Mr. James Wilson",
-              subject: "History & Social Studies",
-              image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-              isActive: false,
-              email: "j.wilson@school.edu",
-              phone: "+1 (555) 456-7890"
-            },
-            {
-              id: 5,
-              name: "Dr. Lisa Thompson",
-              subject: "Biology & Chemistry",
-              image: "https://images.unsplash.com/photo-1551836026-d5c2c5af78e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-              isActive: true,
-              email: "l.thompson@school.edu",
-              phone: "+1 (555) 567-8901"
-            }
-          ];
-          setTeachers(mockTeachers);
-          setFilteredTeachers(mockTeachers);
-          setLoading(false);
-        }, 1000);
-      } catch (err) {
-        setError('Failed to load teachers');
-        setLoading(false);
-      }
-    };
-
     fetchTeachers();
   }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await fetch('/api/teacher');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch teachers: ${response.status}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load teachers');
+      }
+      
+      setTeachers(result.data);
+      setFilteredTeachers(result.data);
+      setLoading(false);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load teachers');
+      setLoading(false);
+      console.error('Error fetching teachers:', err);
+    }
+  };
 
   // Handle search
   useEffect(() => {
@@ -157,12 +162,40 @@ export default function AdminTeachersPage() {
     setShowDeleteModal(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (teacherToDelete) {
+  const handleDeleteConfirm = async () => {
+    if (!teacherToDelete) return;
+    
+    try {
+      setDeleteLoading(true);
+      
+      // Call DELETE API
+      const response = await fetch('/api/admin/teacher', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: teacherToDelete.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to delete teacher');
+      }
+
+      // Remove teacher from local state
       setTeachers(prev => prev.filter(t => t.id !== teacherToDelete.id));
       setFilteredTeachers(prev => prev.filter(t => t.id !== teacherToDelete.id));
+      
+      // Close modal and reset
       setShowDeleteModal(false);
       setTeacherToDelete(null);
+      
+    } catch (err) {
+      console.error('Error deleting teacher:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete teacher');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -171,26 +204,16 @@ export default function AdminTeachersPage() {
     setTeacherToDelete(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header - Always visible */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Teacher Management</h1>
           <p className="text-gray-600">Manage your teaching faculty and their profiles</p>
         </div>
 
-        {/* Controls */}
+        {/* Controls - Always visible */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -226,123 +249,156 @@ export default function AdminTeachersPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center">
             <p className="text-red-600">{error}</p>
-          </div>
-        )}
-
-        {/* Teachers Grid */}
-        {filteredTeachers.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredTeachers.map((teacher) => (
-              <div
-                key={teacher.id}
-                className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
-              >
-                {/* Teacher Image */}
-                <div className="relative h-48 bg-gray-100">
-                  {teacher.image ? (
-                    <img
-                      src={teacher.image}
-                      alt={teacher.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.parentElement!.innerHTML = `
-                          <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                            <div class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</div>
-                          </div>
-                        `;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
-                      <div className="text-white">
-                        <UserIcon />
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute top-3 right-3">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${teacher.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                      {teacher.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Teacher Info */}
-                <div className="p-5">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{teacher.name}</h3>
-                  <p className="text-blue-600 font-medium mb-2">{teacher.subject}</p>
-                  <div className="space-y-1 mb-4">
-                    <p className="text-sm text-gray-600 truncate">
-                      <span className="font-medium">Email:</span> {teacher.email}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Phone:</span> {teacher.phone}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(teacher.id)}
-                      className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-lg transition-colors duration-200"
-                    >
-                      <EditIcon />
-                      <span className="ml-2">Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(teacher)}
-                      className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors duration-200"
-                    >
-                      <DeleteIcon />
-                      <span className="ml-2">Delete</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No teachers found</h3>
-            <p className="text-gray-600 mb-6">No teachers match your search criteria.</p>
             <button
-              onClick={() => setSearchQuery('')}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+              onClick={() => setError('')}
+              className="text-red-500 hover:text-red-700"
             >
-              Clear Search
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         )}
 
-        {/* Stats */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-gray-600">
-                Showing <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> of{' '}
-                <span className="font-semibold text-blue-600">{teachers.length}</span> teachers
-              </p>
+        {/* Teachers Grid with Skeleton Loading */}
+        <div className="mb-8">
+          {!error && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {loading ? (
+                // Show skeleton loading cards
+                Array.from({ length: 8 }).map((_, index) => (
+                  <SkeletonTeacherCard key={index} />
+                ))
+              ) : filteredTeachers.length > 0 ? (
+                // Show actual teacher cards
+                filteredTeachers.map((teacher) => (
+                  <div
+                    key={teacher.id}
+                    className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                  >
+                    {/* Teacher Image */}
+                    <div className="relative h-48 bg-gray-100">
+                      {teacher.image ? (
+                        <img
+                          src={teacher.image}
+                          alt={teacher.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement!.innerHTML = `
+                              <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
+                                <div class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</div>
+                              </div>
+                            `;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
+                          <div className="text-white">
+                            <UserIcon />
+                          </div>
+                        </div>
+                      )}
+                      <div className="absolute top-3 right-3">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800`}>
+                          {teacher.classLevels.length} classes
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Teacher Info */}
+                    <div className="p-5">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">{teacher.name}</h3>
+                      <p className="text-blue-600 font-medium mb-2 truncate">{teacher.subject}</p>
+                      
+                      {/* Additional Info */}
+                      <div className="space-y-1 mb-4">
+                        <p className="text-sm text-gray-600 truncate" title={teacher.email}>
+                          <span className="font-medium">Email:</span> {teacher.email}
+                        </p>
+                        <p className="text-sm text-gray-600 truncate" title={teacher.experience}>
+                          <span className="font-medium">Exp:</span> {teacher.experience}
+                        </p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(teacher.id)}
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-lg transition-colors duration-200"
+                        >
+                          <EditIcon />
+                          <span className="ml-2">Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(teacher)}
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors duration-200"
+                        >
+                          <DeleteIcon />
+                          <span className="ml-2">Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                // No results message
+                <div className="col-span-full text-center py-12">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {searchQuery ? 'No teachers found' : 'No teachers available'}
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    {searchQuery 
+                      ? 'No teachers match your search criteria.' 
+                      : 'Get started by adding your first teacher.'
+                    }
+                  </p>
+                  {searchQuery ? (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+                    >
+                      Clear Search
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleAddNew}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center"
+                    >
+                      <AddIcon />
+                      Add First Teacher
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center text-sm text-gray-600">
-                <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-                Active: {teachers.filter(t => t.isActive).length}
-              </span>
-              <span className="flex items-center text-sm text-gray-600">
-                <span className="w-3 h-3 bg-gray-400 rounded-full mr-2"></span>
-                Inactive: {teachers.filter(t => !t.isActive).length}
-              </span>
+          )}
+        </div>
+
+        {/* Stats - Only show when not loading */}
+        {!loading && !error && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-gray-600">
+                  Showing <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> of{' '}
+                  <span className="font-semibold text-blue-600">{teachers.length}</span> teachers
+                </p>
+              </div>
+              <div className="text-sm text-gray-600">
+                Total teachers in system: <span className="font-semibold text-blue-600">{teachers.length}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -354,18 +410,54 @@ export default function AdminTeachersPage() {
               <p className="text-gray-600 mb-6">
                 Are you sure you want to delete <span className="font-semibold">{teacherToDelete.name}</span>? This action cannot be undone.
               </p>
+              
+              {/* Teacher Preview */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                    {teacherToDelete.image ? (
+                      <img 
+                        src={teacherToDelete.image} 
+                        alt={teacherToDelete.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-bold text-lg">
+                        {teacherToDelete.name.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{teacherToDelete.name}</p>
+                    <p className="text-sm text-gray-600">{teacherToDelete.subject}</p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex space-x-3">
                 <button
                   onClick={handleDeleteCancel}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  disabled={deleteLoading}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
+                  disabled={deleteLoading}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  Delete Teacher
+                  {deleteLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Teacher'
+                  )}
                 </button>
               </div>
             </div>

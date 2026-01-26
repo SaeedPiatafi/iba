@@ -1,0 +1,54 @@
+{
+  "admissionSteps": [
+    {
+      "step": 1,
+      "title": "Application Form Submission",
+      "description": "Fill out and submit the admission application form either online or collect it from school office"
+    },
+    {
+      "step": 2,
+      "title": "Document Submission",
+      "description": "Submit all required documents along with the application form"
+    },
+    {
+      "step": 3,
+      "title": "Entrance Test",
+      "description": "Appear for the admission entrance test (for classes 1-12)"
+    },
+    {
+      "step": 4,
+      "title": "Result Announcement & Fee Payment",
+      "description": "Receive admission result and complete fee payment to secure admission"
+    }
+  ],
+  "documentRequirements": [
+    "Birth Certificate (Original + 2 copies) - For all classes",
+    "B-Form / Child Registration Certificate (CRC) - For all classes",
+    "6 Passport-size photographs (blue background) - For all classes",
+    "Previous School Leaving Certificate (if applicable) - For all classes",
+    "Previous School Report Card / Transcript - For all classes",
+    "Character Certificate from previous school - For Class 1-10",
+    "Immunization Record - For Class 1 only",
+    "Class 8 Mark Sheet & Certificate - For Class 9-10",
+    "Transfer Certificate from previous school - For Class 9-12",
+    "Matriculation (Class 10) Certificate & Marks Sheet - For Class 11-12",
+    "Father's CNIC copy - For Class 9-12",
+    "Migration Certificate (if from other board) - For Class 11-12"
+  ],
+  "importantDates": [
+    { "date": "March 1, 2024", "event": "Admission applications open" },
+    { "date": "April 15, 2024", "event": "Last date for submission" },
+    { "date": "April 20-25, 2024", "event": "Entrance tests (Classes 1-12)" },
+    { "date": "May 5, 2024", "event": "Admission results announced" },
+    { "date": "May 10-15, 2024", "event": "Fee submission deadline" },
+    { "date": "August 1, 2024", "event": "Academic year begins" }
+  ],
+  "eligibilityCriteria": [
+    { "class": "Class 1", "requirement": "Must have completed Kindergarten" },
+    { "class": "Class 6", "requirement": "Passed Class 5 with minimum 60%" },
+    { "class": "Class 9", "requirement": "Passed Class 8 with minimum 60%" },
+    { "class": "Class 11 Science", "requirement": "Passed Matric with minimum 70% in Science subjects" },
+    { "class": "Class 11 Commerce", "requirement": "Passed Matric with minimum 65%" },
+    { "class": "Class 11 Arts", "requirement": "Passed Matric with minimum 60%" }
+  ]
+}

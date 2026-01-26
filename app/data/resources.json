@@ -1,0 +1,110 @@
+{
+  "classes": [
+    "Class 6", "Class 7", "Class 8", "Class 9", 
+    "Class 10", "Class 11 Science", "Class 11 Commerce", 
+    "Class 11 Arts", "Class 12 Science", "Class 12 Commerce", 
+    "Class 12 Arts"
+  ],
+  "subjectsByClass": {
+    "Class 6-8": [
+      "Mathematics", "Science", "English", "Social Studies", 
+      "Computer Science", "Urdu", "Islamiyat", "General Knowledge"
+    ],
+    "Class 9-10": [
+      "Mathematics", "Physics", "Chemistry", "Biology", 
+      "English", "Urdu", "Islamiyat", "Pakistan Studies",
+      "Computer Science"
+    ],
+    "Science": [
+      "Mathematics", "Physics", "Chemistry", "Biology",
+      "English", "Urdu", "Islamiyat", "Pakistan Studies",
+      "Computer Science"
+    ],
+    "Commerce": [
+      "Principles of Accounting", "Business Studies", "Economics",
+      "Mathematics", "Statistics", "English", "Urdu",
+      "Islamiyat", "Pakistan Studies"
+    ],
+    "Arts": [
+      "English Literature", "Urdu Literature", "Islamic Studies",
+      "Pakistan Studies", "Sociology", "Psychology", "Geography",
+      "History", "Political Science"
+    ]
+  },
+  "resources": {
+    "Class 6": {
+      "Mathematics": [
+        { "id": 1, "title": "Basic Algebra Guide", "type": "Book", "link": "https://example.com/math6-book", "description": "Complete guide to algebra basics" },
+        { "id": 2, "title": "Fractions and Decimals", "type": "Video", "link": "https://khanacademy.org/fractions", "description": "Video lessons on fractions" },
+        { "id": 3, "title": "Math Practice Problems", "type": "Practice", "link": "https://example.com/math-practice", "description": "Interactive practice problems" },
+        { "id": 4, "title": "Geometry Basics", "type": "Video", "link": "https://khanacademy.org/geometry", "description": "Introduction to geometry" }
+      ],
+      "Science": [
+        { "id": 5, "title": "Science Textbook", "type": "Book", "link": "https://example.com/science6-book", "description": "Full science curriculum" },
+        { "id": 6, "title": "Biology Basics", "type": "Video", "link": "https://khanacademy.org/biology-basics", "description": "Introduction to biology" },
+        { "id": 7, "title": "Science Experiments", "type": "Article", "link": "https://example.com/science-experiments", "description": "Fun science experiments" }
+      ],
+      "English": [
+        { "id": 8, "title": "English Grammar", "type": "Book", "link": "https://example.com/english-grammar", "description": "Complete grammar guide" },
+        { "id": 9, "title": "Vocabulary Builder", "type": "Practice", "link": "https://example.com/vocabulary", "description": "Interactive vocabulary exercises" }
+      ]
+    },
+    "Class 7": {
+      "Mathematics": [
+        { "id": 10, "title": "Algebra Fundamentals", "type": "Book", "link": "https://example.com/algebra7-book", "description": "Algebra concepts for Class 7" },
+        { "id": 11, "title": "Geometry Advanced", "type": "Video", "link": "https://khanacademy.org/geometry-advanced", "description": "Advanced geometry topics" }
+      ],
+      "Science": [
+        { "id": 12, "title": "Physics Basics", "type": "Book", "link": "https://example.com/physics7-book", "description": "Introduction to physics" },
+        { "id": 13, "title": "Chemistry Experiments", "type": "Video", "link": "https://example.com/chemistry-videos", "description": "Chemistry lab experiments" }
+      ]
+    },
+    "Class 8": {
+      "Mathematics": [
+        { "id": 14, "title": "Advanced Mathematics", "type": "Book", "link": "https://example.com/math8-book", "description": "Complete Class 8 math" },
+        { "id": 15, "title": "Algebra Practice", "type": "Practice", "link": "https://example.com/algebra-practice", "description": "Algebra practice problems" }
+      ],
+      "Science": [
+        { "id": 16, "title": "General Science", "type": "Book", "link": "https://example.com/science8-book", "description": "Science textbook Class 8" }
+      ]
+    },
+    "Class 9": {
+      "Physics": [
+        { "id": 17, "title": "Physics Concepts", "type": "Book", "link": "https://example.com/physics9-book", "description": "Complete physics guide" },
+        { "id": 18, "title": "Motion and Force", "type": "Video", "link": "https://khanacademy.org/physics-motion", "description": "Video lectures on motion" },
+        { "id": 19, "title": "Past Papers 2023", "type": "Exam", "link": "https://example.com/past-papers", "description": "Previous year exam papers" },
+        { "id": 20, "title": "Physics Formulas", "type": "Article", "link": "https://example.com/physics-formulas", "description": "Important formulas sheet" }
+      ],
+      "Chemistry": [
+        { "id": 21, "title": "Chemistry Textbook", "type": "Book", "link": "https://example.com/chemistry9-book", "description": "Official chemistry textbook" },
+        { "id": 22, "title": "Chemical Reactions", "type": "Video", "link": "https://khanacademy.org/chemical-reactions", "description": "Chemical reactions explained" }
+      ],
+      "Mathematics": [
+        { "id": 23, "title": "Mathematics Class 9", "type": "Book", "link": "https://example.com/math9-book", "description": "Complete math textbook" },
+        { "id": 24, "title": "Algebra Tutorials", "type": "Video", "link": "https://khanacademy.org/algebra", "description": "Algebra video lessons" }
+      ]
+    },
+    "Class 10": {
+      "Physics": [
+        { "id": 25, "title": "Physics Class 10", "type": "Book", "link": "https://example.com/physics10-book", "description": "Complete physics guide" },
+        { "id": 26, "title": "Electricity Tutorials", "type": "Video", "link": "https://khanacademy.org/electricity", "description": "Electricity and circuits" }
+      ]
+    },
+    "Class 11 Science": {
+      "Physics": [
+        { "id": 27, "title": "Advanced Physics", "type": "Book", "link": "https://example.com/physics11-book", "description": "FSC Part 1 Physics" },
+        { "id": 28, "title": "Mechanics Videos", "type": "Video", "link": "https://khanacademy.org/mechanics", "description": "Complete mechanics course" }
+      ],
+      "Chemistry": [
+        { "id": 29, "title": "Organic Chemistry", "type": "Book", "link": "https://example.com/organic-chem", "description": "Organic chemistry guide" },
+        { "id": 30, "title": "Chemical Bonding", "type": "Video", "link": "https://khanacademy.org/chemical-bonding", "description": "Video lessons on bonding" }
+      ]
+    },
+    "Class 12 Science": {
+      "Mathematics": [
+        { "id": 31, "title": "Calculus Complete", "type": "Book", "link": "https://example.com/calculus-book", "description": "Advanced calculus topics" },
+        { "id": 32, "title": "Integration Tutorials", "type": "Video", "link": "https://khanacademy.org/integration", "description": "Step-by-step integration" }
+      ]
+    }
+  }
+}

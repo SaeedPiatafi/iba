@@ -1,4 +1,3 @@
-// app/teachers/page.tsx
 "use client";
 
 import { useState, useEffect, ReactNode } from 'react';
@@ -8,7 +7,7 @@ interface IconProps {
   className?: string;
 }
 
-// Custom SVG icons as components with proper typing
+// Custom SVG icons
 const GraduationCapIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M10.394 2.08a1 0 00-.788 0l-7 3a1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
@@ -52,12 +51,6 @@ const AwardIcon = ({ className = "w-5 h-5" }: IconProps) => (
   </svg>
 );
 
-const CalendarIcon = ({ className = "w-5 h-5" }: IconProps) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-  </svg>
-);
-
 const TeachingIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M10.394 2.08a1 0 00-.788 0l-7 3a1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
@@ -82,286 +75,44 @@ interface Teacher {
   email: string;
 }
 
-// Teacher data with additional fields for profile
-const teachersData: Teacher[] = [
-  {
-    id: 1,
-    name: "Dr. Sarah Johnson",
-    subject: "Mathematics & Physics",
-    classLevels: ["9th Grade", "10th Grade", "11th Grade", "12th Grade"],
-    image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "PhD in Mathematics, Stanford University",
-      "M.S. in Physics, MIT",
-      "B.S. in Mathematics, Harvard University"
-    ],
-    experience: "15 years teaching experience",
-    teachingExperience: [
-      "Head of Mathematics Department (2015-Present)",
-      "Senior Mathematics Teacher, Current School (2010-2015)",
-      "Mathematics Lecturer, University of California (2008-2010)"
-    ],
-    bio: "Dr. Johnson specializes in making complex mathematical concepts accessible and engaging for all students. Her innovative teaching methods have helped hundreds of students excel in advanced mathematics.",
-    achievements: [
-      "National Mathematics Teacher of the Year 2022",
-      "Published 5 research papers in mathematics education",
-      "Developed award-winning curriculum for advanced mathematics"
-    ],
-    teachingPhilosophy: "Believes in creating an inclusive learning environment where every student can discover their mathematical potential through practical applications and real-world problem-solving.",
-    officeHours: "Monday-Friday: 2:00 PM - 4:00 PM",
-    roomNumber: "Room 302, Science Building",
-    email: "s.johnson@school.edu"
-  },
-  {
-    id: 2,
-    name: "Mr. David Chen",
-    subject: "Computer Science",
-    classLevels: ["10th Grade", "11th Grade", "12th Grade"],
-    image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "M.S. in Computer Science, MIT",
-      "B.S. in Software Engineering, Carnegie Mellon"
-    ],
-    experience: "10 years in tech industry + 5 years teaching",
-    teachingExperience: [
-      "Computer Science Department Lead (2018-Present)",
-      "Senior Software Engineer, Google (2013-2018)",
-      "Software Developer, Microsoft (2010-2013)"
-    ],
-    bio: "Former software engineer turned educator, Mr. Chen brings real-world programming experience to the classroom, preparing students for careers in technology.",
-    achievements: [
-      "Google Developer Expert",
-      "Created school's first AI and Machine Learning course",
-      "Led student teams to national coding competition wins"
-    ],
-    teachingPhilosophy: "Focuses on project-based learning and collaboration to develop both technical skills and creative problem-solving abilities in students.",
-    officeHours: "Tuesday-Thursday: 3:00 PM - 5:00 PM",
-    roomNumber: "Room 205, Tech Center",
-    email: "d.chen@school.edu"
-  },
-  {
-    id: 3,
-    name: "Ms. Maria Rodriguez",
-    subject: "Literature & Languages",
-    classLevels: ["9th Grade", "10th Grade", "11th Grade"],
-    image: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "M.A. in English Literature, Cambridge University",
-      "B.A. in Comparative Literature, University of Oxford",
-      "TESOL Certification"
-    ],
-    experience: "12 years teaching experience",
-    teachingExperience: [
-      "Head of English Department (2017-Present)",
-      "English Teacher, International School (2012-2017)",
-      "ESL Instructor, Language Institute (2010-2012)"
-    ],
-    bio: "Ms. Rodriguez fosters a love for literature through interactive discussions and creative writing workshops that inspire students to become lifelong readers.",
-    achievements: [
-      "Published author of 2 poetry collections",
-      "State Literature Teacher Award 2021",
-      "Organizer of annual school literary festival"
-    ],
-    teachingPhilosophy: "Emphasizes critical thinking and empathy through literary analysis, helping students connect classic works with contemporary issues.",
-    officeHours: "Monday-Wednesday-Friday: 1:00 PM - 3:00 PM",
-    roomNumber: "Room 101, Humanities Building",
-    email: "m.rodriguez@school.edu"
-  },
-  {
-    id: 4,
-    name: "Mr. James Wilson",
-    subject: "History & Social Studies",
-    classLevels: ["9th Grade", "10th Grade"],
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "M.A. in History, University of Chicago",
-      "B.A. in Political Science, Columbia University",
-      "Teaching Credential in Social Studies"
-    ],
-    experience: "18 years teaching experience",
-    teachingExperience: [
-      "Social Studies Department Chair (2015-Present)",
-      "History Teacher, Current School (2006-2015)",
-      "Museum Educator, Smithsonian (2004-2006)"
-    ],
-    bio: "Mr. Wilson makes history come alive through engaging storytelling and primary source analysis, connecting past events to current affairs.",
-    achievements: [
-      "National History Day Teacher of the Year 2020",
-      "Published historical research on civil rights movement",
-      "Developed interactive history curriculum adopted statewide"
-    ],
-    teachingPhilosophy: "Uses primary sources and debates to help students develop historical thinking skills and understand multiple perspectives.",
-    officeHours: "Tuesday-Thursday: 2:30 PM - 4:30 PM",
-    roomNumber: "Room 215, Social Studies Wing",
-    email: "j.wilson@school.edu"
-  },
-  {
-    id: 5,
-    name: "Dr. Lisa Thompson",
-    subject: "Biology & Chemistry",
-    classLevels: ["11th Grade", "12th Grade"],
-    image: "https://images.unsplash.com/photo-1551836026-d5c2c5af78e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "PhD in Biochemistry, Johns Hopkins University",
-      "M.S. in Molecular Biology, UC Berkeley",
-      "B.S. in Chemistry, Stanford University"
-    ],
-    experience: "14 years teaching + 6 years research",
-    teachingExperience: [
-      "Science Department Head (2016-Present)",
-      "Research Scientist, Biotech Company (2008-2014)",
-      "University Lab Instructor (2006-2008)"
-    ],
-    bio: "Dr. Thompson's hands-on laboratory approach helps students develop scientific inquiry skills while exploring the wonders of biological systems.",
-    achievements: [
-      "Published 8 papers in peer-reviewed journals",
-      "NSF Grant recipient for science education",
-      "Lead organizer of school science fair for 8 years"
-    ],
-    teachingPhilosophy: "Focuses on inquiry-based learning where students design and conduct experiments to discover scientific principles firsthand.",
-    officeHours: "Monday-Wednesday-Friday: 8:00 AM - 10:00 AM",
-    roomNumber: "Room 410, Science Laboratory",
-    email: "l.thompson@school.edu"
-  },
-  {
-    id: 6,
-    name: "Mr. Robert Kim",
-    subject: "Physical Education",
-    classLevels: ["9th Grade", "10th Grade", "11th Grade", "12th Grade"],
-    image: "https://images.unsplash.com/photo-1545167622-3a6ac756afa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "M.S. in Sports Science, University of Michigan",
-      "B.S. in Kinesiology, UCLA",
-      "Certified Personal Trainer"
-    ],
-    experience: "9 years coaching + 6 years teaching",
-    teachingExperience: [
-      "Athletic Director (2018-Present)",
-      "Head Basketball Coach (2015-2018)",
-      "Strength and Conditioning Coach, College (2012-2015)"
-    ],
-    bio: "Coach Kim focuses on developing physical fitness, teamwork, and sportsmanship while promoting lifelong healthy habits.",
-    achievements: [
-      "State Championship Coach 2022",
-      "Developed award-winning fitness curriculum",
-      "Certified in multiple sports training methodologies"
-    ],
-    teachingPhilosophy: "Promotes physical literacy and lifelong fitness through inclusive, varied, and enjoyable physical activities for all skill levels.",
-    officeHours: "Daily: 7:30 AM - 8:30 AM",
-    roomNumber: "Gymnasium Office",
-    email: "r.kim@school.edu"
-  },
-  {
-    id: 7,
-    name: "Ms. Amina Hassan",
-    subject: "Art & Creative Design",
-    classLevels: ["10th Grade", "11th Grade"],
-    image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "B.F.A. in Fine Arts, Rhode Island School of Design",
-      "M.F.A. in Visual Arts, School of the Art Institute of Chicago"
-    ],
-    experience: "7 years teaching + 5 years professional artist",
-    teachingExperience: [
-      "Art Department Coordinator (2019-Present)",
-      "Gallery Manager and Artist (2015-2019)",
-      "Art Instructor, Community Center (2013-2015)"
-    ],
-    bio: "Ms. Hassan encourages creative expression through various media while teaching technical skills and art history fundamentals.",
-    achievements: [
-      "Solo exhibitions in 3 major cities",
-      "Art Education Innovation Grant recipient",
-      "Student art showcased in national competitions"
-    ],
-    teachingPhilosophy: "Fosters creative confidence and technical skill through exploration of diverse materials and art historical contexts.",
-    officeHours: "Tuesday-Thursday: 4:00 PM - 6:00 PM",
-    roomNumber: "Room 108, Art Studio",
-    email: "a.hassan@school.edu"
-  },
-  {
-    id: 8,
-    name: "Mr. Thomas O'Reilly",
-    subject: "Music & Performing Arts",
-    classLevels: ["9th Grade", "10th Grade", "11th Grade"],
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "M.M. in Music Education, Juilliard School",
-      "B.M. in Performance, Berklee College of Music"
-    ],
-    experience: "11 years teaching + 8 years performing",
-    teachingExperience: [
-      "Director of Performing Arts (2017-Present)",
-      "Professional Musician and Composer (2010-2017)",
-      "Music Teacher, Private School (2009-2010)"
-    ],
-    bio: "Mr. O'Reilly directs award-winning music programs and teaches students to appreciate music theory, history, and performance.",
-    achievements: [
-      "Grammy Music Educator Award nominee",
-      "Composed original score for school musical",
-      "Student ensembles won multiple state competitions"
-    ],
-    teachingPhilosophy: "Combines technical mastery with creative expression to help students discover their unique musical voice.",
-    officeHours: "Monday-Wednesday-Friday: 3:30 PM - 5:30 PM",
-    roomNumber: "Room 201, Music Building",
-    email: "t.oreilly@school.edu"
-  },
-  {
-    id: 9,
-    name: "Ms. Jennifer Park",
-    subject: "Economics & Business",
-    classLevels: ["11th Grade", "12th Grade"],
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "MBA, Harvard Business School",
-      "B.A. in Economics, Wharton School",
-      "Certified Financial Analyst"
-    ],
-    experience: "7 years teaching + 8 years corporate",
-    teachingExperience: [
-      "Business Department Head (2019-Present)",
-      "Financial Analyst, Investment Bank (2014-2019)",
-      "Economics Consultant (2012-2014)"
-    ],
-    bio: "With corporate experience, Ms. Park brings practical business knowledge to the classroom, preparing students for economic literacy.",
-    achievements: [
-      "Developed school's first entrepreneurship program",
-      "Student investment club achieved 25% returns",
-      "Business plan competition state champion"
-    ],
-    teachingPhilosophy: "Connects economic theory with real-world applications through case studies, simulations, and guest speakers.",
-    officeHours: "Monday-Thursday: 1:00 PM - 3:00 PM",
-    roomNumber: "Room 305, Business Wing",
-    email: "j.park@school.edu"
-  },
-  {
-    id: 10,
-    name: "Dr. Michael Brown",
-    subject: "Psychology & Counseling",
-    classLevels: ["12th Grade"],
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    education: [
-      "PhD in Clinical Psychology, UCLA",
-      "M.A. in Counseling Psychology, Northwestern",
-      "Licensed Clinical Psychologist"
-    ],
-    experience: "13 years teaching + 10 years clinical practice",
-    teachingExperience: [
-      "Head of Counseling Department (2018-Present)",
-      "Clinical Psychologist, Private Practice (2012-2018)",
-      "University Professor (2008-2012)"
-    ],
-    bio: "Dr. Brown helps students understand human behavior and mental processes while providing academic counseling and support.",
-    achievements: [
-      "Published 3 psychology textbooks",
-      "Developed school wellness program",
-      "State Psychology Educator of the Year 2023"
-    ],
-    teachingPhilosophy: "Integrates psychological science with practical life skills to promote student well-being and academic success.",
-    officeHours: "By appointment",
-    roomNumber: "Room 103, Counseling Center",
-    email: "m.brown@school.edu"
-  }
-];
+// API Response Type
+interface ApiResponse {
+  success: boolean;
+  data: Teacher[];
+  count: number;
+  timestamp: string;
+}
+
+// Error Display Component
+function ErrorDisplay({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+        <div className="text-red-600 mb-4">
+          <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
+        <p className="text-gray-600 mb-6">{message}</p>
+        <div className="space-y-3">
+          <button
+            onClick={onRetry}
+            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 transition-all duration-300"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Props for TeacherCard component
 interface TeacherCardProps {
@@ -385,7 +136,7 @@ function TeacherCard({ teacher, onViewProfile }: TeacherCardProps) {
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
-      {/* Teacher Image - Fixed Height */}
+      {/* Teacher Image */}
       <div className="relative h-48 overflow-hidden">
         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
           <div className="relative w-full h-full">
@@ -400,12 +151,12 @@ function TeacherCard({ teacher, onViewProfile }: TeacherCardProps) {
         </div>
       </div>
       
-      {/* Teacher Info - Fixed Content Area */}
+      {/* Teacher Info */}
       <div className="p-4 flex flex-col flex-grow">
         <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">{teacher.name}</h3>
         <p className="text-blue-600 font-semibold mb-3 line-clamp-1">{teacher.subject}</p>
         
-        {/* View Profile Button at bottom */}
+        {/* View Profile Button */}
         <div className="mt-auto">
           <button
             onClick={() => onViewProfile(teacher.id)}
@@ -427,7 +178,6 @@ interface TeacherProfileProps {
 
 // Detailed Teacher Profile Component
 function TeacherProfile({ teacher, onBack }: TeacherProfileProps) {
-  // Scroll to top when profile opens
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -456,7 +206,7 @@ function TeacherProfile({ teacher, onBack }: TeacherProfileProps) {
           Back to All Teachers
         </button>
         
-        {/* Teacher Profile Card - Alumni Style */}
+        {/* Teacher Profile Card */}
         <div className="bg-white rounded-xl md:rounded-2xl shadow-xl overflow-hidden border border-gray-200">
           {/* Profile Header */}
           <div className="p-6 md:p-8 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-teal-50">
@@ -629,37 +379,89 @@ function TeacherProfile({ teacher, onBack }: TeacherProfileProps) {
   );
 }
 
+// Teacher Card Skeleton Component (only for cards)
+function TeacherCardSkeleton() {
+  return (
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 h-full flex flex-col">
+      <div className="h-48 bg-gray-300 animate-pulse"></div>
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="h-6 bg-gray-300 rounded mb-2 animate-pulse"></div>
+        <div className="h-4 bg-gray-300 rounded mb-4 animate-pulse w-3/4"></div>
+        <div className="mt-auto">
+          <div className="h-10 bg-gray-300 rounded animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Main Teachers Page Component
 export default function TeachersPage() {
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>(teachersData);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const teachersPerPage = 10;
 
+  // Fetch teachers data
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/teacher');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (!result.success) {
+        throw new Error('Failed to fetch teachers');
+      }
+      
+      setTeachers(result.data);
+      setFilteredTeachers(result.data);
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load teachers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle search
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredTeachers(teachers);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = teachers.filter(teacher =>
+        teacher.name.toLowerCase().includes(query) ||
+        teacher.subject.toLowerCase().includes(query) ||
+        teacher.classLevels.some(level => level.toLowerCase().includes(query))
+      );
+      setFilteredTeachers(filtered);
+    }
+    setCurrentPage(1);
+  }, [searchQuery, teachers]);
+
   const handleViewProfile = (teacherId: number) => {
-    const foundTeacher = teachersData.find(t => t.id === teacherId);
+    const foundTeacher = teachers.find(t => t.id === teacherId);
     setSelectedTeacher(foundTeacher || null);
   };
 
   const handleBackToList = () => {
     setSelectedTeacher(null);
   };
-
-  // Handle search
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredTeachers(teachersData);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = teachersData.filter(teacher =>
-        teacher.name.toLowerCase().includes(query) ||
-        teacher.subject.toLowerCase().includes(query)
-      );
-      setFilteredTeachers(filtered);
-    }
-    setCurrentPage(1); // Reset to first page when searching
-  }, [searchQuery]);
 
   // Pagination logic
   const indexOfLastTeacher = currentPage * teachersPerPage;
@@ -672,6 +474,11 @@ export default function TeachersPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Show error state
+  if (error) {
+    return <ErrorDisplay message={error} onRetry={fetchTeachers} />;
+  }
+
   // If a teacher is selected, show their detailed profile
   if (selectedTeacher) {
     return <TeacherProfile teacher={selectedTeacher} onBack={handleBackToList} />;
@@ -681,7 +488,7 @@ export default function TeachersPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Heading */}
+        {/* Heading - Always visible */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Our Faculty
@@ -691,7 +498,7 @@ export default function TeachersPage() {
           </p>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar - Always visible */}
         <div className="max-w-2xl mx-auto mb-12">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -701,13 +508,15 @@ export default function TeachersPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search teachers by name or subject..."
+              placeholder="Search teachers by name, subject, or grade..."
               className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+              disabled={loading}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                disabled={loading}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -717,19 +526,86 @@ export default function TeachersPage() {
           </div>
         </div>
 
-        {/* Teachers Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-          {currentTeachers.map((teacher) => (
-            <TeacherCard 
-              key={teacher.id} 
-              teacher={teacher} 
-              onViewProfile={handleViewProfile}
-            />
-          ))}
-        </div>
+        {/* Teachers Grid - Shows skeleton while loading */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <TeacherCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : currentTeachers.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+              {currentTeachers.map((teacher) => (
+                <TeacherCard 
+                  key={teacher.id} 
+                  teacher={teacher} 
+                  onViewProfile={handleViewProfile}
+                />
+              ))}
+            </div>
 
-        {/* No Results Message */}
-        {filteredTeachers.length === 0 && (
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col items-center gap-4 mb-12">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        currentPage === page
+                          ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Page Info */}
+                <p className="text-gray-600 text-sm">
+                  Showing {indexOfFirstTeacher + 1}-{Math.min(indexOfLastTeacher, filteredTeachers.length)} of {filteredTeachers.length} teachers
+                </p>
+              </div>
+            )}
+
+            {/* Results Count */}
+            <div className="pt-6 border-t border-gray-200 text-center">
+              <p className="text-gray-600">
+                Found <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> teachers
+              </p>
+            </div>
+          </>
+        ) : (
           <div className="text-center py-12">
             <div className="text-gray-600 text-xl mb-4">
               No teachers found matching "{searchQuery}"
@@ -742,66 +618,6 @@ export default function TeachersPage() {
             </button>
           </div>
         )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex flex-col items-center gap-4 mb-12">
-            <div className="flex items-center gap-2">
-              {/* Previous Button */}
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                Previous
-              </button>
-
-              {/* Page Numbers */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    currentPage === page
-                      ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-
-              {/* Next Button */}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                Next
-              </button>
-            </div>
-
-            {/* Page Info */}
-            <p className="text-gray-600 text-sm">
-              Showing {indexOfFirstTeacher + 1}-{Math.min(indexOfLastTeacher, filteredTeachers.length)} of {filteredTeachers.length} teachers
-            </p>
-          </div>
-        )}
-
-        {/* Results Count */}
-        <div className="pt-6 border-t border-gray-200 text-center">
-          <p className="text-gray-600">
-            Found <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> teachers
-          </p>
-        </div>
       </div>
     </div>
   );
