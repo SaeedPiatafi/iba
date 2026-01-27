@@ -1,32 +1,23 @@
-// app/layout.tsx
-"use client";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
 
-import { usePathname } from "next/navigation";
-import PublicHeader from "./components/header";
-import AdminHeader from "./components/adminheader";
-import Footer from "./components/footer";
-import "./globals.css";
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'IBA Admin Portal',
+  description: 'Institute of Business Administration',
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-
-  // Determine which header to show
-  const isAdminRoute = pathname?.startsWith("/web-admin");
-
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col" suppressHydrationWarning>
-        {/* Conditional Header - Only show one */}
-        {isAdminRoute ? <AdminHeader /> : <PublicHeader />}
-
-        <main className="flex-1">{children}</main>
-
-        {/* Footer - Only show on public routes */}
-        {!isAdminRoute && <Footer />}
+    <html lang="en">
+      <body className={`${inter.className} antialiased`}>
+        {children}
       </body>
     </html>
   );

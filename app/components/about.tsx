@@ -35,11 +35,11 @@ export default function AboutSection() {
     }
   ];
 
-  // Carousel images
+  // Carousel images - FIXED: Using direct image URLs
   const carouselImages = [
     {
       id: 1,
-      src: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&h=800&fit=crop&auto=format",
+      src: "https://images.unsplash.com/photos/a-classroom-filled-with-desks-and-chairs-next-to-a-large-window-MT4WtqNuFkE",
       alt: "School Campus"
     },
     {
@@ -59,7 +59,7 @@ export default function AboutSection() {
     },
     {
       id: 5,
-      src: "https://images.unsplash.com/photo-1524178234883-043d5c3f3cf4?w=1200&h=800&fit=crop&auto=format",
+      src: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&h=800&fit=crop&auto=format",
       alt: "Library"
     },
     {
@@ -113,6 +113,7 @@ export default function AboutSection() {
                         src={image.src} 
                         alt={image.alt}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';

@@ -4,10 +4,8 @@
     "name": "Dr. Sarah Johnson",
     "subject": "Mathematics & Physics",
     "classLevels": [
-      "9th Grade",
-      "10th Grade",
-      "11th Grade",
-      "12th Grade"
+      "Senior Secondary Teacher (11-12)",
+      "Higher Secondary Teacher (9-10)"
     ],
     "image": "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     "education": [
@@ -18,8 +16,9 @@
     "experience": "15 years teaching experience",
     "teachingExperience": [
       "Head of Mathematics Department (2015-Present)",
-      "Senior Mathematics Teacher, Current School (2010-2015)",
-      "Mathematics Lecturer, University of California (2008-2010)"
+      "Senior Mathematics Teacher, Current School (2010-2035)",
+      "Mathematics Lecturer, University of California (2008-2010)",
+      "head of computer science department"
     ],
     "bio": "Dr. Johnson specializes in making complex mathematical concepts accessible and engaging for all students. Her innovative teaching methods have helped hundreds of students excel in advanced mathematics.",
     "achievements": [
@@ -28,49 +27,15 @@
       "Developed award-winning curriculum for advanced mathematics"
     ],
     "teachingPhilosophy": "Believes in creating an inclusive learning environment where every student can discover their mathematical potential through practical applications and real-world problem-solving.",
-    "officeHours": "Monday-Friday: 2:00 PM - 4:00 PM",
-    "roomNumber": "Room 302, Science Building",
-    "email": "s.johnson@school.edu"
-  },
-  {
-    "id": 3,
-    "name": "Ms. Maria Rodriguez",
-    "subject": "Literature & Languages",
-    "classLevels": [
-      "9th Grade",
-      "10th Grade",
-      "11th Grade"
-    ],
-    "image": "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    "education": [
-      "M.A. in English Literature, Cambridge University",
-      "B.A. in Comparative Literature, University of Oxford",
-      "TESOL Certification"
-    ],
-    "experience": "12 years teaching experience",
-    "teachingExperience": [
-      "Head of English Department (2017-Present)",
-      "English Teacher, International School (2012-2017)",
-      "ESL Instructor, Language Institute (2010-2012)"
-    ],
-    "bio": "Ms. Rodriguez fosters a love for literature through interactive discussions and creative writing workshops that inspire students to become lifelong readers.",
-    "achievements": [
-      "Published author of 2 poetry collections",
-      "State Literature Teacher Award 2021",
-      "Organizer of annual school literary festival"
-    ],
-    "teachingPhilosophy": "Emphasizes critical thinking and empathy through literary analysis, helping students connect classic works with contemporary issues.",
-    "officeHours": "Monday-Wednesday-Friday: 1:00 PM - 3:00 PM",
-    "roomNumber": "Room 101, Humanities Building",
-    "email": "m.rodriguez@school.edu"
+    "email": "s.johnson@school.saeed"
   },
   {
     "id": 4,
     "name": "Mr. James Wilson",
     "subject": "History & Social Studies",
     "classLevels": [
-      "9th Grade",
-      "10th Grade"
+      "Secondary Teacher (6-8)",
+      "Primary Teacher (1-5)"
     ],
     "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     "education": [
@@ -91,8 +56,6 @@
       "Developed interactive history curriculum adopted statewide"
     ],
     "teachingPhilosophy": "Uses primary sources and debates to help students develop historical thinking skills and understand multiple perspectives.",
-    "officeHours": "Tuesday-Thursday: 2:30 PM - 4:30 PM",
-    "roomNumber": "Room 215, Social Studies Wing",
     "email": "j.wilson@school.edu"
   },
   {
@@ -100,8 +63,8 @@
     "name": "Dr. Lisa Thompson",
     "subject": "Biology & Chemistry",
     "classLevels": [
-      "11th Grade",
-      "12th Grade"
+      "Senior Secondary Teacher (11-12)",
+      "Higher Secondary Teacher (9-10)"
     ],
     "image": "https://images.unsplash.com/photo-1551836026-d5c2c5af78e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     "education": [
@@ -122,8 +85,6 @@
       "Lead organizer of school science fair for 8 years"
     ],
     "teachingPhilosophy": "Focuses on inquiry-based learning where students design and conduct experiments to discover scientific principles firsthand.",
-    "officeHours": "Monday-Wednesday-Friday: 8:00 AM - 10:00 AM",
-    "roomNumber": "Room 410, Science Laboratory",
     "email": "l.thompson@school.edu"
   },
   {
@@ -131,10 +92,10 @@
     "name": "Mr. Robert Kim",
     "subject": "Physical Education",
     "classLevels": [
-      "9th Grade",
-      "10th Grade",
-      "11th Grade",
-      "12th Grade"
+      "Senior Secondary Teacher (11-12)",
+      "Higher Secondary Teacher (9-10)",
+      "Secondary Teacher (6-8)",
+      "Primary Teacher (1-5)"
     ],
     "image": "https://images.unsplash.com/photo-1545167622-3a6ac756afa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     "education": [
@@ -155,48 +116,16 @@
       "Certified in multiple sports training methodologies"
     ],
     "teachingPhilosophy": "Promotes physical literacy and lifelong fitness through inclusive, varied, and enjoyable physical activities for all skill levels.",
-    "officeHours": "Daily: 7:30 AM - 8:30 AM",
-    "roomNumber": "Gymnasium Office",
-    "email": "r.kim@school.edu"
-  },
-  {
-    "id": 7,
-    "name": "Ms. Amina Hassan",
-    "subject": "Art & Creative Design",
-    "classLevels": [
-      "10th Grade",
-      "11th Grade"
-    ],
-    "image": "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    "education": [
-      "B.F.A. in Fine Arts, Rhode Island School of Design",
-      "M.F.A. in Visual Arts, School of the Art Institute of Chicago"
-    ],
-    "experience": "7 years teaching + 5 years professional artist",
-    "teachingExperience": [
-      "Art Department Coordinator (2019-Present)",
-      "Gallery Manager and Artist (2015-2019)",
-      "Art Instructor, Community Center (2013-2015)"
-    ],
-    "bio": "Ms. Hassan encourages creative expression through various media while teaching technical skills and art history fundamentals.",
-    "achievements": [
-      "Solo exhibitions in 3 major cities",
-      "Art Education Innovation Grant recipient",
-      "Student art showcased in national competitions"
-    ],
-    "teachingPhilosophy": "Fosters creative confidence and technical skill through exploration of diverse materials and art historical contexts.",
-    "officeHours": "Tuesday-Thursday: 4:00 PM - 6:00 PM",
-    "roomNumber": "Room 108, Art Studio",
-    "email": "a.hassan@school.edu"
+    "email": "r.kim@school.saeed"
   },
   {
     "id": 8,
     "name": "Mr. Thomas O'Reilly",
     "subject": "Music & Performing Arts",
     "classLevels": [
-      "9th Grade",
-      "10th Grade",
-      "11th Grade"
+      "Senior Secondary Teacher (11-12)",
+      "Higher Secondary Teacher (9-10)",
+      "Secondary Teacher (6-8)"
     ],
     "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     "education": [
@@ -216,8 +145,6 @@
       "Student ensembles won multiple state competitions"
     ],
     "teachingPhilosophy": "Combines technical mastery with creative expression to help students discover their unique musical voice.",
-    "officeHours": "Monday-Wednesday-Friday: 3:30 PM - 5:30 PM",
-    "roomNumber": "Room 201, Music Building",
     "email": "t.oreilly@school.edu"
   },
   {
@@ -225,8 +152,7 @@
     "name": "Ms. Jennifer Park",
     "subject": "Economics & Business",
     "classLevels": [
-      "11th Grade",
-      "12th Grade"
+      "Senior Secondary Teacher (11-12)"
     ],
     "image": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     "education": [
@@ -247,8 +173,88 @@
       "Business plan competition state champion"
     ],
     "teachingPhilosophy": "Connects economic theory with real-world applications through case studies, simulations, and guest speakers.",
-    "officeHours": "Monday-Thursday: 1:00 PM - 3:00 PM",
-    "roomNumber": "Room 305, Business Wing",
     "email": "j.park@school.edu"
+  },
+  {
+    "id": 10,
+    "name": "Saeed Ahmed",
+    "subject": "Physical Education",
+    "classLevels": [
+      "Senior Secondary Teacher (11-12)"
+    ],
+    "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Nob29sfGVufDB8fDB8fHww",
+    "education": [
+      "PhD in BA, stanford university",
+      "phd math from, shah abdul latif universty"
+    ],
+    "experience": "15 years teaching experience",
+    "teachingExperience": [
+      "mathematic teacher at islamai college ghokti"
+    ],
+    "bio": "jqhwbefqwefwqegfwq",
+    "achievements": [],
+    "teachingPhilosophy": "qwfejkhwqefgwqef",
+    "email": "pitafisaeedking89@gmail.com"
+  },
+  {
+    "id": 11,
+    "name": "kashif",
+    "subject": "History & Social Studies",
+    "classLevels": [
+      "Primary Teacher (1-5)"
+    ],
+    "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8c2Nob29sfGVufDB8fDB8fHww",
+    "education": [
+      "adfasdfsa"
+    ],
+    "experience": "9 years coaching + 6 years teaching",
+    "teachingExperience": [
+      "asdfsadf"
+    ],
+    "bio": "Professional Biography",
+    "achievements": [
+      "asdfasdf"
+    ],
+    "teachingPhilosophy": "Teaching Philosophy",
+    "email": "pitafisaeedking89@gmail.com"
+  },
+  {
+    "id": 12,
+    "name": "asd",
+    "subject": "adasd",
+    "classLevels": [
+      "Secondary Teacher (6-8)"
+    ],
+    "image": "https://plus.unsplash.com/premium_photo-1682284353484-4e16001c58eb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8c2Nob29sfGVufDB8fDB8fHww",
+    "education": [
+      "asdasda"
+    ],
+    "experience": "asdasd",
+    "teachingExperience": [],
+    "bio": "efwefwefasdsadfs",
+    "achievements": [],
+    "teachingPhilosophy": "asdfasdfasdcsadcsadfsd",
+    "email": "pitafisaeedking89@gmail.com"
+  },
+  {
+    "id": 13,
+    "name": "Saeed Ahmed",
+    "subject": "Physical Education",
+    "classLevels": [
+      "Senior Secondary Teacher (11-12)"
+    ],
+    "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Nob29sfGVufDB8fDB8fHww",
+    "education": [
+      "PhD in BA, stanford university",
+      "phd math from, shah abdul latif universty"
+    ],
+    "experience": "15 years teaching experience",
+    "teachingExperience": [
+      "mathematic teacher at islamai college ghokti"
+    ],
+    "bio": "jqhwbefqwefwqegfwq",
+    "achievements": [],
+    "teachingPhilosophy": "qwfejkhwqefgwqef",
+    "email": "pitafisaeedking89@gmail.com"
   }
 ]

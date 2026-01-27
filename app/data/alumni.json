@@ -16,7 +16,6 @@
       "B.S. Computer Science, Class of 2018",
       "M.S. Computer Science, Stanford University"
     ],
-    "location": "San Francisco, CA",
     "email": "alexandra@example.com",
     "skills": [
       "Machine Learning",
@@ -33,22 +32,23 @@
     "image": "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     "bio": "Full-stack developer specializing in web applications and mobile development. Enjoys solving complex problems and building user-friendly interfaces.",
     "achievements": [
-      "Built award-winning mobile app",
+      "Built award-winning mobile ap",
       "Contributor to major open-source projects",
-      "Tech innovation award winner"
+      "Tech innovation award winner."
     ],
     "education": [
       "B.S. Software Engineering, Class of 2020",
       "Certified Full-Stack Developer"
     ],
-    "location": "New York, NY",
     "email": "michael.chen@example.com",
     "skills": [
       "JavaScript",
       "React",
       "Node.js",
       "Mobile Development"
-    ]
+    ],
+    "location": "",
+    "updatedAt": "2026-01-27T15:19:59.057Z"
   },
   {
     "id": 4,
@@ -66,7 +66,6 @@
       "B.A. English Literature, Class of 2017",
       "MFA Creative Writing, Iowa Writers' Workshop"
     ],
-    "location": "Chicago, IL",
     "email": "jessica.williams@college.edu",
     "skills": [
       "Creative Writing",
@@ -91,7 +90,6 @@
       "B.S. Computer Science, Class of 2019",
       "Advanced Database Management Certification"
     ],
-    "location": "Seattle, WA",
     "email": "david.park@example.com",
     "skills": [
       "Database Design",
@@ -116,7 +114,6 @@
       "B.S. Software Engineering, Class of 2016",
       "Mobile Development Certification"
     ],
-    "location": "Austin, TX",
     "email": "robert.kim@example.com",
     "skills": [
       "iOS Development",
@@ -141,7 +138,6 @@
       "B.A. English Literature, Class of 2018",
       "PhD in Renaissance Literature, University of London"
     ],
-    "location": "London, UK",
     "email": "amanda.thompson@university.edu",
     "skills": [
       "Shakespeare Studies",
@@ -166,7 +162,6 @@
       "B.S. Computer Science, Class of 2021",
       "UI/UX Design Certification"
     ],
-    "location": "Portland, OR",
     "email": "daniel.garcia@example.com",
     "skills": [
       "React",
@@ -191,7 +186,6 @@
       "B.A. English Literature, Class of 2019",
       "PhD in American Literature, Columbia University"
     ],
-    "location": "Philadelphia, PA",
     "email": "olivia.martinez@college.edu",
     "skills": [
       "Cultural Studies",
@@ -216,7 +210,6 @@
       "B.S. Software Engineering, Class of 2020",
       "AWS Solutions Architect Certification"
     ],
-    "location": "Denver, CO",
     "email": "chris.lee@example.com",
     "skills": [
       "DevOps",
@@ -234,7 +227,6 @@
     "bio": "dasasfasdfasdfsajdbfjsadbfas",
     "achievements": [],
     "education": [],
-    "location": "sdfsadfa",
     "email": "pitafisaeedking89@gmail.com",
     "skills": [],
     "createdAt": "2026-01-26T10:53:41.532Z",
@@ -253,12 +245,47 @@
     "education": [
       "bs computer save"
     ],
-    "location": "sdasjashdfasjdfsadfsadfsa",
     "email": "pitafisaeedking89@gmail.com",
     "skills": [
       "DasdASDAsdaSDA"
     ],
     "createdAt": "2026-01-26T11:05:53.562Z",
     "updatedAt": "2026-01-26T11:05:53.562Z"
+  },
+  {
+    "id": 14,
+    "name": "asdfasdfasdfsa",
+    "graduationYear": "2026",
+    "profession": "asdfsadfa",
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "bio": "nasdfasdfsad",
+    "achievements": [
+      "asdfsadf"
+    ],
+    "education": [
+      "bnbnbnbn"
+    ],
+    "location": "asdfasdf",
+    "email": "asdfsadfas@gmail.com",
+    "skills": [
+      "dfsadsadfas"
+    ],
+    "createdAt": "2026-01-27T15:23:43.154Z",
+    "updatedAt": "2026-01-27T15:23:43.154Z"
+  },
+  {
+    "id": 15,
+    "name": "adfasdfas",
+    "graduationYear": "2026",
+    "profession": "asdfasdfas",
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "bio": "fdfasdsadfa",
+    "achievements": [],
+    "education": [],
+    "location": "",
+    "email": "pitafisaeedking89@gmail.com",
+    "skills": [],
+    "createdAt": "2026-01-27T15:31:30.789Z",
+    "updatedAt": "2026-01-27T15:31:30.789Z"
   }
 ]

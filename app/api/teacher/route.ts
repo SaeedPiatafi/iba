@@ -8,6 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const id = searchParams.get('id');
+    const limit = searchParams.get('limit');
 
     let filteredTeachers = [...teachersCache];
 
@@ -26,19 +27,33 @@ export async function GET(request: Request) {
       );
     }
 
+    // Apply limit if specified and valid
+    if (limit) {
+      const limitNum = parseInt(limit, 10);
+      if (!isNaN(limitNum) && limitNum > 0) {
+        filteredTeachers = filteredTeachers.slice(0, limitNum);
+      }
+    }
+
+    // Simulate a small delay for better loading experience
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     return NextResponse.json({
       success: true,
       data: filteredTeachers,
       count: filteredTeachers.length,
+      total: teachersCache.length,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
+    console.error('Error in teachers API:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to load teachers',
         data: [],
         count: 0,
+        total: 0,
       },
       { status: 500 }
     );
