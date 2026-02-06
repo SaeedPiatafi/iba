@@ -1,11 +1,3 @@
 {
-  "uploads": [
-    {
-      "filename": "1000_students.csv",
-      "size": 91348,
-      "year": "2024-2025",
-      "uploadDate": "2026-01-27T09:38:17.320Z",
-      "totalStudents": 1000
-    }
-  ]
+  "uploads": []
 }

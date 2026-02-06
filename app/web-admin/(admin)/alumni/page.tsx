@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
 
 // Define TypeScript interfaces
 interface Alumni {
@@ -34,7 +34,11 @@ interface ApiResponse {
 // Update icon components
 const SearchIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
@@ -46,32 +50,56 @@ const EditIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 
 const DeleteIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
 const AddIcon = ({ className = "w-5 h-5 mr-2" }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M10 3a1 1 0 00-1 1v5H4a1 1 0 100 2h5v5a1 1 0 102 0v-5h5a1 1 0 100-2h-5V4a1 1 0 00-1-1z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
 const ViewIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
 const ChevronLeftIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
-const ChevronRightIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+const ChevronRightIcon = ({
+  className = "w-5 h-5",
+}: {
+  className?: string;
+}) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
@@ -103,13 +131,13 @@ export default function AdminAlumniPage() {
   const router = useRouter();
   const [alumni, setAlumni] = useState<Alumni[]>([]);
   const [filteredAlumni, setFilteredAlumni] = useState<Alumni[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [alumniToDelete, setAlumniToDelete] = useState<Alumni | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8); // Removed setter since we removed the dropdown
@@ -120,20 +148,20 @@ export default function AdminAlumniPage() {
     const fetchAlumni = async () => {
       try {
         setLoading(true);
-        setError('');
-        
-        const response = await fetch('/api/admin/alumni');
-        
+        setError("");
+
+        const response = await fetch("/api/admin/alumni");
+
         if (!response.ok) {
           throw new Error(`Failed to fetch alumni (${response.status})`);
         }
-        
+
         const responseData: ApiResponse = await response.json();
-        
+
         if (!responseData.success) {
-          throw new Error(responseData.error || 'Failed to load alumni data');
+          throw new Error(responseData.error || "Failed to load alumni data");
         }
-        
+
         // Check if data exists and is an array
         if (!responseData.data || !Array.isArray(responseData.data)) {
           setAlumni([]);
@@ -141,30 +169,34 @@ export default function AdminAlumniPage() {
           setLoading(false);
           return;
         }
-        
+
         // Ensure all alumni have the required fields
         const validatedAlumni = responseData.data.map((alum: any) => ({
           id: alum.id || 0,
-          name: alum.name || 'Unknown Alumni',
-          graduationYear: alum.graduationYear?.toString() || 'Unknown',
-          profession: alum.profession || 'Not specified',
-          image: alum.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-          bio: alum.bio || '',
-          achievements: Array.isArray(alum.achievements) ? alum.achievements : [],
+          name: alum.name || "Unknown Alumni",
+          graduationYear: alum.graduationYear?.toString() || "Unknown",
+          profession: alum.profession || "Not specified",
+          image:
+            alum.image ||
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+          bio: alum.bio || "",
+          achievements: Array.isArray(alum.achievements)
+            ? alum.achievements
+            : [],
           education: Array.isArray(alum.education) ? alum.education : [],
-          location: alum.location || 'Location not specified',
-          email: alum.email || '',
+          location: alum.location || "Location not specified",
+          email: alum.email || "",
           skills: Array.isArray(alum.skills) ? alum.skills : [],
           createdAt: alum.createdAt,
-          updatedAt: alum.updatedAt
+          updatedAt: alum.updatedAt,
         }));
-        
+
         setAlumni(validatedAlumni);
         setFilteredAlumni(validatedAlumni);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching alumni:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load alumni');
+        console.error("Error fetching alumni:", err);
+        setError(err instanceof Error ? err.message : "Failed to load alumni");
         setAlumni([]);
         setFilteredAlumni([]);
         setLoading(false);
@@ -179,13 +211,15 @@ export default function AdminAlumniPage() {
     let filtered = alumni;
 
     // Apply search filter
-    if (searchQuery.trim() !== '') {
+    if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(alum =>
-        alum.name.toLowerCase().includes(query) ||
-        alum.profession.toLowerCase().includes(query) ||
-        alum.location.toLowerCase().includes(query) ||
-        (alum.education && alum.education.some(edu => edu.toLowerCase().includes(query)))
+      filtered = filtered.filter(
+        (alum) =>
+          alum.name.toLowerCase().includes(query) ||
+          alum.profession.toLowerCase().includes(query) ||
+          alum.location.toLowerCase().includes(query) ||
+          (alum.education &&
+            alum.education.some((edu) => edu.toLowerCase().includes(query))),
       );
     }
 
@@ -198,7 +232,7 @@ export default function AdminAlumniPage() {
     const total = filteredAlumni.length;
     const pages = Math.ceil(total / itemsPerPage);
     setTotalPages(pages);
-    
+
     // Ensure current page is valid
     if (currentPage > pages && pages > 0) {
       setCurrentPage(pages);
@@ -213,7 +247,7 @@ export default function AdminAlumniPage() {
   };
 
   const handleAddNew = () => {
-    router.push('/web-admin/alumni/new');
+    router.push("/web-admin/alumni/new");
   };
 
   const handleEdit = (id: number) => {
@@ -229,42 +263,39 @@ export default function AdminAlumniPage() {
     setShowDeleteModal(true);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!alumniToDelete) return;
+  // In app/web-admin/alumni/page.tsx - Update ONLY the handleDeleteConfirm function
+const handleDeleteConfirm = async () => {
+  if (!alumniToDelete) return;
+  
+  setDeleteLoading(true);
+  try {
+    // Send DELETE request with ID in URL
+    const response = await fetch(`/api/admin/alumni?id=${alumniToDelete.id}`, {
+      method: 'DELETE',
+    });
     
-    setDeleteLoading(true);
-    try {
-      const response = await fetch('/api/admin/alumni', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: alumniToDelete.id }),
-      });
-      
-      const responseData = await response.json();
-      
-      if (!response.ok || !responseData.success) {
-        throw new Error(responseData.error || 'Failed to delete alumni');
-      }
-      
-      // Remove from state
-      setAlumni(prev => prev.filter(a => a.id !== alumniToDelete.id));
-      setFilteredAlumni(prev => prev.filter(a => a.id !== alumniToDelete.id));
-      
-      // Show success message
-      alert(responseData.message || 'Alumni deleted successfully!');
-      
-      setShowDeleteModal(false);
-      setAlumniToDelete(null);
-    } catch (error) {
-      console.error('Error deleting alumni:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete alumni. Please try again.');
-    } finally {
-      setDeleteLoading(false);
+    const responseData = await response.json();
+    
+    if (!response.ok || !responseData.success) {
+      throw new Error(responseData.error || 'Failed to delete alumni');
     }
-  };
-
+    
+    // Remove from state WITHOUT showing alert
+    setAlumni(prev => prev.filter(a => a.id !== alumniToDelete.id));
+    setFilteredAlumni(prev => prev.filter(a => a.id !== alumniToDelete.id));
+    
+    // Close modal WITHOUT showing alert
+    setShowDeleteModal(false);
+    setAlumniToDelete(null);
+    
+  } catch (error) {
+    console.error('Error deleting alumni:', error);
+    // Only show alert on error
+    alert(error instanceof Error ? error.message : 'Failed to delete alumni. Please try again.');
+  } finally {
+    setDeleteLoading(false);
+  }
+};
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
     setAlumniToDelete(null);
@@ -274,50 +305,52 @@ export default function AdminAlumniPage() {
   const refreshAlumni = async () => {
     try {
       setLoading(true);
-      setError('');
-      
-      const response = await fetch('/api/admin/alumni');
-      
+      setError("");
+
+      const response = await fetch("/api/admin/alumni");
+
       if (!response.ok) {
         throw new Error(`Failed to fetch alumni (${response.status})`);
       }
-      
+
       const responseData: ApiResponse = await response.json();
-      
+
       if (!responseData.success) {
-        throw new Error(responseData.error || 'Failed to load alumni data');
+        throw new Error(responseData.error || "Failed to load alumni data");
       }
-      
+
       if (!responseData.data || !Array.isArray(responseData.data)) {
         setAlumni([]);
         setFilteredAlumni([]);
         setLoading(false);
         return;
       }
-      
+
       const validatedAlumni = responseData.data.map((alum: any) => ({
         id: alum.id || 0,
-        name: alum.name || 'Unknown Alumni',
-        graduationYear: alum.graduationYear?.toString() || 'Unknown',
-        profession: alum.profession || 'Not specified',
-        image: alum.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-        bio: alum.bio || '',
+        name: alum.name || "Unknown Alumni",
+        graduationYear: alum.graduationYear?.toString() || "Unknown",
+        profession: alum.profession || "Not specified",
+        image:
+          alum.image ||
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+        bio: alum.bio || "",
         achievements: Array.isArray(alum.achievements) ? alum.achievements : [],
         education: Array.isArray(alum.education) ? alum.education : [],
-        location: alum.location || 'Location not specified',
-        email: alum.email || '',
+        location: alum.location || "Location not specified",
+        email: alum.email || "",
         skills: Array.isArray(alum.skills) ? alum.skills : [],
         createdAt: alum.createdAt,
-        updatedAt: alum.updatedAt
+        updatedAt: alum.updatedAt,
       }));
-      
+
       setAlumni(validatedAlumni);
       setFilteredAlumni(validatedAlumni);
       setLoading(false);
       setCurrentPage(1);
     } catch (err) {
-      console.error('Error refreshing alumni:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load alumni');
+      console.error("Error refreshing alumni:", err);
+      setError(err instanceof Error ? err.message : "Failed to load alumni");
       setLoading(false);
     }
   };
@@ -326,21 +359,21 @@ export default function AdminAlumniPage() {
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -348,7 +381,7 @@ export default function AdminAlumniPage() {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -358,25 +391,25 @@ export default function AdminAlumniPage() {
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         pages.push(currentPage - 1);
         pages.push(currentPage);
         pages.push(currentPage + 1);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -389,15 +422,13 @@ export default function AdminAlumniPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Alumni Management</h1>
-              <p className="text-gray-600">Manage your distinguished alumni and their achievements</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Alumni Management
+              </h1>
+              <p className="text-gray-600">
+                Manage your distinguished alumni and their achievements
+              </p>
             </div>
-            <button
-              onClick={refreshAlumni}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors duration-200"
-            >
-              Refresh
-            </button>
           </div>
         </div>
 
@@ -412,17 +443,29 @@ export default function AdminAlumniPage() {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setSearchQuery(e.target.value)
+                }
                 placeholder="Search alumni by name, profession, or location..."
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchQuery("")}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               )}
@@ -449,7 +492,9 @@ export default function AdminAlumniPage() {
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 font-medium mb-2">Error loading alumni data</p>
+            <p className="text-red-600 font-medium mb-2">
+              Error loading alumni data
+            </p>
             <p className="text-red-700 text-sm mb-3">{error}</p>
             <div className="flex space-x-2">
               <button
@@ -459,7 +504,7 @@ export default function AdminAlumniPage() {
                 Try Again
               </button>
               <button
-                onClick={() => router.push('/web-admin/alumni/new')}
+                onClick={() => router.push("/web-admin/alumni/new")}
                 className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium rounded transition-colors"
               >
                 Add First Alumni
@@ -491,7 +536,8 @@ export default function AdminAlumniPage() {
                         alt={alum.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
+                          e.currentTarget.src =
+                            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
                         }}
                       />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
@@ -503,8 +549,12 @@ export default function AdminAlumniPage() {
 
                     {/* Alumni Info - Only name and profession */}
                     <div className="p-5">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">{alum.name}</h3>
-                      <p className="text-blue-600 font-medium mb-4 truncate">{alum.profession}</p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
+                        {alum.name}
+                      </h3>
+                      <p className="text-blue-600 font-medium mb-4 truncate">
+                        {alum.profession}
+                      </p>
 
                       {/* Action Buttons - 3 buttons now */}
                       <div className="grid grid-cols-3 gap-2">
@@ -537,22 +587,39 @@ export default function AdminAlumniPage() {
                 // No results message
                 <div className="col-span-full text-center py-12">
                   <div className="text-gray-400 mb-4">
-                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    <svg
+                      className="w-16 h-16 mx-auto"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 14l9-5-9-5-9 5 9 5z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+                      />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No alumni found</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No alumni found
+                  </h3>
                   <p className="text-gray-600 mb-6">
-                    {searchQuery 
-                      ? "No alumni match your search criteria." 
+                    {searchQuery
+                      ? "No alumni match your search criteria."
                       : "No alumni have been added yet. Start by adding your first alumni!"}
                   </p>
                   <div className="space-x-3">
                     {searchQuery && (
                       <button
                         onClick={() => {
-                          setSearchQuery('');
+                          setSearchQuery("");
                         }}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
                       >
@@ -581,11 +648,17 @@ export default function AdminAlumniPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               {/* Page info */}
               <div className="text-sm text-gray-600">
-                Showing <span className="font-semibold">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                Showing{" "}
+                <span className="font-semibold">
+                  {(currentPage - 1) * itemsPerPage + 1}
+                </span>{" "}
+                to{" "}
                 <span className="font-semibold">
                   {Math.min(currentPage * itemsPerPage, filteredAlumni.length)}
-                </span> of{' '}
-                <span className="font-semibold">{filteredAlumni.length}</span> alumni
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold">{filteredAlumni.length}</span>{" "}
+                alumni
               </div>
 
               {/* Pagination buttons */}
@@ -601,9 +674,12 @@ export default function AdminAlumniPage() {
 
                 {/* Page numbers */}
                 <div className="flex items-center space-x-1">
-                  {getPageNumbers().map((pageNum, index) => (
-                    pageNum === '...' ? (
-                      <span key={`ellipsis-${index}`} className="px-3 py-1 text-gray-400">
+                  {getPageNumbers().map((pageNum, index) =>
+                    pageNum === "..." ? (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="px-3 py-1 text-gray-400"
+                      >
                         ...
                       </span>
                     ) : (
@@ -612,14 +688,14 @@ export default function AdminAlumniPage() {
                         onClick={() => goToPage(pageNum as number)}
                         className={`px-3 py-1 rounded-lg transition-colors ${
                           currentPage === pageNum
-                            ? 'bg-blue-600 text-white'
-                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                            ? "bg-blue-600 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                         }`}
                       >
                         {pageNum}
                       </button>
-                    )
-                  ))}
+                    ),
+                  )}
                 </div>
 
                 {/* Next button */}
@@ -641,9 +717,14 @@ export default function AdminAlumniPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Delete Alumni</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Delete Alumni
+              </h3>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete <span className="font-semibold">{alumniToDelete.name}</span> (Class of {alumniToDelete.graduationYear})? This action cannot be undone.
+                Are you sure you want to delete{" "}
+                <span className="font-semibold">{alumniToDelete.name}</span>{" "}
+                (Class of {alumniToDelete.graduationYear})? This action cannot
+                be undone.
               </p>
               <div className="flex space-x-3">
                 <button
@@ -664,7 +745,7 @@ export default function AdminAlumniPage() {
                       <span className="ml-2">Deleting...</span>
                     </div>
                   ) : (
-                    'Delete Alumni'
+                    "Delete Alumni"
                   )}
                 </button>
               </div>

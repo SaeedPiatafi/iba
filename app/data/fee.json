@@ -1,8 +1,4 @@
 {
-  "academicYear": "2025-2026",
-  "lastUpdated": "2026-01-26",
-  "currency": "PKR",
-  "schoolName": "The Educators",
   "feeStructure": [
     {
       "id": 3,
@@ -111,6 +107,20 @@
       "monthlyFee": 18000,
       "otherCharges": 22000,
       "description": "Board exam preparation, university counseling, and career guidance"
+    },
+    {
+      "id": 15,
+      "className": "PG (Play Group)",
+      "category": "Primary",
+      "admissionFee": "Rs. 2,134,213",
+      "monthlyFee": "Rs. 1,234,123",
+      "annualFee": "Rs. 14,809,476",
+      "otherCharges": "Rs. 23,421",
+      "totalAnnual": "Rs. 16,967,110",
+      "description": "dewdwedqwdwed",
+      "isActive": true,
+      "createdAt": "2026-01-28T13:47:43.930Z",
+      "updatedAt": "2026-01-28T13:47:43.930Z"
     }
   ]
 }

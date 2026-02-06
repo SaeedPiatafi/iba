@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 // Icons
@@ -24,46 +24,6 @@ const SaveIcon = () => (
   </svg>
 );
 
-const SuccessIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-    <path
-      fillRule="evenodd"
-      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
-const WarningIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-    <path
-      fillRule="evenodd"
-      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
-const ErrorIcon = () => (
-  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-    <path
-      fillRule="evenodd"
-      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-    <path
-      fillRule="evenodd"
-      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
 interface FeeFormData {
   className: string;
   category: string;
@@ -75,26 +35,100 @@ interface FeeFormData {
   description: string;
 }
 
-interface Notification {
-  type: "success" | "error" | "warning" | "info";
-  message: string;
-  visible: boolean;
-}
-
 interface DuplicateModal {
   visible: boolean;
   message: string;
   className: string;
 }
 
+// Class-Category Mapping
+const CLASS_CATEGORY_MAP: Record<string, string> = {
+  // Pre-School Classes
+  "PG (Play Group)": "Pre-School",
+  "KG (Kindergarten)": "Pre-School",
+  "Nursery": "Pre-School",
+  "Playgroup": "Pre-School",
+  "KG-1": "Pre-School",
+  "KG-2": "Pre-School",
+  "KG": "Pre-School",
+  
+  // Primary Classes
+  "Class 1": "Primary",
+  "Class 2": "Primary",
+  "Class 3": "Primary",
+  "Class 4": "Primary",
+  "Class 5": "Primary",
+  "Grade 1": "Primary",
+  "Grade 2": "Primary",
+  "Grade 3": "Primary",
+  "Grade 4": "Primary",
+  "Grade 5": "Primary",
+  
+  // Middle School Classes
+  "Class 6": "Middle School",
+  "Class 7": "Middle School",
+  "Class 8": "Middle School",
+  "Grade 6": "Middle School",
+  "Grade 7": "Middle School",
+  "Grade 8": "Middle School",
+  
+  // Secondary Classes
+  "Class 9": "Secondary",
+  "Class 10": "Secondary",
+  "Grade 9": "Secondary",
+  "Grade 10": "Secondary",
+  "Matric 9": "Secondary",
+  "Matric 10": "Secondary",
+  
+  // Higher Secondary Classes
+  "Class 11": "Higher Secondary",
+  "Class 12": "Higher Secondary",
+  "Grade 11": "Higher Secondary",
+  "Grade 12": "Higher Secondary",
+  "F.Sc 1": "Higher Secondary",
+  "F.Sc 2": "Higher Secondary",
+  "A-Level 1": "Higher Secondary",
+  "A-Level 2": "Higher Secondary",
+};
+
+// Category colors for badges
+const CATEGORY_COLORS: Record<string, string> = {
+  "Pre-School": "bg-pink-100 text-pink-800 border-pink-200",
+  "Primary": "bg-blue-100 text-blue-800 border-blue-200",
+  "Middle School": "bg-green-100 text-green-800 border-green-200",
+  "Secondary": "bg-yellow-100 text-yellow-800 border-yellow-200",
+  "Higher Secondary": "bg-purple-100 text-purple-800 border-purple-200",
+};
+
+// Available class options
+const CLASS_OPTIONS = [
+  "PG (Play Group)",
+  "KG (Kindergarten)",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+];
+
+const CATEGORY_OPTIONS = [
+  "Pre-School",
+  "Primary",
+  "Middle School",
+  "Secondary",
+  "Higher Secondary",
+];
+
 export default function NewFeePage() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-  const [notification, setNotification] = useState<Notification>({
-    type: "info",
-    message: "",
-    visible: false,
-  });
   const [duplicateModal, setDuplicateModal] = useState<DuplicateModal>({
     visible: false,
     message: "",
@@ -111,30 +145,9 @@ export default function NewFeePage() {
     description: "",
   });
 
-  const parseCurrencyToNumber = (value: string): number => {
-    if (typeof value !== "string") return 0;
-    const cleaned = value.replace(/[^\d]/g, "");
-    return parseInt(cleaned) || 0;
-  };
-
+  // Format number to currency string with Rs. prefix
   const formatCurrency = (amount: number): string => {
     return `Rs. ${amount.toLocaleString()}`;
-  };
-
-  const showNotification = (
-    type: "success" | "error" | "warning" | "info",
-    message: string,
-  ) => {
-    setNotification({
-      type,
-      message,
-      visible: true,
-    });
-
-    // Auto hide after 5 seconds
-    setTimeout(() => {
-      setNotification((prev) => ({ ...prev, visible: false }));
-    }, 5000);
   };
 
   const showDuplicateModal = (className: string, message: string) => {
@@ -153,35 +166,75 @@ export default function NewFeePage() {
     });
   };
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
+  // Handle class selection change
+  const handleClassChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const className = e.target.value;
+    
+    // Set the class name
+    setFormData(prev => ({
+      ...prev,
+      className
+    }));
 
-    // Hide notifications when user starts typing
-    if (notification.visible) {
-      setNotification((prev) => ({ ...prev, visible: false }));
+    // Auto-select category based on class
+    if (className && CLASS_CATEGORY_MAP[className]) {
+      setFormData(prev => ({
+        ...prev,
+        category: CLASS_CATEGORY_MAP[className]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        category: ""
+      }));
     }
-    if (duplicateModal.visible) {
-      closeDuplicateModal();
-    }
+  };
 
-    if (
-      name === "monthlyFee" ||
-      name === "otherCharges" ||
-      name === "admissionFee"
-    ) {
-      // Calculate annual and total automatically
-      const monthlyFee = name === "monthlyFee" ? value : formData.monthlyFee;
-      const otherCharges =
-        name === "otherCharges" ? value : formData.otherCharges;
-      const admissionFee =
-        name === "admissionFee" ? value : formData.admissionFee;
+  // Handle category change (manual override)
+  const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      category: e.target.value
+    }));
+  };
 
-      // Parse values to numbers
-      const monthlyNum = parseCurrencyToNumber(monthlyFee);
-      const otherNum = parseCurrencyToNumber(otherCharges);
-      const admissionNum = parseCurrencyToNumber(admissionFee);
+  // Handle fee input change - FIXED: No rounding
+const handleFeeChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+
+  // For number inputs, get the numeric value directly
+  const numericValue = e.target.valueAsNumber;
+  
+  // Check if it's a valid number
+  if (!isNaN(numericValue) && numericValue >= 0) {
+    // Store as string without formatting
+    setFormData(prev => ({
+      ...prev,
+      [name]: numericValue.toString()
+    }));
+  } else if (value === '') {
+    // Allow empty value
+    setFormData(prev => ({
+      ...prev,
+      [name]: ''
+    }));
+  }
+};
+
+  // Handle textarea change
+  const handleTextareaChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      description: e.target.value
+    }));
+  };
+
+  // Calculate fees when monthly fee or other charges change
+  useEffect(() => {
+    const calculateFees = () => {
+      const monthlyNum = parseFloat(formData.monthlyFee) || 0;
+      const admissionNum = parseFloat(formData.admissionFee) || 0;
+      const otherNum = parseFloat(formData.otherCharges) || 0;
 
       // Calculate annual fee (monthly * 12)
       const annualNum = monthlyNum * 12;
@@ -191,150 +244,96 @@ export default function NewFeePage() {
       const totalNum = admissionNum + annualNum + otherNum;
       const totalAnnual = formatCurrency(totalNum);
 
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
-        [name]: value,
         annualFee,
-        totalAnnual,
+        totalAnnual
       }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+    };
+
+    calculateFees();
+  }, [formData.monthlyFee, formData.admissionFee, formData.otherCharges]);
+
+  // In NewFeePage.tsx - Update the handleSubmit function:
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    // Validate required fields
+    if (!formData.className || !formData.category || !formData.monthlyFee) {
+      throw new Error("Please fill in all required fields (*)");
     }
-  };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
+    // Parse numeric values - convert string numbers to actual numbers
+    const admissionFee = parseFloat(formData.admissionFee) || 0;
+    const monthlyFee = parseFloat(formData.monthlyFee) || 0;
+    const otherCharges = parseFloat(formData.otherCharges) || 0;
 
-    try {
-      // Ensure all calculations are done
-      const monthlyNum = parseCurrencyToNumber(formData.monthlyFee);
-      const admissionNum = parseCurrencyToNumber(formData.admissionFee);
-      const otherNum = parseCurrencyToNumber(formData.otherCharges);
+    // Validate monthly fee is positive
+    if (monthlyFee <= 0) {
+      throw new Error("Monthly fee must be greater than 0");
+    }
 
-      const annualNum = monthlyNum * 12;
-      const totalNum = admissionNum + annualNum + otherNum;
+    // IMPORTANT: Send raw numbers, NOT formatted strings with "Rs."
+    const finalFormData = {
+      className: formData.className,
+      category: formData.category,
+      admissionFee: admissionFee, // Send as number, not "Rs. X,XXX"
+      monthlyFee: monthlyFee,     // Send as number, not "Rs. X,XXX"
+      otherCharges: otherCharges, // Send as number, not "Rs. X,XXX"
+      description: formData.description,
+    };
 
-      const finalFormData = {
-        className: formData.className,
-        category: formData.category,
-        admissionFee: formData.admissionFee,
-        monthlyFee: formData.monthlyFee,
-        otherCharges: formData.otherCharges,
-        description: formData.description,
-      };
+    console.log("Submitting fee data (raw numbers):", finalFormData);
 
-      // Submit to API
-      const response = await fetch("/api/admin/fee", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(finalFormData),
-      });
+    // Submit to API
+    const response = await fetch("/api/admin/fee", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(finalFormData),
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (!response.ok) {
-        if (response.status === 409 && result.duplicate) {
-          // Show duplicate fee structure modal
-          showDuplicateModal(
-            formData.className,
-            result.error || "Fee structure for this class already exists",
-          );
-          setLoading(false);
-          return;
-        }
-        throw new Error(result.error || "Failed to save fee data");
+    if (!response.ok) {
+      if (response.status === 409 && result.duplicate) {
+        // Show duplicate fee structure modal
+        showDuplicateModal(
+          formData.className,
+          result.error || "Fee structure for this class already exists",
+        );
+        setLoading(false);
+        return;
       }
-
-      // Show success notification
-      showNotification(
-        "success",
-        result.message || "Fee structure saved successfully!",
-      );
-
-      // Redirect to fees list after 2 seconds
-      setTimeout(() => {
-        router.push("/web-admin/fee");
-        router.refresh();
-      }, 2000);
-    } catch (err: any) {
-      console.error("Error saving fee:", err);
-      showNotification(
-        "error",
-        err.message || "Failed to save fee. Please try again.",
-      );
-      setLoading(false);
+      throw new Error(result.error || "Failed to save fee data");
     }
-  };
+
+    // Direct redirect without notification
+    router.push("/web-admin/fee");
+    router.refresh();
+    
+  } catch (err: any) {
+    console.error("Error saving fee:", err);
+    // Show error modal
+    showDuplicateModal(
+      formData.className,
+      err.message || "Failed to save fee. Please try again."
+    );
+    setLoading(false);
+  }
+};
 
   const handleBack = () => {
     router.push("/web-admin/fee");
   };
 
-  const getNotificationStyles = (type: Notification["type"]) => {
-    switch (type) {
-      case "success":
-        return "bg-green-50 border-green-200 text-green-800";
-      case "error":
-        return "bg-red-50 border-red-200 text-red-800";
-      case "warning":
-        return "bg-yellow-50 border-yellow-200 text-yellow-800";
-      case "info":
-        return "bg-blue-50 border-blue-200 text-blue-800";
-      default:
-        return "bg-gray-50 border-gray-200 text-gray-800";
-    }
+  // Get category badge class
+  const getCategoryBadgeClass = (category: string) => {
+    return CATEGORY_COLORS[category] || "bg-gray-100 text-gray-800 border-gray-200";
   };
-
-  const getNotificationIcon = (type: Notification["type"]) => {
-    switch (type) {
-      case "success":
-        return <SuccessIcon />;
-      case "error":
-        return <ErrorIcon />;
-      case "warning":
-        return <WarningIcon />;
-      case "info":
-        return (
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-              clipRule="evenodd"
-            />
-          </svg>
-        );
-    }
-  };
-
-  const categories: string[] = [
-    "Pre-School",
-    "Primary",
-    "Middle School",
-    "Secondary",
-    "Higher Secondary",
-  ];
-  const classOptions: string[] = [
-    "PG (Play Group)",
-    "KG (Kindergarten)",
-    "Class 1",
-    "Class 2",
-    "Class 3",
-    "Class 4",
-    "Class 5",
-    "Class 6",
-    "Class 7",
-    "Class 8",
-    "Class 9",
-    "Class 10",
-    "Class 11",
-    "Class 12",
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -353,21 +352,9 @@ export default function NewFeePage() {
             Add New Fee Structure
           </h1>
           <p className="text-gray-600">
-            Fill in the fee details for a specific class
+            Create a new fee structure for a specific class
           </p>
         </div>
-
-        {/* Success/Error Notification */}
-        {notification.visible && (
-          <div
-            className={`mb-6 p-4 border rounded-lg ${getNotificationStyles(notification.type)}`}
-          >
-            <div className="flex items-center">
-              {getNotificationIcon(notification.type)}
-              <span className="font-medium">{notification.message}</span>
-            </div>
-          </div>
-        )}
 
         {/* Duplicate Fee Structure Modal */}
         {duplicateModal.visible && (
@@ -383,7 +370,9 @@ export default function NewFeePage() {
               <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
                 <div className="sm:flex sm:items-start">
                   <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <WarningIcon />
+                    <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -398,9 +387,7 @@ export default function NewFeePage() {
                           Class: {duplicateModal.className}
                         </p>
                         <p className="text-sm text-yellow-700 mt-1">
-                          A fee structure for this class already exists in the
-                          system. Please choose a different class or edit the
-                          existing fee structure.
+                          A fee structure for this class already exists in the system. Please choose a different class or edit the existing fee structure.
                         </p>
                       </div>
                     </div>
@@ -432,14 +419,14 @@ export default function NewFeePage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information Section */}
+          {/* Class Information Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">
               Class Information
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Class */}
+              {/* Class Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Class/Level *
@@ -447,24 +434,23 @@ export default function NewFeePage() {
                 <select
                   name="className"
                   value={formData.className}
-                  onChange={handleChange}
+                  onChange={handleClassChange}
                   required
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 >
                   <option value="">Select Class</option>
-                  {classOptions.map((cls) => (
+                  {CLASS_OPTIONS.map((cls) => (
                     <option key={cls} value={cls}>
                       {cls}
                     </option>
                   ))}
                 </select>
                 <p className="mt-1 text-sm text-gray-500">
-                  {formData.className &&
-                    "Check if this class already has a fee structure"}
+                  Select a class and the category will be auto-selected
                 </p>
               </div>
 
-              {/* Category */}
+              {/* Category Display (Auto-selected) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
@@ -472,17 +458,29 @@ export default function NewFeePage() {
                 <select
                   name="category"
                   value={formData.category}
-                  onChange={handleChange}
+                  onChange={handleCategoryChange}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
+                    formData.category ? getCategoryBadgeClass(formData.category).split(' ')[0] + ' bg-opacity-20' : ''
+                  }`}
                 >
                   <option value="">Select Category</option>
-                  {categories.map((cat) => (
+                  {CATEGORY_OPTIONS.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
                   ))}
                 </select>
+                {formData.category && (
+                  <div className="mt-2">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getCategoryBadgeClass(formData.category)}`}>
+                      {formData.category} 
+                      {formData.className && CLASS_CATEGORY_MAP[formData.className] === formData.category && (
+                        <span className="ml-1">(Auto-selected)</span>
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
@@ -493,11 +491,11 @@ export default function NewFeePage() {
                 <textarea
                   name="description"
                   value={formData.description}
-                  onChange={handleChange}
+                  onChange={handleTextareaChange}
                   required
                   rows={3}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  placeholder="Describe what's included in the fee (e.g., textbooks, lab fees, etc.)"
+                  placeholder="Describe what's included in the fee (e.g., textbooks, lab fees, uniform, etc.)"
                 />
               </div>
             </div>
@@ -506,32 +504,11 @@ export default function NewFeePage() {
           {/* Fee Structure Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">
-              Fee Structure
+              Fee Details
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Admission Fee */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Admission Fee *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500">Rs.</span>
-                  </div>
-                  <input
-                    type="text"
-                    name="admissionFee"
-                    value={formData.admissionFee}
-                    onChange={handleChange}
-                    required
-                    className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="15,000"
-                  />
-                </div>
-              </div>
-
-              {/* Monthly Fee */}
+            <div className="space-y-6">
+              {/* Monthly Fee - Most Important */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Monthly Fee *
@@ -541,18 +518,46 @@ export default function NewFeePage() {
                     <span className="text-gray-500">Rs.</span>
                   </div>
                   <input
-                    type="text"
+                    type="number"
                     name="monthlyFee"
                     value={formData.monthlyFee}
-                    onChange={handleChange}
+                    onChange={handleFeeChange}
                     required
+                    min="1"
+                    step="any"
                     className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="8,000"
+                    placeholder="Enter monthly fee"
                   />
                 </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  Annual: {formData.annualFee || "Rs. 0"}
-                </p>
+                <div className="mt-2 flex items-center text-sm">
+                  <span className="text-gray-600">Annual: </span>
+                  <span className="ml-2 font-semibold text-green-600">
+                    {formData.annualFee || "Rs. 0"}
+                  </span>
+                  <span className="ml-4 text-gray-500">(Monthly × 12)</span>
+                </div>
+              </div>
+
+              {/* Admission Fee */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Admission Fee
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500">Rs.</span>
+                  </div>
+                  <input
+                    type="number"
+                    name="admissionFee"
+                    value={formData.admissionFee}
+                    onChange={handleFeeChange}
+                    min="0"
+                    step="any"
+                    className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="Enter one-time admission fee"
+                  />
+                </div>
               </div>
 
               {/* Other Charges */}
@@ -565,71 +570,31 @@ export default function NewFeePage() {
                     <span className="text-gray-500">Rs.</span>
                   </div>
                   <input
-                    type="text"
+                    type="number"
                     name="otherCharges"
                     value={formData.otherCharges}
-                    onChange={handleChange}
+                    onChange={handleFeeChange}
+                    min="0"
+                    step="any"
                     className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    placeholder="5,000"
+                    placeholder="Enter other charges (lab, library, etc.)"
                   />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Preview Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Fee Preview
-            </h2>
-
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {formData.className || "Class Name"}
-                  </h3>
-                  {formData.category && (
-                    <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mt-2">
-                      {formData.category}
-                    </span>
-                  )}
-                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  Optional: Additional one-time charges
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Admission Fee</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {formData.admissionFee || "Rs. 0"}
-                  </p>
+              {/* Total Display - Simple */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900">Total Annual Fee:</span>
+                  <span className="text-2xl font-bold text-blue-700">{formData.totalAnnual || "Rs. 0"}</span>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Monthly Fee</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {formData.monthlyFee || "Rs. 0"}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Other Charges</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {formData.otherCharges || "Rs. 0"}
-                  </p>
-                </div>
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg border border-blue-600">
-                  <p className="text-sm text-white mb-1">Total Annual</p>
-                  <p className="text-xl font-bold text-white">
-                    {formData.totalAnnual || "Rs. 0"}
-                  </p>
-                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Calculated as: Admission Fee + (Monthly Fee × 12) + Other Charges
+                </p>
               </div>
-
-              {formData.description && (
-                <div className="border-t border-gray-200 pt-4">
-                  <p className="text-sm text-gray-600 mb-2">Description:</p>
-                  <p className="text-gray-800">{formData.description}</p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -655,13 +620,27 @@ export default function NewFeePage() {
               ) : (
                 <>
                   <SaveIcon />
-                  Save Fee Structure
+                  Save
                 </>
               )}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Add CSS for animation */}
+      <style jsx>{`
+        /* Hide number input spinners */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
     </div>
   );
 }

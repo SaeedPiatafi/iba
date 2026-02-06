@@ -120,32 +120,25 @@
   },
   {
     "id": 8,
-    "name": "Mr. Thomas O'Reilly",
-    "subject": "Music & Performing Arts",
+    "name": "Coffee shop 123",
+    "subject": "asfsadfasdfasda",
     "classLevels": [
-      "Senior Secondary Teacher (11-12)",
-      "Higher Secondary Teacher (9-10)",
-      "Secondary Teacher (6-8)"
+      "Higher Secondary Teacher (9-10)"
     ],
-    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "image": "https://unsplash.com/photos/man-in-white-crew-neck-shirt-wearing-black-framed-eyeglasses-C8Ta0gwPbQg",
     "education": [
-      "M.M. in Music Education, Juilliard School",
-      "B.M. in Performance, Berklee College of Music"
+      "asdfasdfas"
     ],
-    "experience": "11 years teaching + 8 years performing",
+    "experience": "asdasdf",
     "teachingExperience": [
-      "Director of Performing Arts (2017-Present)",
-      "Professional Musician and Composer (2010-2017)",
-      "Music Teacher, Private School (2009-2010)"
+      "asdfasfd"
     ],
-    "bio": "Mr. O'Reilly directs award-winning music programs and teaches students to appreciate music theory, history, and performance.",
+    "bio": "asdfsa",
     "achievements": [
-      "Grammy Music Educator Award nominee",
-      "Composed original score for school musical",
-      "Student ensembles won multiple state competitions"
+      "asdfsaf"
     ],
-    "teachingPhilosophy": "Combines technical mastery with creative expression to help students discover their unique musical voice.",
-    "email": "t.oreilly@school.edu"
+    "teachingPhilosophy": "sadfsa",
+    "email": "asdfsadf@gmail.com"
   },
   {
     "id": 9,
@@ -238,23 +231,68 @@
   },
   {
     "id": 13,
-    "name": "Saeed Ahmed",
-    "subject": "Physical Education",
+    "name": "dASAdsa",
+    "subject": "asdaSDa",
     "classLevels": [
-      "Senior Secondary Teacher (11-12)"
+      "Higher Secondary Teacher (9-10)"
     ],
-    "image": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c2Nob29sfGVufDB8fDB8fHww",
+    "image": "https://unsplash.com/photos/business-meeting-and-teamwork-by-business-people-in-office-EBZ-26hS4kk",
     "education": [
-      "PhD in BA, stanford university",
-      "phd math from, shah abdul latif universty"
+      "ASasdaS"
     ],
-    "experience": "15 years teaching experience",
+    "experience": "ASDAsdaD",
     "teachingExperience": [
-      "mathematic teacher at islamai college ghokti"
+      "sADasdAD"
     ],
-    "bio": "jqhwbefqwefwqegfwq",
-    "achievements": [],
-    "teachingPhilosophy": "qwfejkhwqefgwqef",
+    "bio": "ASDasdASDa",
+    "achievements": [
+      "AsdaSDAs"
+    ],
+    "teachingPhilosophy": "ASDasdASDAsdSDqwcqweqwe",
     "email": "pitafisaeedking89@gmail.com"
+  },
+  {
+    "id": 14,
+    "name": "Saeed Ahmed",
+    "subject": "asdfasdfasdfsa",
+    "classLevels": [
+      "Higher Secondary Teacher (9-10)"
+    ],
+    "image": "https://plus.unsplash.com/premium_photo-1682284353484-4e16001c58eb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8c2Nob29sfGVufDB8fDB8fHww",
+    "education": [
+      "asdfsadf"
+    ],
+    "experience": "asdfsad",
+    "teachingExperience": [
+      "sadfas"
+    ],
+    "bio": "asdfsaf",
+    "achievements": [
+      "asdfsa"
+    ],
+    "teachingPhilosophy": "adfasdf",
+    "email": "asdfsa@gmail.com"
+  },
+  {
+    "id": 15,
+    "name": "Dr. Sarah Johnson",
+    "subject": "asdfasdf",
+    "classLevels": [
+      "Higher Secondary Teacher (9-10)"
+    ],
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "education": [
+      "sadfasdf"
+    ],
+    "experience": "asdfasdfa",
+    "teachingExperience": [
+      "asdfsafd"
+    ],
+    "bio": "sdafasdfas",
+    "achievements": [
+      "sadfsadasdfasd"
+    ],
+    "teachingPhilosophy": "asdfasdfsa",
+    "email": "adadfasdfwe@gmail.com"
   }
 ]

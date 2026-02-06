@@ -1,50 +1,40 @@
-"use client";
+// app/web-admin/login/page.tsx - WITH COOKIE TEST
+'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
 
-  useEffect(() => {
-    // Check if already logged in
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/admin/validate');
-        const data = await response.json();
-        
-        if (data.success && data.authenticated) {
-          router.push('/web-admin/fee');
-        }
-      } catch (error) {
-        // Not authenticated, stay on login page
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+  const testAuth = async () => {
+    try {
+      console.log('Testing auth...');
+      const response = await fetch('/api/admin/test-auth');
+      const data = await response.json();
+      console.log('Auth test result:', data);
+      return data.success;
+    } catch (err) {
+      console.error('Auth test error:', err);
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setRemainingAttempts(null);
 
-    // Basic client-side validation
     if (!email || !password) {
       setError('Please enter both email and password');
       setLoading(false);
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address');
@@ -53,43 +43,40 @@ export default function AdminLoginPage() {
     }
 
     try {
+      console.log('Sending login request...');
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-        credentials: 'same-origin',
       });
 
       const data = await response.json();
-
-      if (response.status === 429) {
-        setError(`Too many attempts. Please try again in ${data.retryAfter} seconds.`);
-        setLoading(false);
-        return;
-      }
-
-      if (response.status === 423) {
-        setError(`Account locked. ${data.error}`);
-        setLoading(false);
-        return;
-      }
+      console.log('Login response:', data);
 
       if (!response.ok) {
         setError(data.error || 'Login failed');
-        setRemainingAttempts(data.remainingAttempts || null);
         setLoading(false);
         return;
       }
 
       if (data.success) {
-        // Success - redirect to admin dashboard
-        router.push('/web-admin/fee');
-        router.refresh();
+        console.log('Login successful, testing auth...');
+        
+        // Test if auth is working
+        const authTest = await testAuth();
+        console.log('Auth test passed?', authTest);
+        
+        if (authTest) {
+          console.log('Auth working, redirecting...');
+          // Force a hard reload to ensure all state is cleared
+          window.location.href = '/web-admin';
+        } else {
+          setError('Authentication failed. Please try again.');
+        }
       } else {
         setError(data.error || 'Login failed');
-        setRemainingAttempts(data.remainingAttempts || null);
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -113,14 +100,13 @@ export default function AdminLoginPage() {
           Admin Portal
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Enter your credentials to access the admin dashboard
+          Sign in with your admin credentials
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10 border border-gray-200">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Error Message */}
             {error && (
               <div className="rounded-md bg-red-50 p-4 border border-red-200">
                 <div className="flex">
@@ -131,17 +117,11 @@ export default function AdminLoginPage() {
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                    {remainingAttempts !== null && remainingAttempts > 0 && (
-                      <p className="mt-1 text-sm text-red-700">
-                        Remaining attempts: {remainingAttempts}
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -161,7 +141,6 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
@@ -197,26 +176,6 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* Security Notice */}
-            <div className="rounded-md bg-blue-50 p-4 border border-blue-200">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">Security Notice</h3>
-                  <div className="mt-2 text-sm text-blue-700">
-                    <p>• Account locks after 5 failed attempts</p>
-                    <p>• Use strong, unique passwords</p>
-                    <p>• Log out after each session</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Button */}
             <div>
               <button
                 type="submit"
@@ -229,7 +188,7 @@ export default function AdminLoginPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Authenticating...
+                    Signing in...
                   </>
                 ) : (
                   'Sign in to Admin Portal'
@@ -238,20 +197,6 @@ export default function AdminLoginPage() {
             </div>
           </form>
 
-          {/* Demo Credentials (Remove in production) */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="text-center text-sm text-gray-600">
-              <p className="font-medium">Demo Credentials:</p>
-              <p className="mt-1">
-                Email: <span className="font-mono text-gray-800">pitafisaeed786@gmail.com</span>
-              </p>
-              <p>
-                Password: <span className="font-mono text-gray-800">saeed786</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Footer */}
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -268,9 +213,8 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        {/* Copyright */}
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Admin Portal. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Admin Portal.</p>
           <p className="mt-1">For security purposes, please log out after your session.</p>
         </div>
       </div>

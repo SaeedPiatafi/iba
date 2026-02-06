@@ -162,6 +162,25 @@ function ErrorDisplay({ message }: { message: string }) {
   );
 }
 
+// Helper function to check if array is empty or null
+const isSectionEmpty = (data: any[] | null | undefined): boolean => {
+  return !data || data.length === 0;
+};
+
+// Section display component for empty sections
+const EmptySectionDisplay = ({ sectionName }: { sectionName: string }) => (
+  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center">
+    <div className="text-gray-400 mb-3">
+      <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+      </svg>
+    </div>
+    <p className="text-gray-500 font-medium">
+      {sectionName} is not listed
+    </p>
+  </div>
+);
+
 // Alumni Profile Page Component
 export default function AlumniProfilePage() {
   const params = useParams();
@@ -260,10 +279,10 @@ export default function AlumniProfilePage() {
                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{alumni.name}</h1>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
                   <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-semibold text-sm md:text-base">
-                    {alumni.profession}
+                    {alumni.profession || 'Profession not listed'}
                   </span>
                   <span className="bg-teal-100 text-teal-800 px-4 py-2 rounded-full font-semibold text-sm md:text-base">
-                    Class of {alumni.graduationYear}
+                    Class of {alumni.graduationYear || 'N/A'}
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -272,7 +291,7 @@ export default function AlumniProfilePage() {
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                       <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                     </svg>
-                    <span className="text-gray-800">{alumni.email}</span>
+                    <span className="text-gray-800">{alumni.email || 'Email not listed'}</span>
                   </div>
                 </div>
               </div>
@@ -292,9 +311,13 @@ export default function AlumniProfilePage() {
                     </div>
                     Professional Bio
                   </h2>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <p className="text-gray-800 text-base md:text-lg leading-relaxed">{alumni.bio}</p>
-                  </div>
+                  {!alumni.bio ? (
+                    <EmptySectionDisplay sectionName="Professional bio" />
+                  ) : (
+                    <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
+                      <p className="text-gray-800 text-base md:text-lg leading-relaxed">{alumni.bio}</p>
+                    </div>
+                  )}
                 </section>
                 
                 {/* Education Section */}
@@ -305,23 +328,27 @@ export default function AlumniProfilePage() {
                     </div>
                     Education Background
                   </h2>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <div className="space-y-4">
-                      {alumni.education.map((edu, index) => (
-                        <div key={index} className="flex items-start gap-4">
-                          <div className={`${index === 0 ? 'bg-teal-600' : 'bg-blue-600'} text-white p-3 rounded-full`}>
-                            <GraduationCapIcon />
+                  {isSectionEmpty(alumni.education) ? (
+                    <EmptySectionDisplay sectionName="Education background" />
+                  ) : (
+                    <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
+                      <div className="space-y-4">
+                        {alumni.education.map((edu, index) => (
+                          <div key={index} className="flex items-start gap-4">
+                            <div className={`${index === 0 ? 'bg-teal-600' : 'bg-blue-600'} text-white p-3 rounded-full`}>
+                              <GraduationCapIcon />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                {index === 0 ? 'Main Degree' : 'Additional Education'}
+                              </h3>
+                              <p className="text-gray-800">{edu}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                              {index === 0 ? 'Primary Degree' : 'Additional Education'}
-                            </h3>
-                            <p className="text-gray-800">{edu}</p>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </section>
                 
                 {/* Skills Section */}
@@ -332,18 +359,22 @@ export default function AlumniProfilePage() {
                     </div>
                     Skills & Expertise
                   </h2>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <div className="flex flex-wrap gap-2">
-                      {alumni.skills.map((skill, index) => (
-                        <span 
-                          key={index} 
-                          className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-medium text-sm"
-                        >
-                          {skill}
-                        </span>
-                      ))}
+                  {isSectionEmpty(alumni.skills) ? (
+                    <EmptySectionDisplay sectionName="Skills & expertise" />
+                  ) : (
+                    <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
+                      <div className="flex flex-wrap gap-2">
+                        {alumni.skills.map((skill, index) => (
+                          <span 
+                            key={index} 
+                            className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-medium text-sm"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </section>
               </div>
               
@@ -357,18 +388,22 @@ export default function AlumniProfilePage() {
                     </div>
                     Awards & Achievements
                   </h2>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <div className="space-y-3">
-                      {alumni.achievements.map((achievement, index) => (
-                        <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
-                          <div className="bg-yellow-100 text-yellow-600 p-2 rounded-full">
-                            <AwardIcon />
+                  {isSectionEmpty(alumni.achievements) ? (
+                    <EmptySectionDisplay sectionName="Awards & achievements" />
+                  ) : (
+                    <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
+                      <div className="space-y-3">
+                        {alumni.achievements.map((achievement, index) => (
+                          <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
+                            <div className="bg-yellow-100 text-yellow-600 p-2 rounded-full">
+                              <AwardIcon />
+                            </div>
+                            <span className="text-gray-900 font-medium">{achievement}</span>
                           </div>
-                          <span className="text-gray-900 font-medium">{achievement}</span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </section>
               </div>
             </div>

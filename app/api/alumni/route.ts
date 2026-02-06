@@ -1,63 +1,68 @@
 import { NextResponse } from 'next/server';
-import alumni from '@/app/data/alumni.json';
+import { supabase } from '@/lib/supabase';
 
-let alumniCache = alumni;
-
+// GET - Public access to read alumni data
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const id = searchParams.get('id');
-    const year = searchParams.get('year');
-    const profession = searchParams.get('profession');
-    const limit = searchParams.get('limit');
+    
+    let query = supabase
+      .from('alumni')
+      .select('*')
+      .order('graduation_year', { ascending: false });
 
-    let filteredAlumni = [...alumniCache];
+    // If ID is provided, get specific alumni
+    if (id && !isNaN(Number(id))) {
+      query = query.eq('id', Number(id));
+    }
 
+    const { data: alumni, error } = await query;
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    // Apply search filter if provided
+    let filteredAlumni = alumni || [];
     if (search) {
       const q = search.toLowerCase();
       filteredAlumni = filteredAlumni.filter(a =>
         a.name.toLowerCase().includes(q) ||
         a.profession.toLowerCase().includes(q) ||
-        a.education.some(e => e.toLowerCase().includes(q)) ||
         (a.bio && a.bio.toLowerCase().includes(q)) ||
-        a.skills.some(s => s.toLowerCase().includes(q))
+        (a.email && a.email.toLowerCase().includes(q))
       );
     }
 
-    if (id) {
-      const alumniId = Number(id);
-      if (!isNaN(alumniId)) {
-        filteredAlumni = filteredAlumni.filter(a => a.id === alumniId);
-      }
-    }
+    // Transform data to match your format
+    const transformedData = filteredAlumni.map(alumni => ({
+      id: alumni.id,
+      name: alumni.name,
+      graduationYear: alumni.graduation_year,
+      profession: alumni.profession,
+      image: alumni.image,
+      bio: alumni.bio,
+      achievements: alumni.achievements || [],
+      education: alumni.education || [],
+      email: alumni.email,
+      skills: alumni.skills || [],
+      createdAt: alumni.created_at,
+      updatedAt: alumni.updated_at
+    }));
 
-    if (year) {
-      filteredAlumni = filteredAlumni.filter(a => a.graduationYear === year);
-    }
-
-    if (profession) {
-      const prof = profession.toLowerCase();
-      filteredAlumni = filteredAlumni.filter(a => 
-        a.profession.toLowerCase().includes(prof)
-      );
-    }
-
-    if (limit) {
-      const limitNum = Number(limit);
-      if (!isNaN(limitNum) && limitNum > 0) {
-        filteredAlumni = filteredAlumni.slice(0, limitNum);
-      }
-    }
-
-    // Sort by graduation year (newest first)
-    filteredAlumni.sort((a, b) => Number(b.graduationYear) - Number(a.graduationYear));
+    // Get total count
+    const { count: totalCount } = await supabase
+      .from('alumni')
+      .select('*', { count: 'exact', head: true });
 
     return NextResponse.json({
       success: true,
-      data: filteredAlumni,
-      count: filteredAlumni.length,
-      total: alumniCache.length,
+      data: transformedData,
+      count: transformedData.length,
+      total: totalCount || transformedData.length,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

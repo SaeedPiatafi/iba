@@ -1,3 +1,4 @@
+// app/web-admin/login/layout.tsx
 import { ReactNode } from 'react';
 
 export default function LoginLayout({ children }: { children: ReactNode }) {
@@ -7,3 +8,8 @@ export default function LoginLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+export const metadata = {
+  title: 'Admin Login',
+  description: 'Admin portal login page',
+};

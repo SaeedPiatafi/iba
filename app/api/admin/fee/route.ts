@@ -1,72 +1,196 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 
-// Path to your JSON file
-const FEE_FILE_PATH = path.join(process.cwd(), 'app', 'data', 'fee.json');
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Helper function to read fee data
-async function readFeeData() {
-  try {
-    const fileContent = await fs.readFile(FEE_FILE_PATH, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    // If file doesn't exist or is corrupted, create basic structure
-    return {
-      academicYear: "2025-2026",
-      lastUpdated: new Date().toISOString().split('T')[0],
-      currency: "PKR",
-      schoolName: "The Educators",
-      feeStructure: []
-    };
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-}
+});
 
-// Helper function to write fee data
-async function writeFeeData(data: any) {
-  // Update last updated date
-  data.lastUpdated = new Date().toISOString().split('T')[0];
-  await fs.writeFile(FEE_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-// Parse currency to number
-const parseCurrency = (value: string | number): number => {
-  if (typeof value === 'number') return value;
-  if (typeof value !== 'string') return 0;
-  // Remove currency symbols, commas, and spaces
-  const cleaned = value.replace(/[^0-9.-]+/g, '');
-  return parseFloat(cleaned) || 0;
-};
-
-// Format number to currency string
+// Helper functions
 const formatCurrency = (amount: number): string => {
-  return `Rs. ${amount.toLocaleString()}`;
+  return `Rs. ${amount.toLocaleString('en-PK', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })}`;
 };
 
-export async function POST(request: NextRequest) {
+// GET - Fetch all fee structures OR single fee by ID
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     
-    // Validate required fields
-    const requiredFields = ['className', 'category', 'admissionFee', 'monthlyFee', 'otherCharges', 'description'];
-    for (const field of requiredFields) {
-      if (!body[field]) {
+    console.log(`GET request for ${id ? `fee ID: ${id}` : 'all fees'}`);
+    
+    // If ID is provided, fetch single fee
+    if (id) {
+      const feeId = parseInt(id);
+      
+      if (isNaN(feeId)) {
         return NextResponse.json(
-          { success: false, error: `Missing required field: ${field}` },
+          { success: false, error: 'Invalid fee ID' },
           { status: 400 }
         );
       }
+      
+      const { data: feeData, error } = await supabase
+        .from('fee')
+        .select('*')
+        .eq('id', feeId)
+        .single();
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        if (error.code === 'PGRST116') {
+          return NextResponse.json(
+            { success: false, error: 'Fee structure not found' },
+            { status: 404 }
+          );
+        }
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch fee data from database' },
+          { status: 500 }
+        );
+      }
+      
+      if (!feeData) {
+        return NextResponse.json(
+          { success: false, error: 'Fee structure not found' },
+          { status: 404 }
+        );
+      }
+      
+      // Transform single fee
+      const admissionFee = Number(feeData.admission_fee) || 0;
+      const monthlyFee = Number(feeData.monthly_fee) || 0;
+      const otherCharges = Number(feeData.other_charges) || 0;
+      const annualFee = monthlyFee * 12;
+      const totalAnnual = admissionFee + annualFee + otherCharges;
+      
+      const formattedFee = {
+        id: feeData.id,
+        className: feeData.class_name,
+        category: feeData.category,
+        admissionFee: formatCurrency(admissionFee),
+        monthlyFee: formatCurrency(monthlyFee),
+        annualFee: formatCurrency(annualFee),
+        otherCharges: formatCurrency(otherCharges),
+        totalAnnual: formatCurrency(totalAnnual),
+        description: feeData.description || '',
+        createdAt: feeData.created_at,
+        updatedAt: feeData.updated_at
+      };
+      
+      return NextResponse.json({
+        success: true,
+        data: formattedFee
+      });
+    }
+    
+    // Fetch all fees
+    console.log('Fetching all fee data from Supabase...');
+    const { data: feeData, error } = await supabase
+      .from('fee')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to fetch fee data from database'
+        },
+        { status: 500 }
+      );
     }
 
-    // Read existing fee data
-    const feeData = await readFeeData();
+    console.log(`Found ${feeData?.length || 0} fee records`);
+    
+    // Transform data
+    const transformedData = (feeData || []).map(fee => {
+      const admissionFee = Number(fee.admission_fee) || 0;
+      const monthlyFee = Number(fee.monthly_fee) || 0;
+      const otherCharges = Number(fee.other_charges) || 0;
+      const annualFee = monthlyFee * 12;
+      const totalAnnual = admissionFee + annualFee + otherCharges;
 
-    // Check for duplicate class name
-    const classExists = feeData.feeStructure.some((fee: any) => 
-      fee.className.toLowerCase() === body.className.toLowerCase()
+      return {
+        id: fee.id,
+        className: fee.class_name,
+        category: fee.category,
+        admissionFee: formatCurrency(admissionFee),
+        monthlyFee: formatCurrency(monthlyFee),
+        annualFee: formatCurrency(annualFee),
+        otherCharges: formatCurrency(otherCharges),
+        totalAnnual: formatCurrency(totalAnnual),
+        description: fee.description || '',
+        createdAt: fee.created_at,
+        updatedAt: fee.updated_at
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        feeStructure: transformedData,
+        lastUpdated: new Date().toISOString()
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Error:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Internal server error'
+      },
+      { status: 500 }
     );
+  }
+}
 
-    if (classExists) {
+// POST - Create new fee structure
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    console.log('Creating new fee:', body);
+    
+    // Validate required fields
+    if (!body.className || !body.category || !body.monthlyFee) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Parse numeric values
+    const admissionFee = Number(body.admissionFee) || 0;
+    const monthlyFee = Number(body.monthlyFee) || 0;
+    const otherCharges = Number(body.otherCharges) || 0;
+
+    // Check for duplicate
+    const { data: existingFee, error: checkError } = await supabase
+      .from('fee')
+      .select('id')
+      .eq('class_name', body.className)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Check error:', checkError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to check existing fees' },
+        { status: 500 }
+      );
+    }
+
+    if (existingFee) {
       return NextResponse.json(
         { 
           success: false, 
@@ -77,68 +201,203 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate new ID
-    const newId = feeData.feeStructure.length > 0 
-      ? Math.max(...feeData.feeStructure.map((fee: any) => fee.id)) + 1 
-      : 1;
+    // Insert new fee
+    const { data: newFee, error: insertError } = await supabase
+      .from('fee')
+      .insert({
+        class_name: body.className,
+        category: body.category,
+        admission_fee: admissionFee,
+        monthly_fee: monthlyFee,
+        other_charges: otherCharges,
+        description: body.description || '',
+        academic_year: '2025-2026'
+      })
+      .select()
+      .single();
 
-    // Parse currency values
-    const admissionNum = parseCurrency(body.admissionFee);
-    const monthlyNum = parseCurrency(body.monthlyFee);
-    const otherNum = parseCurrency(body.otherCharges);
-    const annualNum = monthlyNum * 12;
-    const totalNum = admissionNum + annualNum + otherNum;
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to create fee structure' },
+        { status: 500 }
+      );
+    }
 
-    // Create new fee entry with formatted currency
-    const newFee = {
-      id: newId,
-      className: body.className,
-      category: body.category,
-      admissionFee: formatCurrency(admissionNum),
-      monthlyFee: formatCurrency(monthlyNum),
-      annualFee: formatCurrency(annualNum),
-      otherCharges: formatCurrency(otherNum),
-      totalAnnual: formatCurrency(totalNum),
-      description: body.description,
-      isActive: true, // Always active now
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    // Format response
+    const annualFee = monthlyFee * 12;
+    const totalAnnual = admissionFee + annualFee + otherCharges;
+
+    const formattedFee = {
+      id: newFee.id,
+      className: newFee.class_name,
+      category: newFee.category,
+      admissionFee: formatCurrency(admissionFee),
+      monthlyFee: formatCurrency(monthlyFee),
+      annualFee: formatCurrency(annualFee),
+      otherCharges: formatCurrency(otherCharges),
+      totalAnnual: formatCurrency(totalAnnual),
+      description: newFee.description || '',
+      createdAt: newFee.created_at,
+      updatedAt: newFee.updated_at
     };
-
-    // Add new fee to structure
-    feeData.feeStructure.push(newFee);
-    
-    // Write back to file
-    await writeFeeData(feeData);
 
     return NextResponse.json({
       success: true,
       message: 'Fee structure added successfully',
-      data: newFee
+      data: formattedFee
     }, { status: 201 });
 
-  } catch (error) {
-    console.error('Error saving fee data:', error);
+  } catch (error: any) {
+    console.error('Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to save fee data' },
+      { 
+        success: false, 
+        error: 'Failed to save fee data'
+      },
       { status: 500 }
     );
   }
 }
 
-export async function GET() {
+// PUT - Update existing fee structure
+export async function PUT(request: NextRequest) {
   try {
-    const feeData = await readFeeData();
-    return NextResponse.json({ success: true, data: feeData });
-  } catch (error) {
-    console.error('Error reading fee data:', error);
+    const body = await request.json();
+    console.log('Updating fee:', body);
+    
+    // Validate required fields
+    if (!body.id) {
+      return NextResponse.json(
+        { success: false, error: 'Fee ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    if (!body.className || !body.category || !body.monthlyFee) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    const feeId = parseInt(body.id);
+    if (isNaN(feeId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid fee ID' },
+        { status: 400 }
+      );
+    }
+
+    // Parse numeric values
+    const admissionFee = Number(body.admissionFee) || 0;
+    const monthlyFee = Number(body.monthlyFee) || 0;
+    const otherCharges = Number(body.otherCharges) || 0;
+
+    // Check if fee exists
+    const { data: existingFee, error: checkError } = await supabase
+      .from('fee')
+      .select('*')
+      .eq('id', feeId)
+      .single();
+
+    if (checkError) {
+      if (checkError.code === 'PGRST116') {
+        return NextResponse.json(
+          { success: false, error: 'Fee structure not found' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { success: false, error: 'Failed to find fee structure' },
+        { status: 500 }
+      );
+    }
+
+    // Check for duplicate class name (excluding current fee)
+    const { data: duplicateFee, error: duplicateError } = await supabase
+      .from('fee')
+      .select('id')
+      .eq('class_name', body.className)
+      .neq('id', feeId)
+      .maybeSingle();
+
+    if (duplicateError) {
+      console.error('Duplicate check error:', duplicateError);
+    }
+
+    if (duplicateFee) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Another fee structure with this class name already exists',
+          duplicate: true
+        },
+        { status: 409 }
+      );
+    }
+
+    // Update fee in database
+    const { data: updatedFee, error: updateError } = await supabase
+      .from('fee')
+      .update({
+        class_name: body.className,
+        category: body.category,
+        admission_fee: admissionFee,
+        monthly_fee: monthlyFee,
+        other_charges: otherCharges,
+        description: body.description || '',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', feeId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Update error:', updateError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to update fee structure' },
+        { status: 500 }
+      );
+    }
+
+    // Format response
+    const annualFee = monthlyFee * 12;
+    const totalAnnual = admissionFee + annualFee + otherCharges;
+
+    const formattedFee = {
+      id: updatedFee.id,
+      className: updatedFee.class_name,
+      category: updatedFee.category,
+      admissionFee: formatCurrency(admissionFee),
+      monthlyFee: formatCurrency(monthlyFee),
+      annualFee: formatCurrency(annualFee),
+      otherCharges: formatCurrency(otherCharges),
+      totalAnnual: formatCurrency(totalAnnual),
+      description: updatedFee.description || '',
+      createdAt: updatedFee.created_at,
+      updatedAt: updatedFee.updated_at
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: 'Fee structure updated successfully',
+      data: formattedFee
+    });
+
+  } catch (error: any) {
+    console.error('Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to read fee data' },
+      { 
+        success: false, 
+        error: 'Failed to update fee data'
+      },
       { status: 500 }
     );
   }
 }
 
+// DELETE - COMPLETELY DELETE fee structure (hard delete)
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -153,36 +412,96 @@ export async function DELETE(request: NextRequest) {
 
     const feeId = parseInt(id);
     
-    // Read existing fee data
-    const feeData = await readFeeData();
-    
-    // Find the fee to delete
-    const feeIndex = feeData.feeStructure.findIndex((fee: any) => fee.id === feeId);
-    
-    if (feeIndex === -1) {
+    if (isNaN(feeId)) {
       return NextResponse.json(
-        { success: false, error: 'Fee structure not found' },
-        { status: 404 }
+        { success: false, error: 'Invalid fee ID' },
+        { status: 400 }
       );
     }
 
-    // Remove the fee from the array
-    const deletedFee = feeData.feeStructure.splice(feeIndex, 1)[0];
-    
-    // Write updated data back to file
-    await writeFeeData(feeData);
+    // Check if fee exists first to return details in response
+    const { data: existingFee, error: checkError } = await supabase
+      .from('fee')
+      .select('*')
+      .eq('id', feeId)
+      .single();
+
+    if (checkError) {
+      if (checkError.code === 'PGRST116') {
+        return NextResponse.json(
+          { success: false, error: 'Fee structure not found' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { success: false, error: 'Failed to find fee structure' },
+        { status: 500 }
+      );
+    }
+
+    // HARD DELETE - completely remove from database
+    const { error: deleteError } = await supabase
+      .from('fee')
+      .delete()
+      .eq('id', feeId);
+
+    if (deleteError) {
+      console.error('Delete error:', deleteError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to delete fee structure' },
+        { status: 500 }
+      );
+    }
+
+    // Format the deleted fee for response
+    const admissionFee = Number(existingFee.admission_fee) || 0;
+    const monthlyFee = Number(existingFee.monthly_fee) || 0;
+    const otherCharges = Number(existingFee.other_charges) || 0;
+    const annualFee = monthlyFee * 12;
+    const totalAnnual = admissionFee + annualFee + otherCharges;
+
+    const deletedFee = {
+      id: existingFee.id,
+      className: existingFee.class_name,
+      category: existingFee.category,
+      admissionFee: formatCurrency(admissionFee),
+      monthlyFee: formatCurrency(monthlyFee),
+      annualFee: formatCurrency(annualFee),
+      otherCharges: formatCurrency(otherCharges),
+      totalAnnual: formatCurrency(totalAnnual),
+      description: existingFee.description || '',
+      createdAt: existingFee.created_at,
+      updatedAt: existingFee.updated_at
+    };
+
+    console.log('Successfully deleted fee:', deletedFee.className);
 
     return NextResponse.json({
       success: true,
-      message: 'Fee structure deleted successfully',
+      message: 'Fee structure permanently deleted',
       data: deletedFee
-    }, { status: 200 });
+    });
 
-  } catch (error) {
-    console.error('Error deleting fee data:', error);
+  } catch (error: any) {
+    console.error('Error in DELETE /api/admin/fee:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete fee data' },
+      { 
+        success: false, 
+        error: 'Failed to delete fee data',
+        details: error.message 
+      },
       { status: 500 }
     );
   }
+}
+
+// Handle OPTIONS requests for CORS
+export async function OPTIONS(request: NextRequest) {
+  return NextResponse.json({}, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }

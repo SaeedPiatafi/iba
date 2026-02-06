@@ -162,31 +162,32 @@ export default function TeachersPage() {
   }, []);
 
   const fetchTeachers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/teacher');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result: ApiResponse = await response.json();
-      
-      if (!result.success) {
-        throw new Error('Failed to fetch teachers');
-      }
-      
-      setTeachers(result.data);
-      setFilteredTeachers(result.data);
-    } catch (error) {
-      console.error('Error fetching teachers:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load teachers');
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    setError('');
+    
+    const response = await fetch('/api/teacher'); 
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch teachers: ${response.status}`);
     }
-  };
+    
+    const result: ApiResponse = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to load teachers');
+    }
+    
+    setTeachers(result.data);
+    setFilteredTeachers(result.data);
+    setLoading(false);
+    
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to load teachers');
+    setLoading(false);
+    console.error('Error fetching teachers:', err);
+  }
+};
 
   // Handle search
   useEffect(() => {

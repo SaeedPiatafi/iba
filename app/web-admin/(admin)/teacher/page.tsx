@@ -8,17 +8,8 @@ interface Teacher {
   id: number;
   name: string;
   subject: string;
-  classLevels: string[];
   image: string;
-  education: string[];
-  experience: string;
-  teachingExperience: string[];
-  bio: string;
-  achievements: string[];
-  teachingPhilosophy: string;
-  officeHours: string;
-  roomNumber: string;
-  email: string;
+  // Only these fields are needed for listing page
 }
 
 interface ApiResponse {
@@ -29,7 +20,7 @@ interface ApiResponse {
   error?: string;
 }
 
-// Icons components
+// Icons components - Updated with better sizing
 const SearchIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -62,38 +53,32 @@ const ViewIcon = () => (
 );
 
 const UserIcon = () => (
-  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+  <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
   </svg>
 );
 
-// Skeleton Loading Components
+// Skeleton Loading Components - Matching alumni size
 const SkeletonTeacherCard = () => (
   <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden animate-pulse">
     {/* Image Skeleton */}
     <div className="relative h-48 bg-gray-300">
-      <div className="absolute top-3 right-3">
-        <div className="w-16 h-6 bg-gray-400 rounded-full"></div>
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+        <div className="h-4 bg-gray-400 rounded w-1/3"></div>
       </div>
     </div>
 
     {/* Info Skeleton */}
     <div className="p-5">
-      <div className="h-6 bg-gray-300 rounded mb-2 w-3/4"></div>
+      <div className="h-5 bg-gray-300 rounded mb-2 w-3/4"></div>
       <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
-      
-      {/* Additional Info Skeleton */}
-      <div className="space-y-2 mb-4">
-        <div className="h-3 bg-gray-200 rounded w-full"></div>
-        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-      </div>
 
-      {/* Action Buttons Skeleton */}
-      <div className="flex space-x-2 mb-2">
-        <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
-        <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
+      {/* Buttons Skeleton */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="h-10 bg-gray-200 rounded-lg"></div>
+        <div className="h-10 bg-gray-200 rounded-lg"></div>
+        <div className="h-10 bg-gray-200 rounded-lg"></div>
       </div>
-      <div className="h-10 bg-gray-200 rounded-lg"></div>
     </div>
   </div>
 );
@@ -109,7 +94,7 @@ export default function AdminTeachersPage() {
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Fetch teachers from API
+  // Fetch teachers from API - Request minimal data
   useEffect(() => {
     fetchTeachers();
   }, []);
@@ -119,7 +104,8 @@ export default function AdminTeachersPage() {
       setLoading(true);
       setError('');
       
-      const response = await fetch('/api/teacher');
+      // Add ?minimal=true parameter to get only essential data
+      const response = await fetch('/api/teacher?minimal=true');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch teachers: ${response.status}`);
@@ -150,8 +136,7 @@ export default function AdminTeachersPage() {
       const query = searchQuery.toLowerCase();
       const filtered = teachers.filter(teacher =>
         teacher.name.toLowerCase().includes(query) ||
-        teacher.subject.toLowerCase().includes(query) ||
-        teacher.email.toLowerCase().includes(query)
+        teacher.subject.toLowerCase().includes(query)
       );
       setFilteredTeachers(filtered);
     }
@@ -180,13 +165,8 @@ export default function AdminTeachersPage() {
     try {
       setDeleteLoading(true);
       
-      // Call DELETE API
-      const response = await fetch('/api/admin/teacher', {
+      const response = await fetch(`/api/admin/teacher?id=${teacherToDelete.id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: teacherToDelete.id }),
       });
 
       const result = await response.json();
@@ -218,7 +198,7 @@ export default function AdminTeachersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto"> {/* Changed to max-w-7xl to match alumni */}
         {/* Header - Always visible */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Teacher Management</h1>
@@ -226,71 +206,93 @@ export default function AdminTeachersPage() {
         </div>
 
         {/* Controls - Always visible */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon />
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            {/* Search - Matching alumni width */}
+            <div className="relative flex-1 max-w-md w-full">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                placeholder="Search teachers by name or subject..."
+                className="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-base"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  aria-label="Clear search"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              placeholder="Search teachers by name, subject, or email..."
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            />
-            {searchQuery && (
+
+            <button
+              onClick={handleAddNew}
+              className="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 w-full sm:w-auto text-base"
+            >
+              <AddIcon />
+              <span className="whitespace-nowrap">Add New Teacher</span>
+            </button>
+          </div>
+
+          {/* Stats - Mobile responsive */}
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <span className="flex items-center text-gray-600">
+              <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+              Total Teachers: <span className="font-semibold ml-1">{teachers.length}</span>
+            </span>
+            <span className="flex items-center text-gray-600">
+              <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+              Showing: <span className="font-semibold ml-1">{filteredTeachers.length}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-red-600 font-medium mb-1">Error loading teachers</p>
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
               <button
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                onClick={() => setError('')}
+                className="text-red-500 hover:text-red-700 p-1"
+                aria-label="Dismiss error"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            )}
-          </div>
-
-          <button
-            onClick={handleAddNew}
-            className="inline-flex items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200"
-          >
-            <AddIcon />
-            Add New Teacher
-          </button>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center">
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={() => setError('')}
-              className="text-red-500 hover:text-red-700"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            </div>
           </div>
         )}
 
-        {/* Teachers Grid with Skeleton Loading */}
+        {/* Teachers Grid with Skeleton Loading - Matching alumni layout */}
         <div className="mb-8">
           {!error && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"> {/* Changed to match alumni: 4 columns on xl */}
               {loading ? (
                 // Show skeleton loading cards
                 Array.from({ length: 8 }).map((_, index) => (
                   <SkeletonTeacherCard key={index} />
                 ))
               ) : filteredTeachers.length > 0 ? (
-                // Show actual teacher cards
+                // Show actual teacher cards - Matching alumni card size
                 filteredTeachers.map((teacher) => (
                   <div
                     key={teacher.id}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                    className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col h-full"
                   >
-                    {/* Teacher Image */}
+                    {/* Teacher Image - Matching alumni height (h-48) */}
                     <div className="relative h-48 bg-gray-100">
                       {teacher.image ? (
                         <img
@@ -314,115 +316,123 @@ export default function AdminTeachersPage() {
                           </div>
                         </div>
                       )}
-                      
+                      {/* Optional: Add subject overlay at bottom like alumni */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                        <div className="text-white text-sm font-medium">
+                          {teacher.subject}
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Teacher Info */}
-                    <div className="p-5">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">{teacher.name}</h3>
-                      <p className="text-blue-600 font-medium mb-4 truncate">{teacher.subject}</p>
-                      <p className="text-sm text-gray-500 mb-4 truncate">{teacher.email}</p>
-                  
-                      {/* Top Action Buttons */}
-                      <div className="flex space-x-2 mb-3">
+                    {/* Teacher Info - Matching alumni padding and structure */}
+                    <div className="p-5 flex flex-col flex-1">
+                      {/* Name - Matching alumni styling */}
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate" title={teacher.name}>
+                        {teacher.name}
+                      </h3>
+                      
+                      {/* Subject - Matching alumni styling */}
+                      <p className="text-blue-600 font-medium mb-4 truncate" title={teacher.subject}>
+                        {teacher.subject}
+                      </p>
+                      
+                      {/* Action Buttons - Grid of 3 matching alumni */}
+                      <div className="grid grid-cols-3 gap-2">
                         <button
                           onClick={() => handleEdit(teacher.id)}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-lg transition-colors duration-200"
+                          className="inline-flex items-center justify-center p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors duration-200"
+                          aria-label={`Edit ${teacher.name}`}
+                          title="Edit"
                         >
                           <EditIcon />
-                          <span className="ml-2">Edit</span>
                         </button>
                         <button
                           onClick={() => handleDeleteClick(teacher)}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors duration-200"
+                          className="inline-flex items-center justify-center p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors duration-200"
+                          aria-label={`Delete ${teacher.name}`}
+                          title="Delete"
                         >
                           <DeleteIcon />
-                          <span className="ml-2">Delete</span>
+                        </button>
+                        <button
+                          onClick={() => handleView(teacher.id)}
+                          className="inline-flex items-center justify-center p-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg transition-colors duration-200"
+                          aria-label={`View ${teacher.name}'s profile`}
+                          title="View Profile"
+                        >
+                          <ViewIcon />
                         </button>
                       </div>
-
-                      {/* View Button - Full Width */}
-                      <button
-                        onClick={() => handleView(teacher.id)}
-                        className="w-full inline-flex items-center justify-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-lg transition-colors duration-200"
-                      >
-                        <ViewIcon />
-                        <span className="ml-2">View Profile</span>
-                      </button>
                     </div>
                   </div>
                 ))
               ) : (
-                // No results message
-                <div className="col-span-full text-center py-12">
-                  <div className="text-gray-400 mb-4">
-                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                // No results message - Responsive
+                <div className="col-span-full text-center py-12 px-4">
+                  <div className="text-gray-400 mb-4 mx-auto w-20 h-20">
+                    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
                     {searchQuery ? 'No teachers found' : 'No teachers available'}
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
                     {searchQuery 
                       ? 'No teachers match your search criteria.' 
                       : 'Get started by adding your first teacher.'
                     }
                   </p>
-                  {searchQuery ? (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
-                    >
-                      Clear Search
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleAddNew}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center"
-                    >
-                      <AddIcon />
-                      Add First Teacher
-                    </button>
-                  )}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    {searchQuery ? (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+                      >
+                        Clear Search
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleAddNew}
+                        className="inline-flex items-center justify-center px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+                      >
+                        <AddIcon />
+                        <span>Add First Teacher</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Stats - Only show when not loading */}
-        {!loading && !error && (
+        {/* Stats Footer - Only show when not loading */}
+        {!loading && !error && filteredTeachers.length > 0 && (
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-gray-600">
-                  Showing <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> of{' '}
-                  <span className="font-semibold text-blue-600">{teachers.length}</span> teachers
-                </p>
-              </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="text-sm text-gray-600">
-                Total teachers in system: <span className="font-semibold text-blue-600">{teachers.length}</span>
+                Showing <span className="font-semibold text-blue-600">{filteredTeachers.length}</span> teachers
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal - Responsive */}
       {showDeleteModal && teacherToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-auto">
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Delete Teacher</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Delete Teacher</h3>
               <p className="text-gray-600 mb-6">
                 Are you sure you want to delete <span className="font-semibold">{teacherToDelete.name}</span>? This action cannot be undone.
               </p>
               
               {/* Teacher Preview */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
                     {teacherToDelete.image ? (
                       <img 
                         src={teacherToDelete.image} 
@@ -435,25 +445,26 @@ export default function AdminTeachersPage() {
                       </span>
                     )}
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{teacherToDelete.name}</p>
-                    <p className="text-sm text-gray-600">{teacherToDelete.subject}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate">{teacherToDelete.name}</p>
+                    <p className="text-gray-600 truncate">{teacherToDelete.subject}</p>
                   </div>
                 </div>
               </div>
               
+              {/* Action Buttons */}
               <div className="flex space-x-3">
                 <button
                   onClick={handleDeleteCancel}
                   disabled={deleteLoading}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={deleteLoading}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {deleteLoading ? (
                     <>

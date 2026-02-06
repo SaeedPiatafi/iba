@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   Search,
   RefreshCw,
@@ -26,24 +26,31 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
-interface SubjectMarks {
-  [key: string]: number;
+// Interfaces
+interface SubjectMark {
+  marks: number;
+  max_marks: number;
 }
 
 interface StudentResult {
-  id: string;
-  name: string;
-  fatherName: string;
-  rollNumber: string;
-  marks: SubjectMarks;
-  totalMarks: number;
-  maxTotalMarks: number;
-  percentage: number;
-  status: string;
-  grade: string;
-  year: string;
+  studentInfo: {
+    name: string;
+    fatherName: string;
+    rollNumber: string;
+    academicYear: string;
+  };
+  marks: Record<string, SubjectMark>;
+  summary: {
+    totalMarks: number;
+    obtainMarks: number;
+    percentage: number;
+    grade: string;
+    status: string;
+  };
 }
 
 // Subject icons mapping
@@ -62,6 +69,11 @@ const subjectIcons: Record<string, any> = {
   Geography: Globe,
   Art: Palette,
   "Physical Education": Dumbbell,
+  Economics: Calculator,
+  "Business Studies": BookOpen,
+  Accounting: Calculator,
+  "Computer Studies": Cpu,
+  "General Science": FlaskConical,
 };
 
 // Subject colors
@@ -76,26 +88,23 @@ const subjectColors: Record<string, string> = {
   Physics: "bg-pink-100 text-pink-600",
   Chemistry: "bg-yellow-100 text-yellow-600",
   Biology: "bg-lime-100 text-lime-600",
+  History: "bg-amber-100 text-amber-600",
+  Geography: "bg-cyan-100 text-cyan-600",
+  Economics: "bg-emerald-100 text-emerald-600",
+  "Business Studies": "bg-violet-100 text-violet-600",
+  Accounting: "bg-rose-100 text-rose-600",
+  Art: "bg-fuchsia-100 text-fuchsia-600",
+  "Physical Education": "bg-sky-100 text-sky-600",
 };
 
 export default function ResultPortal() {
   // State management
   const [rollNumber, setRollNumber] = useState<string>("");
   const [result, setResult] = useState<StudentResult | null>(null);
-  const [showResult, setShowResult] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [tableScrollPosition, setTableScrollPosition] = useState(0);
-
-  // Sample roll numbers for suggestions
-  const sampleRollNumbers = [
-    "STU2024-001",
-    "STU2024-002",
-    "STU2024-003",
-    "STU2024-004",
-    "STU2024-005",
-    "STU2024-006",
-  ];
+  const tableRef = useRef<HTMLDivElement>(null);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,26 +117,25 @@ export default function ResultPortal() {
 
     setIsLoading(true);
     setError("");
+    setResult(null);
 
     try {
-      const response = await fetch(
-        `/api/result?rollNumber=${encodeURIComponent(rollNumber.trim())}`,
-      );
+      // Build API URL - only roll number, no academic year
+      const apiUrl = `/api/result?rollNumber=${encodeURIComponent(rollNumber.trim())}`;
+
+      const response = await fetch(apiUrl);
+
       const data = await response.json();
 
-      if (!data.success) {
-        setError(data.message || "No result found for this roll number");
-        setResult(null);
-        setShowResult(false);
-      } else {
-        setResult(data.data);
-        setShowResult(true);
-        // Reset table scroll position
-        setTableScrollPosition(0);
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "No result found");
       }
-    } catch (err) {
-      setError("Failed to fetch result. Please try again.");
+
+      setResult(data.data);
+      
+    } catch (err: any) {
       console.error("Error fetching result:", err);
+      setError(err.message || "Failed to fetch result. Please check the roll number and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -137,20 +145,39 @@ export default function ResultPortal() {
   const handleReset = () => {
     setRollNumber("");
     setResult(null);
-    setShowResult(false);
     setError("");
     setTableScrollPosition(0);
   };
 
   // Handle print
   const handlePrint = () => {
-    window.print();
+    if (typeof window !== "undefined") {
+      window.print();
+    }
   };
 
-  // Initialize with a sample roll number
-  useEffect(() => {
-    setRollNumber("STU2024-001");
-  }, []);
+  // Handle download PDF (placeholder)
+  const handleDownloadPDF = () => {
+    if (result) {
+      alert("PDF download feature will be available soon!");
+      // In production, implement actual PDF generation
+      // window.open(`/api/result/pdf?rollNumber=${result.studentInfo.rollNumber}`, '_blank');
+    }
+  };
+
+  // Handle table scroll
+  const scrollTable = (direction: "left" | "right") => {
+    if (tableRef.current) {
+      const scrollAmount = 200;
+      const newPosition =
+        direction === "left"
+          ? tableScrollPosition - scrollAmount
+          : tableScrollPosition + scrollAmount;
+
+      tableRef.current.scrollLeft = newPosition;
+      setTableScrollPosition(newPosition);
+    }
+  };
 
   // Calculate grade color
   const getGradeColor = (grade: string) => {
@@ -165,6 +192,8 @@ export default function ResultPortal() {
         return "from-orange-500 to-amber-600";
       case "D":
         return "from-red-500 to-rose-600";
+      case "E":
+        return "from-purple-500 to-violet-600";
       case "F":
         return "from-gray-500 to-slate-600";
       default:
@@ -172,19 +201,10 @@ export default function ResultPortal() {
     }
   };
 
-  // Handle table scroll
-  const scrollTable = (direction: "left" | "right") => {
-    const table = document.getElementById("results-table");
-    if (table) {
-      const scrollAmount = 200;
-      const newPosition =
-        direction === "left"
-          ? tableScrollPosition - scrollAmount
-          : tableScrollPosition + scrollAmount;
-
-      table.scrollLeft = newPosition;
-      setTableScrollPosition(newPosition);
-    }
+  // Calculate pass status for a subject
+  const getSubjectPassStatus = (marks: number, maxMarks: number = 100) => {
+    const percentage = (marks / maxMarks) * 100;
+    return percentage >= 33;
   };
 
   return (
@@ -208,59 +228,47 @@ export default function ResultPortal() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-3">
-                <span className="flex items-center gap-2">
-                  <Hash className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
-                  Roll Number
-                </span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={rollNumber}
-                  onChange={(e) => setRollNumber(e.target.value)}
-                  placeholder="Enter your roll number (e.g., STU2024-001)"
-                  className="w-full px-4 md:px-5 py-3 md:py-4 text-base md:text-lg border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-3 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all duration-200 bg-white placeholder-gray-400"
-                  disabled={isLoading}
-                />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  {isLoading && (
-                    <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  )}
-                </div>
-              </div>
-
-              {/* Sample roll numbers */}
-              <div className="mt-3">
-                <p className="text-xs md:text-sm text-gray-500 mb-2">
-                  Try these sample roll numbers:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {sampleRollNumbers.map((roll) => (
-                    <button
-                      key={roll}
-                      type="button"
-                      onClick={() => setRollNumber(roll)}
-                      className="px-3 py-1.5 text-xs md:text-sm bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
-                    >
-                      {roll}
-                    </button>
-                  ))}
+            <div className="grid grid-cols-1 gap-6">
+              {/* Roll Number Input */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-3">
+                  <span className="flex items-center gap-2">
+                    <Hash className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
+                    Roll Number *
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={rollNumber}
+                    onChange={(e) => setRollNumber(e.target.value)}
+                    placeholder="Enter your roll number"
+                    className="w-full px-4 md:px-5 py-3 md:py-4 text-base md:text-lg border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-3 focus:ring-blue-500/30 focus:border-blue-500 outline-none transition-all duration-200 bg-white placeholder-gray-400"
+                    disabled={isLoading}
+                    required
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {isLoading && (
+                      <Loader2 className="w-4 h-4 md:w-5 md:h-5 text-blue-600 animate-spin" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-                <p className="text-red-600 flex items-center gap-2">
-                  <XCircle className="w-4 h-4 md:w-5 md:h-5" />
-                  {error}
-                </p>
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-red-800 font-medium mb-1">Error</p>
+                    <p className="text-red-700">{error}</p>
+                  </div>
+                </div>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
                 type="submit"
                 disabled={isLoading || !rollNumber.trim()}
@@ -268,7 +276,7 @@ export default function ResultPortal() {
               >
                 {isLoading ? (
                   <>
-                    <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
                     Searching...
                   </>
                 ) : (
@@ -288,19 +296,27 @@ export default function ResultPortal() {
                 Reset Form
               </button>
             </div>
+
+            {/* Help Text */}
+            <div className="pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Note:</span> Make sure to enter the correct roll number provided by your institution.
+                The system will automatically show your most recent academic result.
+              </p>
+            </div>
           </form>
         </div>
 
         {/* Result Section */}
-        {showResult && result && (
-          <div className="space-y-6 md:space-y-8">
+        {result && (
+          <div className="space-y-6 md:space-y-8 animate-fadeIn">
             {/* Result Card */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg md:shadow-xl p-4 md:p-6 lg:p-8 border border-gray-200 animate-fadeIn">
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg md:shadow-xl p-4 md:p-6 lg:p-8 border border-gray-200">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 md:gap-6 mb-6 md:mb-8">
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-3 mb-1">
                     <Award className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
-                    Academic Result - {result.year}
+                    Academic Result - {result.studentInfo.academicYear}
                   </h2>
                   <p className="text-gray-600 text-sm md:text-base">
                     Official result issued by the institution
@@ -314,13 +330,15 @@ export default function ResultPortal() {
                   >
                     <Printer className="w-4 h-4 md:w-5 md:h-5" />
                     <span className="hidden sm:inline">Print Result</span>
+                    <span className="sm:hidden">Print</span>
                   </button>
                   <button
-                    onClick={() => alert("Download feature coming soon!")}
+                    onClick={handleDownloadPDF}
                     className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 md:py-3 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 flex items-center gap-2 md:gap-3 shadow-lg hover:shadow-xl"
                   >
                     <Download className="w-4 h-4 md:w-5 md:h-5" />
                     <span className="hidden sm:inline">Download PDF</span>
+                    <span className="sm:hidden">PDF</span>
                   </button>
                 </div>
               </div>
@@ -330,48 +348,48 @@ export default function ResultPortal() {
                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-semibold text-gray-600">
-                      STUDENT NAME
+                    <span className="text-xs font-semibold text-gray-600 uppercase">
+                      Student Name
                     </span>
                   </div>
                   <p className="text-base md:text-lg font-bold text-gray-900">
-                    {result.name}
+                    {result.studentInfo.name}
                   </p>
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-xl border border-green-100">
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-4 h-4 text-green-600" />
-                    <span className="text-xs font-semibold text-gray-600">
-                      FATHER'S NAME
+                    <span className="text-xs font-semibold text-gray-600 uppercase">
+                      Father's Name
                     </span>
                   </div>
                   <p className="text-base md:text-lg font-bold text-gray-900">
-                    {result.fatherName}
+                    {result.studentInfo.fatherName}
                   </p>
                 </div>
 
                 <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
                   <div className="flex items-center gap-2 mb-2">
                     <Hash className="w-4 h-4 text-purple-600" />
-                    <span className="text-xs font-semibold text-gray-600">
-                      ROLL NUMBER
+                    <span className="text-xs font-semibold text-gray-600 uppercase">
+                      Roll Number
                     </span>
                   </div>
-                  <p className="text-base md:text-lg font-bold text-gray-900">
-                    {result.rollNumber}
+                  <p className="text-base md:text-lg font-bold text-gray-900 font-mono">
+                    {result.studentInfo.rollNumber}
                   </p>
                 </div>
 
                 <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
                   <div className="flex items-center gap-2 mb-2">
                     <Calendar className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-semibold text-gray-600">
-                      ACADEMIC YEAR
+                    <span className="text-xs font-semibold text-gray-600 uppercase">
+                      Academic Year
                     </span>
                   </div>
                   <p className="text-base md:text-lg font-bold text-gray-900">
-                    {result.year}
+                    {result.studentInfo.academicYear}
                   </p>
                 </div>
               </div>
@@ -379,8 +397,8 @@ export default function ResultPortal() {
               {/* Horizontal Scrollable Table Container */}
               <div className="mb-6 md:mb-8">
                 {/* Table Header with Scroll Buttons for Mobile */}
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-900">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900">
                     Subject-wise Marks
                   </h3>
                   <div className="md:hidden flex items-center gap-2">
@@ -404,14 +422,14 @@ export default function ResultPortal() {
                 {/* Table Container */}
                 <div className="relative">
                   <div
-                    id="results-table"
-                    className="overflow-x-auto scrollbar-hide"
+                    ref={tableRef}
+                    className="overflow-x-auto rounded-lg border border-gray-200"
                     style={{ scrollBehavior: "smooth" }}
                   >
-                    <table className="w-full min-w-[700px] md:min-w-full">
+                    <table className="w-full min-w-[700px]">
                       <thead>
                         <tr className="bg-blue-600 text-white">
-                          <th className="text-left p-3 md:p-4 rounded-tl-xl">
+                          <th className="text-left p-3 md:p-4 rounded-tl-lg">
                             <div className="flex items-center gap-2">
                               <BookOpen className="w-4 h-4" />
                               <span>Subject</span>
@@ -420,7 +438,7 @@ export default function ResultPortal() {
                           <th className="text-left p-3 md:p-4">
                             <div className="flex items-center gap-2">
                               <Calculator className="w-4 h-4" />
-                              <span>Maximum Marks</span>
+                              <span>Max Marks</span>
                             </div>
                           </th>
                           <th className="text-left p-3 md:p-4">
@@ -435,7 +453,7 @@ export default function ResultPortal() {
                               <span>Percentage</span>
                             </div>
                           </th>
-                          <th className="text-left p-3 md:p-4 rounded-tr-xl">
+                          <th className="text-left p-3 md:p-4 rounded-tr-lg">
                             <div className="flex items-center gap-2">
                               <Award className="w-4 h-4" />
                               <span>Status</span>
@@ -445,17 +463,14 @@ export default function ResultPortal() {
                       </thead>
                       <tbody>
                         {Object.entries(result.marks).map(
-                          ([subject, marks], index) => {
-                            const SubjectIcon =
-                              subjectIcons[subject] || BookOpen;
-                            const maxMarks = 100;
-                            const isPass = marks >= 33;
-                            const percentage = (marks / maxMarks) * 100;
-                            const percentageStr = percentage.toFixed(1);
+                          ([subject, subjectData], index) => {
+                            const SubjectIcon = subjectIcons[subject] || BookOpen;
+                            const isPass = getSubjectPassStatus(subjectData.marks, subjectData.max_marks);
+                            const percentage = (subjectData.marks / subjectData.max_marks) * 100;
 
                             return (
                               <tr
-                                key={subject}
+                                key={`${subject}-${index}`}
                                 className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
                                   index % 2 === 0 ? "bg-white" : "bg-gray-50"
                                 }`}
@@ -473,11 +488,11 @@ export default function ResultPortal() {
                                   </div>
                                 </td>
                                 <td className="p-3 md:p-4 text-gray-700 font-medium">
-                                  {maxMarks}
+                                  {subjectData.max_marks}
                                 </td>
                                 <td className="p-3 md:p-4">
                                   <span className="font-bold text-lg text-gray-900">
-                                    {marks}
+                                    {subjectData.marks}
                                   </span>
                                 </td>
                                 <td className="p-3 md:p-4">
@@ -485,7 +500,7 @@ export default function ResultPortal() {
                                     <span
                                       className={`font-semibold ${percentage >= 33 ? "text-green-600" : "text-red-600"}`}
                                     >
-                                      {percentageStr}%
+                                      {percentage.toFixed(1)}%
                                     </span>
                                   </div>
                                 </td>
@@ -504,7 +519,7 @@ export default function ResultPortal() {
                                 </td>
                               </tr>
                             );
-                          },
+                          }
                         )}
                       </tbody>
                     </table>
@@ -520,7 +535,6 @@ export default function ResultPortal() {
               </div>
 
               {/* Result Summary */}
-              {/* Result Summary */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 md:p-4 lg:p-6 rounded-xl border border-blue-200">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
@@ -528,18 +542,18 @@ export default function ResultPortal() {
                       <FileText className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-semibold text-gray-600 mb-1 truncate">
-                        TOTAL MARKS
+                      <h3 className="text-xs font-semibold text-gray-600 mb-1 uppercase">
+                        Total Marks
                       </h3>
                       <div className="flex items-baseline gap-1">
-                        <p className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                          {result.totalMarks}
+                        <p className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
+                          {result.summary.obtainMarks}
                         </p>
                         <span className="text-sm md:text-base text-gray-500">
                           /
                         </span>
-                        <p className="text-base md:text-lg text-gray-500 truncate">
-                          {result.maxTotalMarks}
+                        <p className="text-base md:text-lg text-gray-500">
+                          {result.summary.totalMarks}
                         </p>
                       </div>
                     </div>
@@ -552,11 +566,11 @@ export default function ResultPortal() {
                       <Percent className="w-5 h-5 md:w-6 md:h-6 text-teal-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-semibold text-gray-600 mb-1 truncate">
-                        PERCENTAGE
+                      <h3 className="text-xs font-semibold text-gray-600 mb-1 uppercase">
+                        Percentage
                       </h3>
-                      <p className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                        {result.percentage.toFixed(2)}%
+                      <p className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
+                        {result.summary.percentage.toFixed(2)}%
                       </p>
                     </div>
                   </div>
@@ -568,29 +582,31 @@ export default function ResultPortal() {
                       <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-semibold text-gray-600 mb-1 truncate">
-                        RESULT STATUS
+                      <h3 className="text-xs font-semibold text-gray-600 mb-1 uppercase">
+                        Result Status
                       </h3>
-                      <p className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                        {result.status}
+                      <p className={`text-lg md:text-xl lg:text-2xl font-bold ${
+                        result.summary.status === 'Passed' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {result.summary.status}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div
-                  className={`p-3 md:p-4 lg:p-6 rounded-xl border bg-gradient-to-r ${getGradeColor(result.grade)}`}
+                  className={`p-3 md:p-4 lg:p-6 rounded-xl border bg-gradient-to-r ${getGradeColor(result.summary.grade)}`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                     <div className="p-2 md:p-3 bg-white/20 rounded-lg md:rounded-xl flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
                       <Award className="w-5 h-5 md:w-6 md:h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-semibold text-white/90 mb-1 truncate">
-                        GRADE
+                      <h3 className="text-xs font-semibold text-white/90 mb-1 uppercase">
+                        Grade
                       </h3>
-                      <p className="text-lg md:text-xl lg:text-2xl font-bold text-white truncate">
-                        {result.grade}
+                      <p className="text-lg md:text-xl lg:text-2xl font-bold text-white">
+                        {result.summary.grade}
                       </p>
                     </div>
                   </div>
@@ -611,11 +627,17 @@ export default function ResultPortal() {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-gray-600">
                       <Mail className="w-4 h-4" />
-                      <span className="text-sm">info@school.edu.pk</span>
+                      <span className="text-sm hidden sm:inline">
+                        results@institution.edu.pk
+                      </span>
+                      <span className="text-sm sm:hidden">Email</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Phone className="w-4 h-4" />
-                      <span className="text-sm">(021) 123-4567</span>
+                      <span className="text-sm hidden sm:inline">
+                        (021) 123-4567
+                      </span>
+                      <span className="text-sm sm:hidden">Phone</span>
                     </div>
                   </div>
                 </div>
@@ -632,24 +654,21 @@ export default function ResultPortal() {
                 <div>
                   <ul className="space-y-3">
                     <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                       <span className="text-gray-600">
-                        This result is provisional until verified by the
-                        examination board.
+                        This result is provisional until verified by the examination board.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                       <span className="text-gray-600">
-                        Contact examination department within 7 days for any
-                        discrepancies.
+                        Contact examination department within 7 days for any discrepancies.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                       <span className="text-gray-600">
-                        Keep this result safe for future reference and admission
-                        purposes.
+                        Keep this result safe for future reference and admission purposes.
                       </span>
                     </li>
                   </ul>
@@ -657,70 +676,24 @@ export default function ResultPortal() {
                 <div>
                   <ul className="space-y-3">
                     <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                       <span className="text-gray-600">
                         Passing percentage: 33% in each subject.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                       <span className="text-gray-600">
-                        A+ Grade: 80% and above | A Grade: 70-79%
+                        A+ Grade: 80% and above | A Grade: 70-79% | B Grade: 60-69%
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                       <span className="text-gray-600">
-                        Original mark sheet will be issued within 15 working
-                        days.
+                        Original mark sheet will be issued within 15 working days.
                       </span>
                     </li>
                   </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Statistics */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg md:shadow-xl p-4 md:p-6 border border-gray-200">
-              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                <Clock className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
-                Result Statistics
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-xl">
-                  <div className="text-2xl md:text-3xl font-bold text-blue-600">
-                    {Object.keys(result.marks).length}
-                  </div>
-                  <div className="text-sm text-gray-600">Total Subjects</div>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-xl">
-                  <div className="text-2xl md:text-3xl font-bold text-green-600">
-                    {
-                      Object.values(result.marks).filter((mark) => mark >= 33)
-                        .length
-                    }
-                  </div>
-                  <div className="text-sm text-gray-600">Passed Subjects</div>
-                </div>
-                <div className="text-center p-4 bg-yellow-50 rounded-xl">
-                  <div className="text-2xl md:text-3xl font-bold text-yellow-600">
-                    {result.percentage >= 80
-                      ? "A+"
-                      : result.percentage >= 70
-                        ? "A"
-                        : result.percentage >= 60
-                          ? "B"
-                          : result.percentage >= 50
-                            ? "C"
-                            : "D"}
-                  </div>
-                  <div className="text-sm text-gray-600">Grade Category</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-xl">
-                  <div className="text-2xl md:text-3xl font-bold text-purple-600">
-                    {new Date().getFullYear()}
-                  </div>
-                  <div className="text-sm text-gray-600">Current Year</div>
                 </div>
               </div>
             </div>
@@ -728,7 +701,7 @@ export default function ResultPortal() {
         )}
 
         {/* Empty State */}
-        {!showResult && !isLoading && !error && (
+        {!result && !isLoading && !error && (
           <div className="text-center py-12">
             <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-6 rounded-full bg-blue-100 flex items-center justify-center">
               <Search className="w-10 h-10 md:w-12 md:h-12 text-blue-600" />
@@ -737,9 +710,13 @@ export default function ResultPortal() {
               Enter Roll Number to View Result
             </h3>
             <p className="text-gray-600 max-w-md mx-auto">
-              Use your roll number to access your academic results. Make sure
-              you enter the correct roll number provided by your institution.
+              Use your roll number to access your academic results. Make sure you enter the correct roll number provided by your institution.
             </p>
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 max-w-md mx-auto">
+              <p className="text-sm text-blue-700">
+                <span className="font-medium">Note:</span> The system will automatically show your most recent academic result.
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -768,8 +745,8 @@ export default function ResultPortal() {
 
         /* Hide scrollbar for IE, Edge and Firefox */
         .scrollbar-hide {
-          -ms-overflow-style: none; /* IE and Edge */
-          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
 
         /* Print styles */
@@ -806,59 +783,6 @@ export default function ResultPortal() {
 
           .overflow-x-auto {
             overflow: visible !important;
-          }
-
-          .scrollbar-hide {
-            overflow: visible !important;
-          }
-        }
-
-        /* Responsive table adjustments */
-        @media (max-width: 768px) {
-          table {
-            font-size: 14px;
-          }
-
-          th,
-          td {
-            padding: 12px 8px !important;
-          }
-
-          .min-w-\[700px\] {
-            min-width: 700px;
-          }
-        }
-
-        @media (max-width: 640px) {
-          table {
-            font-size: 13px;
-          }
-
-          th,
-          td {
-            padding: 10px 6px !important;
-          }
-
-          .text-lg {
-            font-size: 16px !important;
-          }
-
-          .text-xl {
-            font-size: 18px !important;
-          }
-        }
-
-        /* Better touch targets on mobile */
-        @media (max-width: 768px) {
-          button,
-          input,
-          select {
-            min-height: 44px;
-          }
-
-          /* Table scroll hint */
-          #results-table {
-            -webkit-overflow-scrolling: touch;
           }
         }
       `}</style>

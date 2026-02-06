@@ -1,4 +1,3 @@
-// app/teachers/[id]/page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ interface IconProps {
   className?: string;
 }
 
-// Custom SVG icons
+// Custom SVG icons (keep your existing icons)
 const GraduationCapIcon = ({ className = "w-5 h-5" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M10.394 2.08a1 0 00-.788 0l-7 3a1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
@@ -59,28 +58,32 @@ const EmptyIcon = ({ className = "w-5 h-5" }: IconProps) => (
   </svg>
 );
 
-// Teacher Type Definition
+// Teacher Type Definition - MATCHING API RESPONSE
 interface Teacher {
-  id: number;
+  id: string; // Changed from number to string for UUID
   name: string;
   subject: string;
+  email: string;
   classLevels: string[];
   image: string;
   education: string[];
   experience: string;
-  teachingExperience: string[];
+  teachingExperience: any[] | string[];
   bio: string;
   achievements: string[];
   teachingPhilosophy: string;
-  officeHours: string;
-  roomNumber: string;
-  email: string;
+  createdAt: string;
+  updatedAt: string;
+  // Optional fields (if your API doesn't return them, remove or make optional)
+  officeHours?: string;
+  roomNumber?: string;
 }
 
-// Skeleton Loader Component
+// Skeleton Loader Component (keep your existing)
 function TeacherProfileSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4 animate-pulse">
+      {/* ... keep your existing skeleton code ... */}
       <div className="max-w-6xl mx-auto">
         {/* Back Button Skeleton */}
         <div className="h-6 bg-gray-300 rounded w-32 mb-8"></div>
@@ -116,32 +119,6 @@ function TeacherProfileSkeleton() {
                     <div className="h-4 bg-gray-300 rounded w-5/6"></div>
                   </div>
                 </div>
-                
-                {/* Education Skeleton */}
-                <div>
-                  <div className="h-8 bg-gray-300 rounded w-1/3 mb-4"></div>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-300 rounded w-1/4"></div>
-                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Right Column */}
-              <div className="space-y-8">
-                {/* Classes Skeleton */}
-                <div>
-                  <div className="h-8 bg-gray-300 rounded w-1/3 mb-4"></div>
-                  <div className="space-y-3">
-                    <div className="h-12 bg-gray-300 rounded"></div>
-                    <div className="h-12 bg-gray-300 rounded"></div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -151,7 +128,7 @@ function TeacherProfileSkeleton() {
   );
 }
 
-// Error Display Component
+// Error Display Component (keep your existing)
 function ErrorDisplay({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -182,7 +159,7 @@ function ErrorDisplay({ message, onRetry }: { message: string; onRetry: () => vo
   );
 }
 
-// Empty State Component
+// Empty State Component (keep your existing)
 function EmptyState({ 
   message, 
   icon: Icon = EmptyIcon,
@@ -206,11 +183,13 @@ function EmptyState({
 export default function TeacherProfilePage() {
   const router = useRouter();
   const params = useParams();
-  const teacherId = params.id;
   
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Get teacherId from params
+  const teacherId = params?.id as string;
 
   useEffect(() => {
     if (teacherId) {
@@ -223,23 +202,37 @@ export default function TeacherProfilePage() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/teacher?id=${teacherId}`);
+      console.log('Fetching teacher with ID:', teacherId);
+      
+      // IMPORTANT: Use SINGULAR "teacher" not "teachers"
+      const response = await fetch(`/api/teacher/${teacherId}`);
+      
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error message from response
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use default message
+        }
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
+      console.log('API result:', result);
       
       if (!result.success) {
-        throw new Error('Failed to fetch teacher');
+        throw new Error(result.error || 'Failed to fetch teacher');
       }
       
-      if (!result.data || result.data.length === 0) {
+      if (!result.data) {
         throw new Error('Teacher not found');
       }
       
-      setTeacher(result.data[0]);
+      setTeacher(result.data);
     } catch (error) {
       console.error('Error fetching teacher:', error);
       setError(error instanceof Error ? error.message : 'Failed to load teacher');
@@ -253,8 +246,10 @@ export default function TeacherProfilePage() {
     
     const target = e.target as HTMLImageElement;
     target.style.display = 'none';
-    if (target.parentElement) {
-      target.parentElement.innerHTML = `
+    const parent = target.parentElement;
+    if (parent) {
+      // Create fallback with initial
+      parent.innerHTML = `
         <div class="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-teal-600">
           <span class="text-white text-4xl font-bold">${teacher.name.charAt(0)}</span>
         </div>
@@ -410,12 +405,14 @@ export default function TeacherProfilePage() {
                   <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
                     {teacher.teachingExperience && teacher.teachingExperience.length > 0 ? (
                       <div className="space-y-3">
-                        {teacher.teachingExperience.map((exp, index) => (
+                        {Array.isArray(teacher.teachingExperience) && teacher.teachingExperience.map((exp, index) => (
                           <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
                             <div className="bg-purple-100 text-purple-600 p-2 rounded-full">
                               <BriefcaseIcon />
                             </div>
-                            <span className="text-gray-900 font-medium">{exp}</span>
+                            <span className="text-gray-900 font-medium">
+                              {typeof exp === 'string' ? exp : JSON.stringify(exp)}
+                            </span>
                           </div>
                         ))}
                       </div>

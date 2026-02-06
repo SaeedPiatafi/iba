@@ -18,7 +18,7 @@ const GraduationCapIcon = ({ className = "w-5 h-5" }: IconProps) => (
 
 const BackIcon = ({ className = "w-5 h-5 mr-2" }: IconProps) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+    <path fillRule="evenodd" d="M9.707 14.707a1 0 01-1.414 0l-4-4a1 0 010-1.414l4-4a1 0 011.414 1.414L7.414 9H15a1 0 110 2H7.414l2.293 2.293a1 0 010 1.414z" clipRule="evenodd" />
   </svg>
 );
 
@@ -306,21 +306,31 @@ export default function AlumniProfilePage() {
                     Education Background
                   </h2>
                   <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <div className="space-y-4">
-                      {alumni.education.map((edu, index) => (
-                        <div key={index} className="flex items-start gap-4">
-                          <div className={`${index === 0 ? 'bg-teal-600' : 'bg-blue-600'} text-white p-3 rounded-full`}>
-                            <GraduationCapIcon />
+                    {alumni.education && alumni.education.length > 0 ? (
+                      <div className="space-y-4">
+                        {alumni.education.map((edu, index) => (
+                          <div key={index} className="flex items-start gap-4">
+                            <div className={`${index === 0 ? 'bg-teal-600' : 'bg-blue-600'} text-white p-3 rounded-full`}>
+                              <GraduationCapIcon />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                {index === 0 ? 'Main Degree' : 'Additional Education'}
+                              </h3>
+                              <p className="text-gray-800">{edu}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                              {index === 0 ? 'Primary Degree' : 'Additional Education'}
-                            </h3>
-                            <p className="text-gray-800">{edu}</p>
-                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400 mb-3">
+                          <GraduationCapIcon className="w-12 h-12 mx-auto" />
                         </div>
-                      ))}
-                    </div>
+                        <p className="text-gray-500 font-medium">Education information not provided</p>
+                        <p className="text-gray-400 text-sm mt-1">This alumni hasn't shared their education background yet</p>
+                      </div>
+                    )}
                   </div>
                 </section>
                 
@@ -333,16 +343,25 @@ export default function AlumniProfilePage() {
                     Skills & Expertise
                   </h2>
                   <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <div className="flex flex-wrap gap-2">
-                      {alumni.skills.map((skill, index) => (
-                        <span 
-                          key={index} 
-                          className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-medium text-sm"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
+                    {alumni.skills && alumni.skills.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {alumni.skills.map((skill, index) => (
+                          <span 
+                            key={index} 
+                            className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-medium text-sm"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <div className="text-gray-400 mb-3">
+                          <BriefcaseIcon className="w-10 h-10 mx-auto" />
+                        </div>
+                        <p className="text-gray-500 font-medium">Skills not specified</p>
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>
@@ -358,16 +377,26 @@ export default function AlumniProfilePage() {
                     Awards & Achievements
                   </h2>
                   <div className="bg-gray-50 p-4 md:p-6 rounded-xl border border-gray-200">
-                    <div className="space-y-3">
-                      {alumni.achievements.map((achievement, index) => (
-                        <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
-                          <div className="bg-yellow-100 text-yellow-600 p-2 rounded-full">
-                            <AwardIcon />
+                    {alumni.achievements && alumni.achievements.length > 0 ? (
+                      <div className="space-y-3">
+                        {alumni.achievements.map((achievement, index) => (
+                          <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200">
+                            <div className="bg-yellow-100 text-yellow-600 p-2 rounded-full">
+                              <AwardIcon />
+                            </div>
+                            <span className="text-gray-900 font-medium">{achievement}</span>
                           </div>
-                          <span className="text-gray-900 font-medium">{achievement}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-gray-400 mb-3">
+                          <AwardIcon className="w-12 h-12 mx-auto" />
                         </div>
-                      ))}
-                    </div>
+                        <p className="text-gray-500 font-medium">Awards & achievements not included</p>
+                        <p className="text-gray-400 text-sm mt-1">This alumni hasn't shared their achievements yet</p>
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>

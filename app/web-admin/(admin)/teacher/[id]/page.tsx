@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import Image from 'next/image';
 
 // Type definitions
 interface TeacherData {
-  id: number;
+  id: string;
   name: string;
   subject: string;
   classLevels: string[];
@@ -23,7 +22,7 @@ interface TeacherData {
 const ViewTeacherPage = () => {
   const router = useRouter();
   const params = useParams();
-  const teacherId = params.id;
+  const teacherId = params.id as string;
   
   const [teacher, setTeacher] = useState<TeacherData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -36,25 +35,29 @@ const ViewTeacherPage = () => {
       
       try {
         setIsLoading(true);
-        const response = await fetch('/api/teacher');
+        console.log("Fetching teacher with ID:", teacherId);
         
+        // Use the admin API with query parameter
+        const response = await fetch(`/api/admin/teacher?id=${teacherId}`);
+        
+        console.log("Response status:", response.status);
+
         if (!response.ok) {
-          throw new Error('Failed to fetch teachers');
+          throw new Error(`Failed to fetch teacher: ${response.status} ${response.statusText}`);
         }
         
         const result = await response.json();
+        console.log("API response:", result);
         
         if (!result.success) {
           throw new Error(result.error || 'Failed to load teacher data');
         }
         
-        const foundTeacher = result.data.find((t: TeacherData) => t.id === Number(teacherId));
-        
-        if (!foundTeacher) {
+        if (!result.data) {
           throw new Error('Teacher not found');
         }
         
-        setTeacher(foundTeacher);
+        setTeacher(result.data);
         setIsLoading(false);
         
       } catch (error) {
@@ -251,7 +254,7 @@ const ViewTeacherPage = () => {
             <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Teacher</h2>
             <p className="text-gray-600 mb-6">{error || 'Teacher not found'}</p>
             <button
-              onClick={() => router.push('/web-admin/teachers')}
+              onClick={() => router.push('/web-admin/teacher')}
               className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +299,7 @@ const ViewTeacherPage = () => {
               Edit Profile
             </button>
             <button
-              onClick={() => router.push('/web-admin/teachers')}
+              onClick={() => router.push('/web-admin/teacher')}
               className="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-sm"
             >
               Back to List
@@ -403,7 +406,7 @@ const ViewTeacherPage = () => {
                     Teaching Experience
                   </h3>
                   <div className="space-y-3">
-                    {teacher.teachingExperience.length > 0 ? (
+                    {teacher.teachingExperience && teacher.teachingExperience.length > 0 ? (
                       teacher.teachingExperience.map((exp, index) => (
                         <div key={index} className="flex items-start gap-3">
                           <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
@@ -430,7 +433,7 @@ const ViewTeacherPage = () => {
                     Education
                   </h3>
                   <div className="space-y-3">
-                    {teacher.education.length > 0 ? (
+                    {teacher.education && teacher.education.length > 0 ? (
                       teacher.education.map((edu, index) => (
                         <div key={index} className="flex items-start gap-3">
                           <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
@@ -454,7 +457,7 @@ const ViewTeacherPage = () => {
                     Achievements & Awards
                   </h3>
                   <div className="space-y-3">
-                    {teacher.achievements.length > 0 ? (
+                    {teacher.achievements && teacher.achievements.length > 0 ? (
                       teacher.achievements.map((achievement, index) => (
                         <div key={index} className="flex items-start gap-3">
                           <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
@@ -478,7 +481,7 @@ const ViewTeacherPage = () => {
                     Teacher Levels
                   </h3>
                   <div className="space-y-2">
-                    {teacher.classLevels.length > 0 ? (
+                    {teacher.classLevels && teacher.classLevels.length > 0 ? (
                       teacher.classLevels.map((level, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -497,7 +500,7 @@ const ViewTeacherPage = () => {
             {/* Action Buttons at Bottom */}
             <div className="mt-8 pt-8 border-t border-gray-200 flex flex-col sm:flex-row gap-4 justify-end">
               <button
-                onClick={() => router.push('/web-admin/teachers')}
+                onClick={() => router.push('/web-admin/teacher')}
                 className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Back to Teachers

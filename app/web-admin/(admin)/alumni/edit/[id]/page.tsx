@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import {
+  useState,
+  useEffect,
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+} from "react";
+import { useRouter, useParams } from "next/navigation";
 
 interface Alumni {
   id: number;
@@ -26,121 +32,152 @@ interface Notification {
 
 const BackIcon = ({ className = "w-5 h-5 mr-2" }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+    <path
+      fillRule="evenodd"
+      d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
+      clipRule="evenodd"
+    />
   </svg>
 );
 
+const RemoveIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+  </svg>
+);
+
+
 export default function EditAlumniPage() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+const [imagePreview, setImagePreview] = useState<string>('');
   const router = useRouter();
   const params = useParams();
   const alumniId = params.id;
 
   const initialAlumniData: Alumni = {
     id: 0,
-    name: '',
-    graduationYear: '',
-    profession: '',
-    image: '',
-    bio: '',
-    achievements: [''],
-    education: [''],
-    email: '',
-    skills: ['']
+    name: "",
+    graduationYear: "",
+    profession: "",
+    image: "",
+    bio: "",
+    achievements: [""],
+    education: [""],
+    email: "",
+    skills: [""],
   };
 
   const [alumniData, setAlumniData] = useState<Alumni>(initialAlumniData);
-  const [originalAlumniData, setOriginalAlumniData] = useState<Alumni>(initialAlumniData);
+  const [originalAlumniData, setOriginalAlumniData] =
+    useState<Alumni>(initialAlumniData);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState<Notification>({
     show: false,
-    message: '',
-    type: '',
+    message: "",
+    type: "",
   });
 
-  // Show notification
-  const showNotification = (message: string, type: "success" | "error" = "success") => {
-    setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: '' });
-    }, 3000);
-  };
+  // Show notification with cleanup
+  const showNotification = useCallback(
+    (message: string, type: "success" | "error" = "success") => {
+      setNotification({ show: true, message, type });
+      const timer = setTimeout(() => {
+        setNotification({ show: false, message: "", type: "" });
+      }, 3000);
+      return () => clearTimeout(timer);
+    },
+    [],
+  );
 
+  // Fetch alumni data
   useEffect(() => {
     const fetchAlumni = async () => {
       try {
         setLoading(true);
-        
+
         if (!alumniId) {
-          throw new Error('Alumni ID not found');
+          throw new Error("Alumni ID not found");
         }
 
-        const response = await fetch(`/api/admin/alumni?id=${alumniId}`);
-        
+        const response = await fetch(`/api/admin/alumni?id=${alumniId}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
+
         if (!response.ok) {
           throw new Error(`Failed to fetch alumni: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (!result.success || !result.data) {
-          throw new Error(result.error || 'Alumni not found');
+          throw new Error(result.error || "Alumni not found");
         }
-        
-        const alumni = result.data;
-        setAlumniData({
+
+        // Handle both array and single object responses
+        let alumni;
+        if (Array.isArray(result.data)) {
+          alumni = result.data[0];
+        } else {
+          alumni = result.data;
+        }
+
+        if (!alumni) {
+          throw new Error("Alumni data not found");
+        }
+
+        const transformedData = {
           id: alumni.id,
-          name: alumni.name || '',
-          graduationYear: alumni.graduationYear || '',
-          profession: alumni.profession || '',
-          image: alumni.image || '',
-          bio: alumni.bio || '',
-          achievements: alumni.achievements && alumni.achievements.length > 0 ? alumni.achievements : [''],
-          education: alumni.education && alumni.education.length > 0 ? alumni.education : [''],
-          email: alumni.email || '',
-          skills: alumni.skills && alumni.skills.length > 0 ? alumni.skills : ['']
-        });
-        setOriginalAlumniData({
-          id: alumni.id,
-          name: alumni.name || '',
-          graduationYear: alumni.graduationYear || '',
-          profession: alumni.profession || '',
-          image: alumni.image || '',
-          bio: alumni.bio || '',
-          achievements: alumni.achievements && alumni.achievements.length > 0 ? alumni.achievements : [''],
-          education: alumni.education && alumni.education.length > 0 ? alumni.education : [''],
-          email: alumni.email || '',
-          skills: alumni.skills && alumni.skills.length > 0 ? alumni.skills : ['']
-        });
-        setLoading(false);
+          name: alumni.name || "",
+          graduationYear: alumni.graduationYear || "",
+          profession: alumni.profession || "",
+          image: alumni.image || "",
+          bio: alumni.bio || "",
+          achievements:
+            alumni.achievements && alumni.achievements.length > 0
+              ? alumni.achievements
+              : [""],
+          education:
+            alumni.education && alumni.education.length > 0
+              ? alumni.education
+              : [""],
+          email: alumni.email || "",
+          skills:
+            alumni.skills && alumni.skills.length > 0 ? alumni.skills : [""],
+        };
+
+        setAlumniData(transformedData);
+        setOriginalAlumniData(transformedData);
       } catch (err) {
-        console.error('Error fetching alumni:', err);
-        showNotification(
-          err instanceof Error ? err.message : 'Failed to load alumni data',
-          'error'
-        );
-        setLoading(false);
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load alumni data";
+        showNotification(errorMessage, "error");
 
         // Redirect back after 2 seconds
         setTimeout(() => {
-          router.push('/web-admin/alumni');
+          router.push("/web-admin/alumni");
         }, 2000);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchAlumni();
-  }, [alumniId, router]);
+  }, [alumniId, router, showNotification]);
 
   // Check if form has changes
-  const hasChanges = (): boolean => {
+  const hasChanges = useCallback((): boolean => {
     // Check basic fields
     const basicFieldsChanged = [
-      'name',
-      'graduationYear',
-      'profession',
-      'image',
-      'bio',
-      'email'
+      "name",
+      "graduationYear",
+      "profession",
+      "image",
+      "bio",
+      "email",
     ].some((field) => {
       const key = field as keyof Alumni;
       return alumniData[key] !== originalAlumniData[key];
@@ -148,211 +185,284 @@ export default function EditAlumniPage() {
 
     // Check array fields
     const educationChanged =
-      JSON.stringify(alumniData.education.filter(e => e.trim() !== '')) !==
-      JSON.stringify(originalAlumniData.education.filter(e => e.trim() !== ''));
+      JSON.stringify(alumniData.education.filter((e) => e.trim() !== "")) !==
+      JSON.stringify(
+        originalAlumniData.education.filter((e) => e.trim() !== ""),
+      );
 
     const skillsChanged =
-      JSON.stringify(alumniData.skills.filter(s => s.trim() !== '')) !==
-      JSON.stringify(originalAlumniData.skills.filter(s => s.trim() !== ''));
+      JSON.stringify(alumniData.skills.filter((s) => s.trim() !== "")) !==
+      JSON.stringify(originalAlumniData.skills.filter((s) => s.trim() !== ""));
 
     const achievementsChanged =
-      JSON.stringify(alumniData.achievements.filter(a => a.trim() !== '')) !==
-      JSON.stringify(originalAlumniData.achievements.filter(a => a.trim() !== ''));
+      JSON.stringify(alumniData.achievements.filter((a) => a.trim() !== "")) !==
+      JSON.stringify(
+        originalAlumniData.achievements.filter((a) => a.trim() !== ""),
+      );
 
-    return basicFieldsChanged || educationChanged || skillsChanged || achievementsChanged;
-  };
+    return (
+      basicFieldsChanged ||
+      educationChanged ||
+      skillsChanged ||
+      achievementsChanged
+    );
+  }, [alumniData, originalAlumniData]);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
-    setAlumniData(prev => ({
+    setAlumniData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleArrayChange = (field: 'achievements' | 'education' | 'skills', index: number, value: string) => {
-    setAlumniData(prev => ({
-      ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
-    }));
-  };
+  const handleArrayChange = useCallback(
+    (
+      field: "achievements" | "education" | "skills",
+      index: number,
+      value: string,
+    ) => {
+      setAlumniData((prev) => ({
+        ...prev,
+        [field]: prev[field].map((item, i) => (i === index ? value : item)),
+      }));
+    },
+    [],
+  );
 
-  const addArrayField = (field: 'achievements' | 'education' | 'skills') => {
-    setAlumniData(prev => ({
-      ...prev,
-      [field]: [...prev[field], '']
-    }));
-  };
+  const addArrayField = useCallback(
+    (field: "achievements" | "education" | "skills") => {
+      setAlumniData((prev) => ({
+        ...prev,
+        [field]: [...prev[field], ""],
+      }));
+    },
+    [],
+  );
 
-  const removeArrayField = (field: 'achievements' | 'education' | 'skills', index: number) => {
-    const fieldArray = alumniData[field] as string[];
-    if (fieldArray.length === 1) return;
+  const removeArrayField = useCallback(
+    (field: "achievements" | "education" | "skills", index: number) => {
+      const fieldArray = alumniData[field] as string[];
+      if (fieldArray.length === 1) return;
 
-    const newArray = fieldArray.filter((_, i) => i !== index);
-    setAlumniData(prev => ({
-      ...prev,
-      [field]: newArray
-    }));
-  };
+      const newArray = fieldArray.filter((_, i) => i !== index);
+      setAlumniData((prev) => ({
+        ...prev,
+        [field]: newArray,
+      }));
+    },
+    [alumniData],
+  );
 
   // Validate form
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     if (!alumniData.name.trim()) {
-      showNotification('Please enter alumni name', 'error');
+      showNotification("Please enter alumni name", "error");
       return false;
     }
     if (!alumniData.graduationYear.trim()) {
-      showNotification('Please enter graduation year', 'error');
+      showNotification("Please enter graduation year", "error");
       return false;
     }
     if (!alumniData.profession.trim()) {
-      showNotification('Please enter profession', 'error');
+      showNotification("Please enter profession", "error");
       return false;
     }
     if (!alumniData.email.trim()) {
-      showNotification('Please enter email address', 'error');
+      showNotification("Please enter email address", "error");
       return false;
     }
     if (!alumniData.image.trim()) {
-      showNotification('Please enter profile image URL', 'error');
+      showNotification("Please enter profile image URL", "error");
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (alumniData.email && !emailRegex.test(alumniData.email)) {
+      showNotification("Please enter a valid email address", "error");
       return false;
     }
 
     // Validate education array has at least one non-empty entry
-    const validEducation = alumniData.education.filter(edu => edu.trim() !== '');
+    const validEducation = alumniData.education.filter(
+      (edu) => edu.trim() !== "",
+    );
     if (validEducation.length === 0) {
-      showNotification('Please enter at least one education background', 'error');
+      showNotification(
+        "Please enter at least one education background",
+        "error",
+      );
       return false;
     }
 
     return true;
-  };
+  }, [alumniData, showNotification]);
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Check if there are any changes
-    if (!hasChanges()) {
-      showNotification('No changes detected to update', 'error');
-      return;
-    }
+  // Check if there are any changes
+  if (!hasChanges() && !selectedFile) {
+    showNotification('No changes detected to update', 'error');
+    return;
+  }
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    setSaving(true);
+  setSaving(true);
 
-    try {
-      // Filter out empty array items
-      const submitData = {
-        ...alumniData,
-        achievements: alumniData.achievements.filter(item => item.trim() !== ''),
-        education: alumniData.education.filter(item => item.trim() !== ''),
-        skills: alumniData.skills.filter(item => item.trim() !== '')
-      };
+  try {
+    // Filter out empty array items
+    const submitData = {
+      ...alumniData,
+      achievements: alumniData.achievements.filter(item => item.trim() !== ''),
+      education: alumniData.education.filter(item => item.trim() !== ''),
+      skills: alumniData.skills.filter(item => item.trim() !== '')
+    };
 
-      const response = await fetch('/api/admin/alumni', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to update alumni');
+    // Create FormData for file upload
+    const formDataToSend = new FormData();
+    
+    // Add all fields to FormData
+    Object.entries(submitData).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        formDataToSend.append(key, JSON.stringify(value));
+      } else if (value !== null && value !== undefined) {
+        formDataToSend.append(key, value.toString());
       }
-
-      // Update original data after successful submission
-      setOriginalAlumniData(alumniData);
-      showNotification('Alumni updated successfully!', 'success');
-
-      // Redirect back after 1.5 seconds
-      setTimeout(() => {
-        router.push('/web-admin/alumni');
-        router.refresh();
-      }, 1500);
-    } catch (err) {
-      console.error('Error updating alumni:', err);
-      showNotification(
-        err instanceof Error ? err.message : 'Failed to update alumni. Please try again.',
-        'error'
-      );
-    } finally {
-      setSaving(false);
+    });
+    
+    // Add file if selected
+    if (selectedFile) {
+      formDataToSend.append('image', selectedFile);
     }
-  };
+
+    const response = await fetch(`/api/admin/alumni?id=${alumniId}`, {
+      method: 'PUT',
+      body: formDataToSend,
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Failed to update alumni');
+    }
+
+    // Update original data after successful submission
+    setOriginalAlumniData(alumniData);
+    setSelectedFile(null);
+    setImagePreview('');
+    showNotification('Alumni updated successfully!', 'success');
+
+    // Redirect back after 1.5 seconds
+    const redirectTimer = setTimeout(() => {
+      router.push('/web-admin/alumni');
+      router.refresh();
+    }, 1500);
+
+    return () => clearTimeout(redirectTimer);
+    
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to update alumni. Please try again.';
+    showNotification(errorMessage, 'error');
+  } finally {
+    setSaving(false);
+  }
+};
 
   // Handle cancel
   const handleCancel = () => {
     if (hasChanges()) {
-      if (window.confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
-        router.push('/web-admin/alumni');
+      if (
+        window.confirm(
+          "Are you sure you want to cancel? All unsaved changes will be lost.",
+        )
+      ) {
+        router.push("/web-admin/alumni");
       }
     } else {
-      router.push('/web-admin/alumni');
+      router.push("/web-admin/alumni");
     }
   };
 
   // Handle delete
   const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete ${alumniData.name}? This action cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${alumniData.name}? This action cannot be undone.`,
+      )
+    ) {
       return;
     }
 
     try {
       setSaving(true);
 
-      const response = await fetch('/api/admin/alumni', {
-        method: 'DELETE',
+      const response = await fetch(`/api/admin/alumni?id=${alumniId}`, {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: alumniId }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete alumni');
+        throw new Error(result.error || "Failed to delete alumni");
       }
 
-      showNotification('Alumni deleted successfully! Redirecting...', 'success');
+      showNotification(
+        "Alumni deleted successfully! Redirecting...",
+        "success",
+      );
 
-      setTimeout(() => {
-        router.push('/web-admin/alumni');
+      const redirectTimer = setTimeout(() => {
+        router.push("/web-admin/alumni");
         router.refresh();
       }, 1500);
+
+      return () => clearTimeout(redirectTimer);
     } catch (error) {
-      console.error('Error deleting alumni:', error);
-      showNotification(
-        error instanceof Error ? error.message : 'Failed to delete alumni. Please try again.',
-        'error'
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to delete alumni. Please try again.";
+      showNotification(errorMessage, "error");
       setSaving(false);
     }
   };
 
   // Handle reset changes
   const handleResetChanges = () => {
-    if (window.confirm('Are you sure you want to reset all changes?')) {
+    if (window.confirm("Are you sure you want to reset all changes?")) {
       setAlumniData({ ...originalAlumniData });
-      showNotification('Changes reset successfully', 'success');
+      showNotification("Changes reset successfully", "success");
     }
   };
 
+  // Check if update button should be disabled
+  const isUpdateDisabled = saving || !hasChanges();
+
   // Skeleton Loading Component
   const SkeletonInput = ({ className = "" }: { className?: string }) => (
-    <div className={`h-12 bg-gray-200 rounded-lg animate-pulse ${className}`}></div>
+    <div
+      className={`h-12 bg-gray-200 rounded-lg animate-pulse ${className}`}
+    ></div>
   );
 
   const SkeletonTextArea = ({ className = "" }: { className?: string }) => (
-    <div className={`h-32 bg-gray-200 rounded-lg animate-pulse ${className}`}></div>
+    <div
+      className={`h-32 bg-gray-200 rounded-lg animate-pulse ${className}`}
+    ></div>
   );
 
   const SkeletonButton = ({ className = "" }: { className?: string }) => (
-    <div className={`h-10 bg-gray-200 rounded-lg animate-pulse ${className}`}></div>
+    <div
+      className={`h-10 bg-gray-200 rounded-lg animate-pulse ${className}`}
+    ></div>
   );
 
   // Loading state
@@ -482,23 +592,40 @@ export default function EditAlumniPage() {
     );
   }
 
-  // Check if update button should be disabled
-  const isUpdateDisabled = saving || !hasChanges();
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       {/* Notification Toast */}
       {notification.show && (
-        <div className={`fixed top-4 right-4 z-50 max-w-md ${notification.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'} border rounded-lg p-4 shadow-lg transition-all duration-300`}>
+        <div
+          className={`fixed top-4 right-4 z-50 max-w-md ${notification.type === "error" ? "bg-red-50 border-red-200 text-red-800" : "bg-green-50 border-green-200 text-green-800"} border rounded-lg p-4 shadow-lg transition-all duration-300`}
+        >
           <div className="flex items-start">
-            <div className={`flex-shrink-0 ${notification.type === 'error' ? 'text-red-400' : 'text-green-400'}`}>
-              {notification.type === 'error' ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            <div
+              className={`flex-shrink-0 ${notification.type === "error" ? "text-red-400" : "text-green-400"}`}
+            >
+              {notification.type === "error" ? (
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               )}
             </div>
@@ -506,11 +633,22 @@ export default function EditAlumniPage() {
               <p className="text-sm font-medium">{notification.message}</p>
             </div>
             <button
-              onClick={() => setNotification({ show: false, message: '', type: '' })}
-              className="ml-auto pl-3"
+              onClick={() =>
+                setNotification({ show: false, message: "", type: "" })
+              }
+              className="ml-auto pl-3 transition-opacity hover:opacity-70"
+              aria-label="Close notification"
             >
-              <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              <svg
+                className="w-4 h-4 text-gray-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
             </button>
           </div>
@@ -521,10 +659,21 @@ export default function EditAlumniPage() {
       <div className="mb-6 md:mb-8">
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 group"
+          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 group transition-colors"
+          aria-label="Go back"
         >
-          <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <svg
+            className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
           Back
         </button>
@@ -535,12 +684,20 @@ export default function EditAlumniPage() {
               Edit Alumni
             </h1>
             <p className="text-gray-600 mt-1">
-              Update the details for {alumniData.name}
+              Update the details for {alumniData.name || "Alumni"}
             </p>
             {hasChanges() && (
               <div className="flex items-center mt-2 text-sm text-amber-600">
-                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>You have unsaved changes</span>
               </div>
@@ -551,10 +708,19 @@ export default function EditAlumniPage() {
             <button
               onClick={() => router.push(`/web-admin/alumni/${alumniId}`)}
               className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center"
+              aria-label="View alumni profile"
             >
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                  clipRule="evenodd"
+                />
               </svg>
               View Profile
             </button>
@@ -569,13 +735,24 @@ export default function EditAlumniPage() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 lg:p-8">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 lg:p-8"
+        >
           {/* Basic Information Section */}
           <div className="mb-8">
             <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-6 pb-2 border-b border-gray-200 flex items-center">
               <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                <svg
+                  className="w-4 h-4 text-blue-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </span>
               Basic Information
@@ -584,10 +761,14 @@ export default function EditAlumniPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="name"
                   type="text"
                   name="name"
                   value={alumniData.name}
@@ -595,15 +776,20 @@ export default function EditAlumniPage() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   placeholder="Enter alumni's full name"
+                  aria-required="true"
                 />
               </div>
 
               {/* Graduation Year */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="graduationYear"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Graduation Year <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="graduationYear"
                   type="text"
                   name="graduationYear"
                   value={alumniData.graduationYear}
@@ -611,15 +797,20 @@ export default function EditAlumniPage() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   placeholder="e.g., 2020"
+                  aria-required="true"
                 />
               </div>
 
               {/* Profession */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="profession"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Profession <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="profession"
                   type="text"
                   name="profession"
                   value={alumniData.profession}
@@ -627,15 +818,20 @@ export default function EditAlumniPage() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   placeholder="e.g., Software Engineer"
+                  aria-required="true"
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="email"
                   type="email"
                   name="email"
                   value={alumniData.email}
@@ -643,52 +839,210 @@ export default function EditAlumniPage() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   placeholder="alumni@example.com"
+                  aria-required="true"
                 />
               </div>
 
-         
-
               {/* Profile Image URL */}
+              {/* Profile Image - Updated for file upload */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profile Photo URL <span className="text-red-500">*</span>
+                  Profile Photo <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="url"
-                  name="image"
-                  value={alumniData.image}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="https://images.unsplash.com/photo-..."
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Leave blank for default image. Use Unsplash or other image hosting service.
-                </p>
 
-                {/* Image Preview */}
-                {alumniData.image && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Image Preview:
+                <div className="space-y-4">
+                  {/* File Upload */}
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      className={`flex flex-col items-center justify-center w-full h-32 border-2 ${selectedFile ? "border-green-500 bg-green-50" : "border-gray-300"} border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors`}
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        {selectedFile ? (
+                          <>
+                            <svg
+                              className="w-8 h-8 mb-2 text-green-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              ></path>
+                            </svg>
+                            <p className="text-sm font-medium text-green-700">
+                              {selectedFile.name}
+                            </p>
+                            <p className="text-xs text-green-600">
+                              {(selectedFile.size / 1024).toFixed(2)} KB
+                            </p>
+                          </>
+                        ) : alumniData.image ? (
+                          <>
+                            <svg
+                              className="w-8 h-8 mb-2 text-blue-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              ></path>
+                            </svg>
+                            <p className="text-sm font-medium text-blue-700">
+                              Current image selected
+                            </p>
+                            <p className="text-xs text-blue-600">
+                              Click to change
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-8 h-8 mb-2 text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                              ></path>
+                            </svg>
+                            <p className="text-sm text-gray-500">
+                              <span className="font-semibold">
+                                Click to upload
+                              </span>{" "}
+                              or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              PNG, JPG, GIF, WEBP (Max. 5MB)
+                            </p>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            // Validate file
+                            if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                              showNotification(
+                                `Invalid file type. Allowed types: ${ALLOWED_FILE_TYPES.join(", ")}`,
+                                "error",
+                              );
+                              return;
+                            }
+                            if (file.size > MAX_FILE_SIZE) {
+                              showNotification(
+                                `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+                                "error",
+                              );
+                              return;
+                            }
+                            setSelectedFile(file);
+
+                            // Create preview
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setImagePreview(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
                     </label>
-                    <div className="flex items-center gap-4">
-                      <div className="w-32 h-32 rounded-lg border border-gray-300 overflow-hidden">
-                        <img
-                          src={alumniData.image}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-                          }}
-                        />
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <p>Current profile image</p>
-                      </div>
+                  </div>
+
+                  {/* Or URL input */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">
+                        Or enter image URL
+                      </span>
                     </div>
                   </div>
-                )}
+
+                  <div className="flex gap-2">
+                    <input
+                      id="image"
+                      type="url"
+                      name="image"
+                      value={alumniData.image}
+                      onChange={handleInputChange}
+                      required
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="https://images.unsplash.com/photo-..."
+                      aria-required="true"
+                    />
+                    {(selectedFile || alumniData.image) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setImagePreview("");
+                          if (!alumniData.image.startsWith("http")) {
+                            handleInputChange({
+                              target: { name: "image", value: "" },
+                            } as ChangeEvent<HTMLInputElement>);
+                          }
+                        }}
+                        className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors flex items-center"
+                        aria-label="Remove image"
+                      >
+                        <RemoveIcon />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Image Preview */}
+                  {(imagePreview || alumniData.image) && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Image Preview:
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <div className="w-32 h-32 rounded-lg border border-gray-300 overflow-hidden">
+                          <img
+                            src={imagePreview || alumniData.image}
+                            alt="Profile preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
+                            }}
+                          />
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <p>Current profile image</p>
+                          {selectedFile && (
+                            <p className="text-xs text-green-600 mt-1">
+                              ✓ New file ready: {selectedFile.name}
+                            </p>
+                          )}
+                          {!selectedFile && alumniData.image && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              ✓ Current image will be kept
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -697,23 +1051,32 @@ export default function EditAlumniPage() {
           <div className="mb-8">
             <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-6 pb-2 border-b border-gray-200 flex items-center">
               <span className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-                <svg className="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-4 h-4 text-indigo-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
                 </svg>
               </span>
               Biography
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="bio"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Professional Biography
               </label>
               <div className="relative">
                 <textarea
+                  id="bio"
                   name="bio"
                   value={alumniData.bio}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  maxLength={500}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
                   placeholder="Write a brief professional biography..."
                 />
                 <div className="absolute bottom-2 right-2 text-xs text-gray-500">
@@ -728,7 +1091,11 @@ export default function EditAlumniPage() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-2 border-b border-gray-200">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center mb-3 sm:mb-0">
                 <span className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 text-green-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                   </svg>
                 </span>
@@ -736,11 +1103,20 @@ export default function EditAlumniPage() {
               </h2>
               <button
                 type="button"
-                onClick={() => addArrayField('education')}
+                onClick={() => addArrayField("education")}
                 className="inline-flex items-center text-sm bg-green-50 text-green-700 hover:bg-green-100 px-4 py-2.5 rounded-lg transition-colors"
+                aria-label="Add education"
               >
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Add Education
               </button>
@@ -753,21 +1129,32 @@ export default function EditAlumniPage() {
                     <input
                       type="text"
                       value={edu}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayChange('education', index, e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        handleArrayChange("education", index, e.target.value)
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                       placeholder="e.g., B.Sc. Computer Science, MIT"
                       required={index === 0}
+                      aria-label={`Education ${index + 1}`}
                     />
                   </div>
                   {alumniData.education.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeArrayField('education', index)}
+                      onClick={() => removeArrayField("education", index)}
                       className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      aria-label="Remove education"
+                      aria-label={`Remove education ${index + 1}`}
                     >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   )}
@@ -781,8 +1168,16 @@ export default function EditAlumniPage() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-2 border-b border-gray-200">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center mb-3 sm:mb-0">
                 <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 text-purple-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"
+                      clipRule="evenodd"
+                    />
                     <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
                   </svg>
                 </span>
@@ -790,11 +1185,20 @@ export default function EditAlumniPage() {
               </h2>
               <button
                 type="button"
-                onClick={() => addArrayField('skills')}
+                onClick={() => addArrayField("skills")}
                 className="inline-flex items-center text-sm bg-purple-50 text-purple-700 hover:bg-purple-100 px-4 py-2.5 rounded-lg transition-colors"
+                aria-label="Add skill"
               >
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Add Skill
               </button>
@@ -807,20 +1211,31 @@ export default function EditAlumniPage() {
                     <input
                       type="text"
                       value={skill}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayChange('skills', index, e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        handleArrayChange("skills", index, e.target.value)
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                       placeholder="e.g., JavaScript, React, Node.js"
+                      aria-label={`Skill ${index + 1}`}
                     />
                   </div>
                   {alumniData.skills.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeArrayField('skills', index)}
+                      onClick={() => removeArrayField("skills", index)}
                       className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      aria-label="Remove skill"
+                      aria-label={`Remove skill ${index + 1}`}
                     >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   )}
@@ -834,7 +1249,11 @@ export default function EditAlumniPage() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-2 border-b border-gray-200">
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center mb-3 sm:mb-0">
                 <span className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 text-yellow-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 </span>
@@ -842,11 +1261,20 @@ export default function EditAlumniPage() {
               </h2>
               <button
                 type="button"
-                onClick={() => addArrayField('achievements')}
+                onClick={() => addArrayField("achievements")}
                 className="inline-flex items-center text-sm bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-4 py-2.5 rounded-lg transition-colors"
+                aria-label="Add achievement"
               >
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11 -2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Add Achievement
               </button>
@@ -859,20 +1287,31 @@ export default function EditAlumniPage() {
                     <input
                       type="text"
                       value={achievement}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => handleArrayChange('achievements', index, e.target.value)}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        handleArrayChange("achievements", index, e.target.value)
+                      }
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
                       placeholder="e.g., Best Employee Award 2023"
+                      aria-label={`Achievement ${index + 1}`}
                     />
                   </div>
                   {alumniData.achievements.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeArrayField('achievements', index)}
+                      onClick={() => removeArrayField("achievements", index)}
                       className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      aria-label="Remove achievement"
+                      aria-label={`Remove achievement ${index + 1}`}
                     >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   )}
@@ -889,9 +1328,18 @@ export default function EditAlumniPage() {
                 onClick={handleDelete}
                 disabled={saving}
                 className="px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                aria-label="Delete alumni"
               >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Delete Alumni
               </button>
@@ -911,19 +1359,44 @@ export default function EditAlumniPage() {
                 type="submit"
                 disabled={isUpdateDisabled}
                 className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                aria-label={saving ? "Saving changes" : "Update alumni"}
               >
                 {saving ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Saving Changes...
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     Update Alumni
                   </>
@@ -938,7 +1411,8 @@ export default function EditAlumniPage() {
               <span className="text-red-500">*</span> indicates required fields
             </p>
             <p className="text-sm text-gray-500 mt-1">
-              Updated alumni information will be displayed on the public website.
+              Updated alumni information will be displayed on the public
+              website.
             </p>
           </div>
         </form>

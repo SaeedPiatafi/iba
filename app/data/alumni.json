@@ -25,32 +25,6 @@
     ]
   },
   {
-    "id": 3,
-    "name": "Michael Chen",
-    "graduationYear": "2020",
-    "profession": "Software Developer",
-    "image": "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    "bio": "Full-stack developer specializing in web applications and mobile development. Enjoys solving complex problems and building user-friendly interfaces.",
-    "achievements": [
-      "Built award-winning mobile ap",
-      "Contributor to major open-source projects",
-      "Tech innovation award winner."
-    ],
-    "education": [
-      "B.S. Software Engineering, Class of 2020",
-      "Certified Full-Stack Developer"
-    ],
-    "email": "michael.chen@example.com",
-    "skills": [
-      "JavaScript",
-      "React",
-      "Node.js",
-      "Mobile Development"
-    ],
-    "location": "",
-    "updatedAt": "2026-01-27T15:19:59.057Z"
-  },
-  {
     "id": 4,
     "name": "Jessica Williams",
     "graduationYear": "2017",
@@ -99,30 +73,6 @@
     ]
   },
   {
-    "id": 6,
-    "name": "Robert Kim",
-    "graduationYear": "2016",
-    "profession": "Software Developer",
-    "image": "https://images.unsplash.com/photo-1545167622-3a6ac756afa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    "bio": "Mobile app developer with expertise in iOS and Android platforms. Has published multiple successful apps with millions of downloads.",
-    "achievements": [
-      "App Store featured developer",
-      "Mobile innovation award",
-      "Published technical articles"
-    ],
-    "education": [
-      "B.S. Software Engineering, Class of 2016",
-      "Mobile Development Certification"
-    ],
-    "email": "robert.kim@example.com",
-    "skills": [
-      "iOS Development",
-      "Android Development",
-      "Swift",
-      "Kotlin"
-    ]
-  },
-  {
     "id": 7,
     "name": "Amanda Thompson",
     "graduationYear": "2018",
@@ -132,7 +82,7 @@
     "achievements": [
       "Shakespeare research grant recipient",
       "Theater production awards",
-      "Academic journal editor"
+      "Academic journal editor."
     ],
     "education": [
       "B.A. English Literature, Class of 2018",
@@ -144,31 +94,9 @@
       "Drama",
       "Theater Production",
       "Academic Research"
-    ]
-  },
-  {
-    "id": 8,
-    "name": "Daniel Garcia",
-    "graduationYear": "2021",
-    "profession": "Software Developer",
-    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    "bio": "Frontend developer passionate about creating beautiful, accessible user interfaces. Focuses on user experience and modern web technologies.",
-    "achievements": [
-      "UI/UX design awards",
-      "Accessibility compliance expert",
-      "Open-source UI library maintainer"
     ],
-    "education": [
-      "B.S. Computer Science, Class of 2021",
-      "UI/UX Design Certification"
-    ],
-    "email": "daniel.garcia@example.com",
-    "skills": [
-      "React",
-      "TypeScript",
-      "UI/UX Design",
-      "Accessibility"
-    ]
+    "location": "",
+    "updatedAt": "2026-01-28T13:44:33.900Z"
   },
   {
     "id": 9,
@@ -287,5 +215,20 @@
     "skills": [],
     "createdAt": "2026-01-27T15:31:30.789Z",
     "updatedAt": "2026-01-27T15:31:30.789Z"
+  },
+  {
+    "id": 16,
+    "name": "edqwdqwdqwdqwdqwd",
+    "graduationYear": "2017",
+    "profession": "adfadfsadfsadfas",
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+    "bio": "sdfsadfasdf",
+    "achievements": [],
+    "education": [],
+    "location": "",
+    "email": "pitafisaeedking89@gmail.com",
+    "skills": [],
+    "createdAt": "2026-01-28T13:45:58.606Z",
+    "updatedAt": "2026-01-28T13:45:58.606Z"
   }
 ]

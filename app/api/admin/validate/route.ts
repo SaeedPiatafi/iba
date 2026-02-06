@@ -1,71 +1,130 @@
+// app/api/admin/validate/route.ts
 import { NextResponse } from 'next/server';
-import { validateAuthToken } from '@/app/lib/jwt-utils';
-
-const securityHeaders = {
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-};
+import { cookies } from 'next/headers';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const user = await validateAuthToken();
+    // Get the access token from cookies
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('sb-access-token')?.value;
     
-    const headers = new Headers();
-    Object.entries(securityHeaders).forEach(([key, value]) => {
-      headers.set(key, value);
-    });
-    
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          authenticated: false,
-          error: 'Not authenticated',
-        },
-        { 
-          status: 401,
-          headers,
-        }
-      );
-    }
-    
-    return NextResponse.json(
-      {
-        success: true,
-        authenticated: true,
-        user: {
-          id: user.userId,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-      },
-      { 
-        status: 200,
-        headers,
-      }
-    );
-  } catch (error) {
-    console.error('Validation error:', error);
-    
-    return NextResponse.json(
-      {
+    if (!accessToken) {
+      return NextResponse.json({
         success: false,
-        error: 'Internal server error',
-      },
-      { 
-        status: 500,
-        headers: securityHeaders,
-      }
-    );
-  }
-}
+        authenticated: false,
+        error: 'No session found',
+      });
+    }
 
-// Prevent other HTTP methods
-export async function POST() {
-  return NextResponse.json(
-    { success: false, error: 'Method not allowed' },
-    { status: 405, headers: securityHeaders }
-  );
+    // Get user from Supabase using the token
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    
+    if (error || !user) {
+      // Try to refresh the token
+      const refreshToken = cookieStore.get('sb-refresh-token')?.value;
+      
+      if (refreshToken) {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
+          refresh_token: refreshToken,
+        });
+        
+        if (refreshError || !refreshData.session) {
+          return NextResponse.json({
+            success: false,
+            authenticated: false,
+            error: 'Session expired',
+          });
+        }
+        
+        // Update cookies with new session
+        cookieStore.set({
+          name: 'sb-access-token',
+          value: refreshData.session.access_token,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: refreshData.session.expires_in,
+        });
+        
+        // Get user info again
+        const { data: { user: refreshedUser } } = await supabase.auth.getUser(refreshData.session.access_token);
+        
+        if (!refreshedUser) {
+          return NextResponse.json({
+            success: false,
+            authenticated: false,
+            error: 'Invalid session',
+          });
+        }
+        
+        // Check if user is admin
+        const { data: adminProfile } = await supabase
+          .from('admin_profiles')
+          .select('role, name')
+          .eq('user_id', refreshedUser.id)
+          .single();
+        
+        if (!adminProfile) {
+          return NextResponse.json({
+            success: false,
+            authenticated: false,
+            error: 'Not an admin user',
+          });
+        }
+        
+        return NextResponse.json({
+          success: true,
+          authenticated: true,
+          user: {
+            id: refreshedUser.id,
+            email: refreshedUser.email,
+            name: adminProfile.name,
+            role: adminProfile.role,
+          },
+        });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        authenticated: false,
+        error: 'Session expired',
+      });
+    }
+
+    // Check if user is admin
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('role, name')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (!adminProfile) {
+      return NextResponse.json({
+        success: false,
+        authenticated: false,
+        error: 'Not an admin user',
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      authenticated: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: adminProfile.name,
+        role: adminProfile.role,
+      },
+    });
+
+  } catch (error) {
+    console.error('Validate error:', error);
+    return NextResponse.json({
+      success: false,
+      authenticated: false,
+      error: 'Validation failed',
+    }, { status: 500 });
+  }
 }

@@ -1,4 +1,3 @@
-// app/web-admin/teacher/new/page.tsx
 "use client";
 
 import { useState, useRef, ChangeEvent, FormEvent } from 'react';
@@ -16,8 +15,6 @@ interface TeacherData {
   bio: string;
   achievements: string[];
   teachingPhilosophy: string;
-  officeHours: string;
-  roomNumber: string;
   email: string;
 }
 
@@ -29,6 +26,7 @@ interface Notification {
 
 const AddTeacherPage = () => {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const initialTeacherData: TeacherData = {
     name: '',
@@ -41,8 +39,6 @@ const AddTeacherPage = () => {
     bio: '',
     achievements: [''],
     teachingPhilosophy: '',
-    officeHours: '',
-    roomNumber: '',
     email: ''
   };
 
@@ -50,6 +46,8 @@ const AddTeacherPage = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>([]);
   const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: '' });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   
   const classLevelOptions = [
     'Primary Teacher (1-5)',
@@ -57,6 +55,10 @@ const AddTeacherPage = () => {
     'Higher Secondary Teacher (9-10)',
     'Senior Secondary Teacher (11-12)'
   ];
+
+  // Allowed file types for upload
+  const allowedFileTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+  const maxFileSize = 5 * 1024 * 1024; // 5MB
 
   // Show notification
   const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -66,9 +68,64 @@ const AddTeacherPage = () => {
     }, 3000);
   };
 
+  // Handle file selection
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!allowedFileTypes.includes(file.type)) {
+      showNotification(`Invalid file type. Allowed types: JPEG, JPG, PNG, WebP, GIF, SVG`, 'error');
+      return;
+    }
+
+    // Validate file size
+    if (file.size > maxFileSize) {
+      showNotification(`File too large. Maximum size is 5MB`, 'error');
+      return;
+    }
+
+    setSelectedFile(file);
+    setTeacherData(prev => ({ ...prev, image: '' }));
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle drag and drop
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const inputEvent = {
+        target: { files: [file] }
+      } as ChangeEvent<HTMLInputElement>;
+      handleFileChange(inputEvent);
+    }
+  };
+
+  // Handle drag over
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   // Handle input change
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    if (name === 'image' && value.trim() !== '') {
+      // Clear file selection when URL is entered
+      setSelectedFile(null);
+      setImagePreview('');
+    }
+    
     setTeacherData(prev => ({
       ...prev,
       [name]: value
@@ -134,6 +191,12 @@ const AddTeacherPage = () => {
       showNotification('Please enter email address', 'error');
       return false;
     }
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(teacherData.email.trim())) {
+      showNotification('Please enter a valid email address', 'error');
+      return false;
+    }
     if (!teacherData.experience.trim()) {
       showNotification('Please enter years of experience', 'error');
       return false;
@@ -158,69 +221,92 @@ const AddTeacherPage = () => {
   };
 
   // Handle form submission to API
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // Handle form submission to API
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  
+  if (!validateForm()) return;
+  
+  setIsSubmitting(true);
+
+  try {
+    // Create FormData for file upload
+    const formData = new FormData();
     
-    if (!validateForm()) return;
+    // Add teacher data to FormData
+    formData.append('name', teacherData.name.trim());
+    formData.append('subject', teacherData.subject.trim());
+    formData.append('email', teacherData.email.trim());
+    formData.append('classLevels', JSON.stringify(selectedClassLevels));
+    formData.append('experience', teacherData.experience.trim());
+    formData.append('education', JSON.stringify(teacherData.education.filter(edu => edu.trim() !== '')));
+    formData.append('teachingExperience', JSON.stringify(teacherData.teachingExperience.filter(exp => exp.trim() !== '')));
+    formData.append('bio', teacherData.bio.trim());
+    formData.append('achievements', JSON.stringify(teacherData.achievements.filter(ach => ach.trim() !== '')));
+    formData.append('teachingPhilosophy', teacherData.teachingPhilosophy.trim());
     
-    setIsSubmitting(true);
-
-    // Prepare data for API submission
-    const submissionData = {
-      ...teacherData,
-      classLevels: selectedClassLevels,
-      education: teacherData.education.filter(edu => edu.trim() !== ''),
-      teachingExperience: teacherData.teachingExperience.filter(exp => exp.trim() !== ''),
-      achievements: teacherData.achievements.filter(ach => ach.trim() !== ''),
-      // Default values if not provided
-      officeHours: teacherData.officeHours || 'Monday-Friday: 9:00 AM - 4:00 PM',
-      roomNumber: teacherData.roomNumber || 'To be assigned',
-      image: teacherData.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
-    };
-
-    try {
-      console.log('Submitting teacher data:', submissionData);
-      
-      // Call the API
-      const response = await fetch('/api/admin/teacher', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submissionData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to add teacher');
-      }
-
-      showNotification('Teacher added successfully! Redirecting...', 'success');
-      
-      // Reset form
-      setTimeout(() => {
-        setTeacherData(initialTeacherData);
-        setSelectedClassLevels([]);
-        
-        // Redirect to teachers list
-        router.push('/web-admin/teacher');
-        router.refresh(); // Refresh to show new data
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Error adding teacher:', error);
-      showNotification(error instanceof Error ? error.message : 'Failed to add teacher. Please try again.', 'error');
-    } finally {
-      setIsSubmitting(false);
+    // Add image file or URL
+    if (selectedFile) {
+      formData.append('image', selectedFile);
+    } else if (teacherData.image.trim()) {
+      formData.append('image', teacherData.image.trim());
     }
-  };
 
+    // Call the API with FormData - ADD credentials: 'include'
+    const response = await fetch('/api/admin/teacher', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include', // ← THIS IS CRITICAL!
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to add teacher');
+    }
+
+    showNotification('Teacher added successfully! Redirecting...', 'success');
+    
+    // Reset form
+    setTimeout(() => {
+      setTeacherData(initialTeacherData);
+      setSelectedClassLevels([]);
+      setSelectedFile(null);
+      setImagePreview('');
+      
+      // Redirect to teachers list
+      router.push('/web-admin/teacher');
+      router.refresh();
+    }, 1500);
+    
+  } catch (error: any) {
+    console.error('Error adding teacher:', error);
+    showNotification(error.message || 'Failed to add teacher. Please try again.', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   // Handle cancel
   const handleCancel = () => {
     if (window.confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
       router.push('/web-admin/teacher');
     }
+  };
+
+  // Remove selected file
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    setImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove image URL
+  const removeImageUrl = () => {
+    setTeacherData(prev => ({ ...prev, image: '' }));
+    setImagePreview('');
+    showNotification('Image removed', 'success');
   };
 
   return (
@@ -359,38 +445,128 @@ const AddTeacherPage = () => {
                 />
               </div>
               
-
-              
-              {/* Profile Image URL */}
+              {/* Profile Image Upload */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profile Photo URL
+                  Profile Photo
                 </label>
-                <input
-                  type="url"
-                  name="image"
-                  value={teacherData.image}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="https://images.unsplash.com/photo-..."
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Leave blank for default image. Use Unsplash or other image hosting service.
-                </p>
                 
-                {/* Image Preview */}
-                {teacherData.image && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Image Preview:</label>
-                    <div className="w-32 h-32 rounded-lg border border-gray-300 overflow-hidden">
-                      <img 
-                        src={teacherData.image} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src 
-                        }}
+                {/* Show upload options only if no image is selected */}
+                {!selectedFile && !teacherData.image && (
+                  <div className="space-y-4">
+                    {/* File Upload Section */}
+                    <div 
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors border-gray-300 hover:border-blue-400 hover:bg-blue-50`}
+                    >
+                      <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <p className="text-sm text-gray-600 mb-2">
+                        <span className="font-semibold text-blue-600">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500 mb-4">
+                        PNG, JPG, GIF, WebP, SVG up to 5MB
+                      </p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="file-upload"
                       />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Choose File
+                      </button>
+                    </div>
+                    
+                    {/* OR Separator */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500">OR</span>
+                      </div>
+                    </div>
+                    
+                    {/* URL Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Enter Image URL
+                      </label>
+                      <input
+                        type="url"
+                        name="image"
+                        value={teacherData.image}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="https://images.unsplash.com/photo-..."
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Image Preview - Show when image is selected */}
+                {(selectedFile || imagePreview || teacherData.image) && (
+                  <div className="mt-6">
+                    <div className="flex flex-col sm:flex-row gap-6 items-start">
+                      <div className="relative">
+                        <div className="w-32 h-32 rounded-lg border border-gray-300 overflow-hidden bg-gray-100">
+                          <img 
+                            src={imagePreview || teacherData.image} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YzZjRmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOWM5YzljIj5JbWFnZSBQcmV2aWV3PC90ZXh0Pjwvc3ZnPg==';
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedFile) {
+                              removeSelectedFile();
+                            } else {
+                              removeImageUrl();
+                            }
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          aria-label="Remove image"
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600 mb-2">
+                          {selectedFile 
+                            ? `Selected file: ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`
+                            : 'Image URL provided'
+                          }
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setTeacherData(prev => ({ ...prev, image: '' }));
+                            setImagePreview('');
+                          }}
+                          className="inline-flex items-center text-sm text-red-600 hover:text-red-800 mt-2"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          Remove Image
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -430,7 +606,7 @@ const AddTeacherPage = () => {
               <h2 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center mb-3 sm:mb-0">
                 <span className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                   <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                    <path d="M10.394 2.08a1 0 00-.788 0l-7 3a1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                   </svg>
                 </span>
                 Education Background <span className="text-red-500">*</span>
@@ -608,6 +784,7 @@ const AddTeacherPage = () => {
                     rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="Write a brief professional biography..."
+                    maxLength={500}
                   />
                   <div className="absolute bottom-2 right-2 text-xs text-gray-500">
                     {teacherData.bio.length}/500 characters
@@ -629,6 +806,7 @@ const AddTeacherPage = () => {
                     rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="Describe the teacher's teaching philosophy..."
+                    maxLength={500}
                   />
                   <div className="absolute bottom-2 right-2 text-xs text-gray-500">
                     {teacherData.teachingPhilosophy.length}/500 characters
@@ -646,6 +824,8 @@ const AddTeacherPage = () => {
                 if (window.confirm('Are you sure you want to clear all fields?')) {
                   setTeacherData(initialTeacherData);
                   setSelectedClassLevels([]);
+                  setSelectedFile(null);
+                  setImagePreview('');
                   showNotification('Form cleared successfully', 'success');
                 }
               }}

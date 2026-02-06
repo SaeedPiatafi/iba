@@ -1,52 +1,54 @@
+// app/api/admin/logout/route.ts
 import { NextResponse } from 'next/server';
-import { clearAuthCookie } from '@/app/lib/jwt-utils';
-
-const securityHeaders = {
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-};
+import { cookies } from 'next/headers';
+import { supabase } from '@/lib/supabase';
 
 export async function POST() {
   try {
-    // Clear authentication cookie
-    await clearAuthCookie();
+    const cookieStore = await cookies();
+    const isProduction = process.env.NODE_ENV === 'production';
     
-    const headers = new Headers();
-    Object.entries(securityHeaders).forEach(([key, value]) => {
-      headers.set(key, value);
+    // Sign out from Supabase
+    await supabase.auth.signOut();
+
+    // Clear cookies
+    cookieStore.set({
+      name: 'sb-access-token',
+      value: '',
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0, // Expire immediately
     });
-    
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Logged out successfully',
-      },
-      { 
-        status: 200,
-        headers,
-      }
-    );
+
+    cookieStore.set({
+      name: 'sb-refresh-token',
+      value: '',
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Logged out successfully',
+      redirectTo: '/web-admin/login',
+    });
   } catch (error) {
     console.error('Logout error:', error);
-    
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Internal server error',
-      },
-      { 
-        status: 500,
-        headers: securityHeaders,
-      }
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
     );
   }
 }
 
-// Prevent other HTTP methods
 export async function GET() {
   return NextResponse.json(
     { success: false, error: 'Method not allowed' },
-    { status: 405, headers: securityHeaders }
+    { status: 405 }
   );
 }
