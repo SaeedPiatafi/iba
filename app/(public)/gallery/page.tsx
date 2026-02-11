@@ -126,7 +126,6 @@ export default function GalleryPage() {
       
       setGalleryData(result.data);
     } catch (error) {
-      console.error('Error fetching gallery data:', error);
       setError(error instanceof Error ? error.message : 'Failed to load gallery');
     } finally {
       setLoading(false);

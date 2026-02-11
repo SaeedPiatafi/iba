@@ -44,9 +44,6 @@ export async function GET(
   try {
     // Await params in Next.js 15
     const { id } = await params;
-    
-    console.log('Fetching teacher with ID:', id);
-
     if (!id) {
       return NextResponse.json(
         {
@@ -66,7 +63,6 @@ export async function GET(
       .single();
 
     if (error) {
-      console.error('Supabase error details:', error);
       
       // Handle different error types
       if (error.code === 'PGRST116') { // No rows returned
@@ -121,7 +117,6 @@ export async function GET(
       updatedAt: teacherData.updated_at,
     };
 
-    console.log('Teacher found:', transformedTeacher.name);
 
     return NextResponse.json({
       success: true,
@@ -129,7 +124,6 @@ export async function GET(
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error in teacher API:', error);
     return NextResponse.json(
       {
         success: false,

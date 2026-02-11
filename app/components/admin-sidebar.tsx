@@ -12,6 +12,7 @@ import {
   FiUserPlus, 
   FiImage, 
   FiFileText, 
+  FiMessageSquare,
   FiAward as FiChamps, 
   FiShield,
   FiDollarSign,
@@ -39,8 +40,8 @@ export default function AdminSidebar({ isMobileOpen, onMobileClose }: AdminSideb
     { name: 'Resources', href: '/web-admin/resources', icon: <FiFileText className="w-5 h-5" /> },
     { name: 'Admission', href: '/web-admin/admission', icon: <FiUserPlus className="w-5 h-5" /> },
     { name: 'Champs', href: '/web-admin/champs', icon: <FiChamps className="w-5 h-5" /> },
-    { name: 'Security', href: '/web-admin/security', icon: <FiShield className="w-5 h-5" /> },
     { name: 'Gallery', href: '/web-admin/gallery', icon: <FiImage className="w-5 h-5" /> },
+    { name: 'Testimonials', href: '/web-admin/testimonials', icon: <FiMessageSquare className="w-5 h-5" /> },
   ];
 
   // Check if current path is active
@@ -81,9 +82,7 @@ export default function AdminSidebar({ isMobileOpen, onMobileClose }: AdminSideb
         });
       }
 
-      // Show success message
-      console.log('Logout successful:', data.message);
-      
+
       // Redirect to login page after a brief delay
       setTimeout(() => {
         router.push('/web-admin/login');
@@ -91,7 +90,6 @@ export default function AdminSidebar({ isMobileOpen, onMobileClose }: AdminSideb
       }, 500);
       
     } catch (error) {
-      console.error('Logout error:', error);
       
       // Show error message to user
       alert('Logout failed. Please try again.');

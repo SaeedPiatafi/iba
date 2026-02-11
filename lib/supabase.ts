@@ -7,10 +7,6 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // Check environment variables in development
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase environment variables are missing!')
-  console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing')
-  console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'Missing')
-  console.log('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing')
   
   // Only throw error in production
   if (process.env.NODE_ENV === 'production') {

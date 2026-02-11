@@ -50,7 +50,6 @@ export default function TeachersSection() {
         throw new Error(data.message || 'Failed to fetch teachers');
       }
     } catch (err) {
-      console.error('Error fetching teachers:', err);
       setError(err instanceof Error ? err.message : 'Failed to load teachers');
       // Fallback to empty array
       setTeachers([]);

@@ -1,74 +1,103 @@
-import { NextResponse } from 'next/server';
-import galleryData from '@/app/data/gallery.json';
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase";
 
-let galleryCache = galleryData;
+// ===================================================================
+// Helper function to get Supabase admin client with null check
+// ===================================================================
+function getSupabaseAdmin() {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not configured. Check SUPABASE_SERVICE_ROLE_KEY environment variable.");
+  }
+  return supabaseAdmin;
+}
 
-export async function GET(request: Request) {
+// ===================================================================
+// GET - Get all gallery images for public access
+// ===================================================================
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const tag = searchParams.get('tag') || '';
-    const limit = searchParams.get('limit');
-    const search = searchParams.get('search') || '';
+    // Get the Supabase admin client
+    const adminClient = getSupabaseAdmin();
 
-    // Clone images
-    let filteredImages = [...galleryCache.images];
+    const { searchParams } = new URL(req.url);
+    const tag = searchParams.get("tag");
+    const limit = searchParams.get("limit");
 
-    // Filter by tag
+
+    let query = adminClient
+      .from("gallery_images")
+      .select("*")
+      .order("uploaded_at", { ascending: false });
+
+    // Apply tag filter if provided
     if (tag) {
-      filteredImages = filteredImages.filter(image => 
-        image.tags.includes(tag)
-      );
+      query = query.contains("tags", [tag]);
     }
 
-    // Filter by search term
-    if (search) {
-      const searchTerm = search.toLowerCase();
-      filteredImages = filteredImages.filter(image =>
-        image.alt.toLowerCase().includes(searchTerm) ||
-        image.tags.some(tag => tag.toLowerCase().includes(searchTerm))
-      );
-    }
-
-    // Apply limit if specified
+    // Apply limit if provided
     if (limit) {
-      const limitNum = Number(limit);
+      const limitNum = parseInt(limit);
       if (!isNaN(limitNum) && limitNum > 0) {
-        filteredImages = filteredImages.slice(0, limitNum);
+        query = query.limit(limitNum);
       }
     }
 
-    // Get tag counts for statistics
-    const tagCounts = galleryCache.images.reduce((acc: {[key: string]: number}, image) => {
-      image.tags.forEach(tag => {
-        acc[tag] = (acc[tag] || 0) + 1;
-      });
-      return acc;
-    }, {});
+    const { data: images, error } = await query;
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: "Failed to fetch gallery images" },
+        { status: 400 },
+      );
+    }
+
+    // Transform images for public view
+    const transformedImages = (images || []).map((image) => ({
+      id: image.id,
+      src: image.src || "",
+      alt: image.alt || "",
+      tags: image.tags || [],
+      uploadedAt: image.uploaded_at || image.created_at,
+    }));
+
+    // Get all unique tags for filtering
+    const allTags = Array.from(
+      new Set(
+        (images || [])
+          .flatMap(img => img.tags || [])
+          .filter(Boolean)
+      )
+    ).sort();
+
+    // Get stats
+    const stats = {
+      totalImages: images?.length || 0,
+      tags: allTags,
+      latestUpdate: images && images.length > 0 
+        ? new Date(images[0].updated_at).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0],
+    };
 
     return NextResponse.json({
       success: true,
       data: {
-        ...galleryCache,
-        images: filteredImages
+        stats,
+        images: transformedImages,
       },
-      count: filteredImages.length,
-      total: galleryCache.images.length,
-      tagCounts: tagCounts,
-      timestamp: new Date().toISOString(),
     });
-  } catch (error) {
-    console.error('Gallery API Error:', error);
+
+  } catch (error: any) {
+    
+    if (error.message.includes('Supabase admin client not configured')) {
+      return NextResponse.json(
+        { success: false, error: "Server configuration error. Please contact administrator." },
+        { status: 500 },
+      );
+    }
     
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to load gallery data',
-        data: null,
-        count: 0,
-        total: 0,
-        tagCounts: {},
-      },
-      { status: 500 }
+      { success: false, error: error.message || "Failed to fetch gallery images" },
+      { status: 500 },
     );
   }
 }

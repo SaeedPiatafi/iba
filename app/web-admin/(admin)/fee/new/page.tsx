@@ -285,7 +285,6 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       description: formData.description,
     };
 
-    console.log("Submitting fee data (raw numbers):", finalFormData);
 
     // Submit to API
     const response = await fetch("/api/admin/fee", {

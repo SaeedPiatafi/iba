@@ -67,7 +67,6 @@ export default function StudentResources() {
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load resources data');
-        console.error('Error fetching resources:', err);
       } finally {
         setLoading(false);
       }

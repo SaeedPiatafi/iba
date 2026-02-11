@@ -1,4 +1,3 @@
-// app/web-admin/gallery/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, MouseEvent } from 'react';
@@ -9,10 +8,8 @@ interface GalleryImage {
   id: number;
   src: string;
   tags: string[];
-  title: string;
-  description: string;
+  alt: string;
   uploadedAt: string;
-  isFeatured: boolean;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -42,14 +39,12 @@ const AddIcon = () => (
   </svg>
 );
 
-// Image Skeleton Loader (unchanged)
+// Image Skeleton Loader
 const ImageSkeleton = () => (
   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
     <div className="h-48 bg-gray-200"></div>
     <div className="p-4">
       <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-      <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-      <div className="h-3 bg-gray-200 rounded w-2/3 mb-4"></div>
       <div className="flex space-x-2">
         <div className="h-8 bg-gray-200 rounded-lg flex-1"></div>
         <div className="h-8 w-8 bg-gray-200 rounded-lg"></div>
@@ -58,23 +53,6 @@ const ImageSkeleton = () => (
     </div>
   </div>
 );
-
-// Sample images - optimized URLs with smaller sizes (unchanged)
-const SAMPLE_IMAGES: GalleryImage[] = [
-  { id: 1, src: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=300&fit=crop', tags: ['events', 'campus-life'], title: 'Annual Sports Day', description: 'Students participating in sports activities', uploadedAt: '2024-01-15', isFeatured: true },
-  { id: 2, src: 'https://images.unsplash.com/photo-1562774053-701939374585?w=400&h=300&fit=crop', tags: ['academics'], title: 'Science Lab Session', description: 'Students conducting experiments in the science lab', uploadedAt: '2024-01-14', isFeatured: true },
-  { id: 3, src: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400&h=300&fit=crop', tags: ['sports'], title: 'Basketball Tournament', description: 'Inter-school basketball competition', uploadedAt: '2024-01-13', isFeatured: false },
-  { id: 4, src: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=300&fit=crop', tags: ['cultural', 'events'], title: 'Music Festival', description: 'Annual music and cultural festival', uploadedAt: '2024-01-12', isFeatured: true },
-  { id: 5, src: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=400&h=300&fit=crop', tags: ['academics', 'campus-life'], title: 'Library Study Session', description: 'Students studying in the school library', uploadedAt: '2024-01-11', isFeatured: false },
-  { id: 6, src: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=400&h=300&fit=crop', tags: ['sports'], title: 'Swimming Competition', description: 'Annual swimming gala', uploadedAt: '2024-01-10', isFeatured: false },
-  { id: 7, src: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop', tags: ['academics'], title: 'Computer Class', description: 'Students learning programming', uploadedAt: '2024-01-09', isFeatured: false },
-  { id: 8, src: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=400&h=300&fit=crop', tags: ['events', 'cultural'], title: 'Art Exhibition', description: 'Student art showcase', uploadedAt: '2024-01-08', isFeatured: true },
-  { id: 9, src: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&h=300&fit=crop', tags: ['sports', 'campus-life'], title: 'Football Match', description: 'Inter-house football competition', uploadedAt: '2024-01-07', isFeatured: false },
-  { id: 10, src: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=300&fit=crop', tags: ['cultural'], title: 'Dance Performance', description: 'Traditional dance performance', uploadedAt: '2024-01-06', isFeatured: false }
-];
-
-// Available tags - moved outside component to avoid dependency issues
-const AVAILABLE_TAGS = ['events', 'campus-life', 'academics', 'sports', 'cultural'] as const;
 
 export default function AdminGalleryPage() {
   const router = useRouter();
@@ -89,41 +67,51 @@ export default function AdminGalleryPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
-  // Type for stats
-  interface GalleryStats {
-    totalImages: number;
-    featuredImages: number;
-    imagesByCategory: Record<string, number>;
-  }
+  // Available tags
+  const AVAILABLE_TAGS = ['events', 'campus-life', 'academics', 'sports', 'cultural'] as const;
 
   // Memoized stats calculation
-  const stats: GalleryStats = useMemo(() => {
+  const stats = useMemo(() => {
     const totalImages = images.length;
-    const featuredImages = images.filter(img => img.isFeatured).length;
     const imagesByCategory = AVAILABLE_TAGS.reduce((acc, tag) => {
       acc[tag] = images.filter(img => img.tags.includes(tag)).length;
       return acc;
     }, {} as Record<string, number>);
     
-    return { totalImages, featuredImages, imagesByCategory };
+    return { totalImages, imagesByCategory };
   }, [images]);
 
-  // Load images immediately without delay
+  // Load images from API
   useEffect(() => {
-    try {
-      setLoading(true);
-      // Set images immediately for instant load
-      setImages(SAMPLE_IMAGES);
-      setFilteredImages(SAMPLE_IMAGES);
-      // Simulate very short loading time
-      const timer = setTimeout(() => {
+    const fetchImages = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/admin/gallery');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch images: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load gallery images');
+        }
+        
+        setImages(result.data);
+        setFilteredImages(result.data);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load gallery images');
+        
+        // Fallback to empty array
+        setImages([]);
+        setFilteredImages([]);
+      } finally {
         setLoading(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    } catch (err) {
-      setError('Failed to load gallery images');
-      setLoading(false);
-    }
+      }
+    };
+
+    fetchImages();
   }, []);
 
   // Optimized filter function
@@ -134,8 +122,7 @@ export default function AdminGalleryPage() {
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(img =>
-        img.title?.toLowerCase().includes(query) ||
-        img.description?.toLowerCase().includes(query) ||
+        img.alt?.toLowerCase().includes(query) ||
         img.tags.some(tag => tag.toLowerCase().includes(query))
       );
     }
@@ -172,7 +159,7 @@ export default function AdminGalleryPage() {
       parent.innerHTML = `
         <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
           <div class="text-white text-4xl font-bold mb-2">📷</div>
-          <div class="text-white text-sm text-center px-4">${image.title || 'Image'}</div>
+          <div class="text-white text-sm text-center px-4">${image.alt || 'Image'}</div>
         </div>
       `;
     }
@@ -192,12 +179,31 @@ export default function AdminGalleryPage() {
     setShowDeleteModal(true);
   }, []);
 
-  const handleDeleteConfirm = useCallback(() => {
-    if (imageToDelete) {
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!imageToDelete) return;
+
+    try {
+      const response = await fetch(`/api/admin/gallery?id=${imageToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete image');
+      }
+
+      // Update local state
       setImages(prev => prev.filter(img => img.id !== imageToDelete.id));
       setFilteredImages(prev => prev.filter(img => img.id !== imageToDelete.id));
+      
       setShowDeleteModal(false);
       setImageToDelete(null);
+      
+      // Show success message
+      alert('Image deleted successfully!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete image');
     }
   }, [imageToDelete]);
 
@@ -220,15 +226,6 @@ export default function AdminGalleryPage() {
     setSelectedTags([]);
   }, []);
 
-  // Featured toggle handler
-  const toggleFeatured = useCallback((id: number) => {
-    setImages(prev =>
-      prev.map(img =>
-        img.id === id ? { ...img, isFeatured: !img.isFeatured } : img
-      )
-    );
-  }, []);
-
   // Close modal handler
   const handleCloseModal = useCallback(() => {
     setSelectedImage(null);
@@ -241,7 +238,7 @@ export default function AdminGalleryPage() {
     }
   }, [handleCloseModal]);
 
-  // Render loading skeleton (unchanged)
+  // Render loading skeleton
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -280,33 +277,25 @@ export default function AdminGalleryPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header (unchanged) */}
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gallery Management</h1>
           <p className="text-gray-600">Manage and organize school gallery images</p>
         </div>
 
-        {/* Quick Stats - Simple Cards */}
+        {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-sm text-gray-600 mb-1">Total Images</div>
             <div className="text-2xl font-bold text-blue-600">{stats.totalImages}</div>
           </div>
           
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">Featured</div>
-            <div className="text-2xl font-bold text-yellow-600">{stats.featuredImages}</div>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">Categories</div>
-            <div className="text-2xl font-bold text-green-600">{AVAILABLE_TAGS.length}</div>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">Filtered</div>
-            <div className="text-2xl font-bold text-purple-600">{filteredImages.length}</div>
-          </div>
+          {AVAILABLE_TAGS.map(tag => (
+            <div key={tag} className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="text-sm text-gray-600 mb-1 capitalize">{tag}</div>
+              <div className="text-2xl font-bold text-green-600">{stats.imagesByCategory[tag] || 0}</div>
+            </div>
+          ))}
         </div>
 
         {/* Controls */}
@@ -321,7 +310,7 @@ export default function AdminGalleryPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search images..."
+                placeholder="Search images by alt text or tags..."
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
               {searchQuery && (
@@ -363,7 +352,7 @@ export default function AdminGalleryPage() {
             </div>
           </div>
 
-          {/* Tag Filters - Simplified */}
+          {/* Tag Filters */}
           <div>
             <div className="flex flex-wrap gap-2 mb-3">
               <button
@@ -425,30 +414,21 @@ export default function AdminGalleryPage() {
                   >
                     <img
                       src={image.src}
-                      alt={image.title}
+                      alt={image.alt}
                       loading="lazy"
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                       onError={(e) => handleImageError(image.id, e)}
                     />
-                    
-                    {/* Featured Badge */}
-                    {image.isFeatured && (
-                      <div className="absolute top-2 left-2">
-                        <span className="px-2 py-1 bg-yellow-500 text-white text-xs font-semibold rounded">
-                          ★
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Image Info */}
                   <div className="p-3">
-                    <h3 className="font-medium text-gray-900 text-sm mb-1 truncate">{image.title}</h3>
+                    <h3 className="font-medium text-gray-900 text-sm mb-1 truncate">{image.alt}</h3>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {image.tags.map(tag => (
                         <span
                           key={tag}
-                          className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                          className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded capitalize"
                         >
                           {tag}
                         </span>
@@ -456,36 +436,28 @@ export default function AdminGalleryPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-end gap-1">
                       <button
-                        onClick={() => toggleFeatured(image.id)}
-                        className={`text-xs px-2 py-1 rounded ${image.isFeatured ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}
+                        onClick={() => handleEdit(image.id)}
+                        className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded"
+                        title="Edit"
                       >
-                        {image.isFeatured ? 'Featured' : 'Feature'}
+                        <EditIcon />
                       </button>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => handleEdit(image.id)}
-                          className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded"
-                          title="Edit"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(image)}
-                          className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded"
-                          title="Delete"
-                        >
-                          <DeleteIcon />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleDeleteClick(image)}
+                        className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded"
+                        title="Delete"
+                      >
+                        <DeleteIcon />
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            // List View - Simplified
+            // List View
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="divide-y divide-gray-200">
                 {filteredImages.map((image) => (
@@ -497,7 +469,7 @@ export default function AdminGalleryPage() {
                       >
                         <img
                           src={image.src}
-                          alt={image.title}
+                          alt={image.alt}
                           loading="lazy"
                           className="h-full w-full object-cover"
                           onError={(e) => {
@@ -514,18 +486,10 @@ export default function AdminGalleryPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-gray-900 truncate">{image.title}</h4>
-                          {image.isFeatured && (
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded">
-                              Featured
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600 truncate">{image.description}</p>
+                        <h4 className="font-medium text-gray-900 truncate">{image.alt}</h4>
                         <div className="flex items-center gap-2 mt-2">
                           {image.tags.map(tag => (
-                            <span key={tag} className="text-xs text-gray-500">
+                            <span key={tag} className="text-xs text-gray-500 capitalize">
                               {tag}
                             </span>
                           ))}
@@ -535,12 +499,6 @@ export default function AdminGalleryPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleFeatured(image.id)}
-                          className={`text-sm px-3 py-1.5 rounded ${image.isFeatured ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}
-                        >
-                          {image.isFeatured ? 'Unfeature' : 'Feature'}
-                        </button>
                         <button
                           onClick={() => handleEdit(image.id)}
                           className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded text-sm"
@@ -618,8 +576,8 @@ export default function AdminGalleryPage() {
             <div className="bg-white rounded-lg overflow-hidden">
               <div className="relative h-[50vh] bg-black">
                 <img
-                  src={selectedImage.src.replace('w=400&h=300', 'w=1200')}
-                  alt={selectedImage.title}
+                  src={selectedImage.src}
+                  alt={selectedImage.alt}
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -628,7 +586,7 @@ export default function AdminGalleryPage() {
                       target.parentElement.innerHTML = `
                         <div class="w-full h-full flex flex-col items-center justify-center">
                           <div class="text-white text-6xl mb-4">📷</div>
-                          <div class="text-white text-xl">${selectedImage.title}</div>
+                          <div class="text-white text-xl">${selectedImage.alt}</div>
                         </div>
                       `;
                     }
@@ -638,15 +596,14 @@ export default function AdminGalleryPage() {
               
               <div className="p-4">
                 <div className="mb-3">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">{selectedImage.title}</h3>
-                  <p className="text-gray-600">{selectedImage.description}</p>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{selectedImage.alt}</h3>
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-3">
                   {selectedImage.tags.map(tag => (
                     <span
                       key={tag}
-                      className="px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded"
+                      className="px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded capitalize"
                     >
                       {tag}
                     </span>
@@ -655,7 +612,6 @@ export default function AdminGalleryPage() {
                 
                 <div className="text-sm text-gray-500">
                   Uploaded: {new Date(selectedImage.uploadedAt).toLocaleDateString()}
-                  {selectedImage.isFeatured && ' • Featured'}
                 </div>
               </div>
             </div>
@@ -670,7 +626,7 @@ export default function AdminGalleryPage() {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Image?</h3>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete "<span className="font-medium">{imageToDelete.title}</span>"? 
+                Are you sure you want to delete "<span className="font-medium">{imageToDelete.alt}</span>"? 
                 This action cannot be undone.
               </p>
               <div className="flex gap-3">

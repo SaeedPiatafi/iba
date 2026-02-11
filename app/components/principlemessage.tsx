@@ -57,14 +57,13 @@ export default function PrincipalMessage() {
               <div className="absolute inset-0 bg-gray-200"></div>
               
               <Image
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=987&q=80"
+                src="https://cfmnrikwmscegidvmqzd.supabase.co/storage/v1/object/public/teacher-images/teacher-1770038722417-kgyolvsmjk.jpg"
                 alt="Dr. Sarah Johnson - Principal"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority
                 onError={(e) => {
-                  console.error('Image failed to load');
                   e.currentTarget.style.display = 'none';
                 }}
               />

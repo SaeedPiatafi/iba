@@ -1,6 +1,42 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+// Define teacher interface
+interface DatabaseTeacher {
+  id: string;
+  name: string;
+  subject: string;
+  email: string;
+  class_levels: string[];
+  image: string;
+  education: string[];
+  experience: string;
+  teaching_experience: string[];
+  bio: string;
+  achievements: string[];
+  teaching_philosophy: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Define transformed teacher interface
+interface TransformedTeacher {
+  id: string;
+  name: string;
+  subject: string;
+  email: string;
+  classLevels: string[];
+  image: string;
+  education: string[];
+  experience: string;
+  teachingExperience: string[];
+  bio: string;
+  achievements: string[];
+  teachingPhilosophy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,7 +63,7 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         success: true,
-        data: transformTeacherData(data),
+        data: transformTeacherData(data as DatabaseTeacher),
       });
     }
 
@@ -39,7 +75,7 @@ export async function GET(request: Request) {
     }
 
     // Transform data to camelCase
-    const teachers = (data || []).map(transformTeacherData);
+    const teachers = (data || []).map((teacher: DatabaseTeacher) => transformTeacherData(teacher));
 
     // Apply search filter
     let filteredTeachers = teachers;
@@ -49,8 +85,8 @@ export async function GET(request: Request) {
         t.name.toLowerCase().includes(q) ||
         t.subject.toLowerCase().includes(q) ||
         t.bio.toLowerCase().includes(q) ||
-        t.classLevels?.some(l => l.toLowerCase().includes(q)) ||
-        t.education?.some(e => e.toLowerCase().includes(q))
+        t.classLevels?.some((l: string) => l.toLowerCase().includes(q)) ||
+        t.education?.some((e: string) => e.toLowerCase().includes(q))
       );
     }
 
@@ -73,7 +109,6 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error in teachers API:', error);
     return NextResponse.json(
       {
         success: false,
@@ -88,12 +123,12 @@ export async function GET(request: Request) {
 }
 
 // Helper function to transform Supabase snake_case to camelCase
-function transformTeacherData(teacher: any) {
+function transformTeacherData(teacher: DatabaseTeacher): TransformedTeacher {
   return {
     id: teacher.id,
-    name: teacher.name,
-    subject: teacher.subject,
-    email: teacher.email,
+    name: teacher.name || '',
+    subject: teacher.subject || '',
+    email: teacher.email || '',
     classLevels: teacher.class_levels || [],
     image: teacher.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
     education: teacher.education || [],

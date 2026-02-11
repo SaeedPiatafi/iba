@@ -14,9 +14,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 // School configuration
 const SCHOOL_CONFIG = {
-  schoolName: "Future Scholars Academy",
+  schoolName: "iba-iphss",
   currency: "PKR",
-  academicYear: "2024-2025"
 };
 
 export async function GET(request: NextRequest) {
@@ -29,7 +28,6 @@ export async function GET(request: NextRequest) {
       .order('id', { ascending: true });
 
     if (error) {
-      console.error('Supabase error:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to fetch fee data from database' },
         { status: 500 }
@@ -41,8 +39,7 @@ export async function GET(request: NextRequest) {
         success: true,
         data: {
           ...SCHOOL_CONFIG,
-          feeStructure: [],
-          lastUpdated: new Date().toISOString()
+          feeStructure: []
         },
         count: 0,
         total: 0,
@@ -79,21 +76,13 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Find the most recent update date
-    const lastUpdated = feeData.reduce((latest, fee) => {
-      const feeDate = new Date(fee.updated_at || fee.created_at);
-      return feeDate > latest ? feeDate : latest;
-    }, new Date(0));
-
     const totalSum = transformedData.reduce((sum, fee) => sum + fee.totalAnnual, 0);
 
     return NextResponse.json({
       success: true,
       data: {
         ...SCHOOL_CONFIG,
-        feeStructure: transformedData,
-        lastUpdated: lastUpdated.toISOString(),
-        formattedDate: formatDate(lastUpdated.toISOString())
+        feeStructure: transformedData
       },
       count: transformedData.length,
       total: totalSum,
@@ -101,7 +90,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error fetching fee data:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -118,14 +106,4 @@ function formatCurrency(amount: number, currency: string): string {
     })}`;
   }
   return `${currency} ${amount.toLocaleString('en-PK')}`;
-}
-
-// Helper function to format date
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
 }

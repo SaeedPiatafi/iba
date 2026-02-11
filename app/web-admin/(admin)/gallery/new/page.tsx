@@ -1,4 +1,3 @@
-// app/web-admin/gallery/new/page.tsx
 "use client";
 
 import { useState, useRef, ChangeEvent, KeyboardEvent, DragEvent } from 'react';
@@ -6,11 +5,9 @@ import { useRouter } from 'next/navigation';
 
 // Define TypeScript interfaces
 interface FormData {
-  title: string;
-  description: string;
+  alt: string;
   imageUrl: string;
   tags: string[];
-  isFeatured: boolean;
 }
 
 interface IconProps {
@@ -61,11 +58,9 @@ export default function NewGalleryPage() {
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
-    title: '',
-    description: '',
+    alt: '',
     imageUrl: '',
     tags: [],
-    isFeatured: false,
   });
   const [newTag, setNewTag] = useState<string>('');
 
@@ -73,8 +68,7 @@ export default function NewGalleryPage() {
   const availableTags: string[] = ['events', 'campus-life', 'academics', 'sports', 'cultural'];
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const target = e.target as HTMLInputElement;
+    const { name, value } = e.target;
     
     if (name === 'imageUrl' && uploadMethod === 'url') {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -85,7 +79,7 @@ export default function NewGalleryPage() {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: type === 'checkbox' ? target.checked : value
+        [name]: value
       }));
     }
   };
@@ -112,11 +106,10 @@ export default function NewGalleryPage() {
       };
       reader.readAsDataURL(file);
 
-      // In real app, you would upload to server and get URL
-      // For now, we'll use the data URL
+      // Set the image URL (will be uploaded via API)
       setFormData(prev => ({
         ...prev,
-        imageUrl: `uploaded_${Date.now()}_${file.name}`
+        imageUrl: file.name // This will be replaced with the uploaded URL
       }));
     }
   };
@@ -154,7 +147,7 @@ export default function NewGalleryPage() {
         // Set the image URL
         setFormData(prev => ({
           ...prev,
-          imageUrl: `uploaded_${Date.now()}_${file.name}`
+          imageUrl: file.name // This will be replaced with the uploaded URL
         }));
       }
     }
@@ -195,8 +188,8 @@ export default function NewGalleryPage() {
   };
 
   const validateForm = (): boolean => {
-    if (!formData.title.trim()) {
-      alert('Please enter a title for the image');
+    if (!formData.alt.trim()) {
+      alert('Please enter alt text for the image');
       return false;
     }
     
@@ -222,21 +215,38 @@ export default function NewGalleryPage() {
     
     setLoading(true);
     
-    // Prepare data
-    const imageData = {
-      ...formData,
-      uploadedAt: new Date().toISOString().split('T')[0]
-    };
-    
-    // In real app, submit to API
-    console.log('Image Data:', imageData);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Prepare form data
+      const formDataToSend = new FormData();
+      formDataToSend.append('alt', formData.alt);
+      formDataToSend.append('tags', JSON.stringify(formData.tags));
+      
+      // Handle file upload or URL
+      if (uploadMethod === 'file' && fileInputRef.current?.files?.[0]) {
+        formDataToSend.append('image', fileInputRef.current.files[0]);
+      } else {
+        formDataToSend.append('imageUrl', formData.imageUrl);
+      }
+      
+      // Submit to API
+      const response = await fetch('/api/admin/gallery', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to upload image');
+      }
+      
       alert('Image uploaded successfully!');
       router.push('/web-admin/gallery');
-    }, 1500);
+    } catch (error: any) {
+      alert(error.message || 'Failed to upload image');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -434,36 +444,23 @@ export default function NewGalleryPage() {
             </h2>
             
             <div className="space-y-6">
-              {/* Title */}
+              {/* Alt Text */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title *
+                  Alt Text *
                 </label>
                 <input
                   type="text"
-                  name="title"
-                  value={formData.title}
+                  name="alt"
+                  value={formData.alt}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  placeholder="Enter a descriptive title for the image"
+                  placeholder="Enter descriptive alt text for the image"
                 />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description *
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  required
-                  rows={4}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  placeholder="Describe what the image shows, event details, etc."
-                />
+                <p className="mt-2 text-sm text-gray-500">
+                  This text is important for accessibility and SEO
+                </p>
               </div>
             </div>
           </div>
@@ -554,24 +551,6 @@ export default function NewGalleryPage() {
                   </div>
                 )}
               </div>
-
-              {/* Featured Toggle */}
-              <div className="flex items-center space-x-3 pt-4 border-t border-gray-200">
-                <input
-                  type="checkbox"
-                  name="isFeatured"
-                  checked={formData.isFeatured}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  id="isFeatured"
-                />
-                <label htmlFor="isFeatured" className="text-sm font-medium text-gray-700">
-                  Mark as Featured Image
-                </label>
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                  Featured images appear prominently on the public site
-                </span>
-              </div>
             </div>
           </div>
 
@@ -616,11 +595,8 @@ export default function NewGalleryPage() {
                 <div className="md:w-2/3">
                   <div className="mb-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {formData.title || 'Image Title'}
+                      {formData.alt || 'Image Alt Text'}
                     </h3>
-                    <p className="text-gray-600 mb-4">
-                      {formData.description || 'Image description will appear here.'}
-                    </p>
                   </div>
                   
                   <div className="space-y-4">
@@ -631,7 +607,7 @@ export default function NewGalleryPage() {
                           formData.tags.map(tag => (
                             <span
                               key={tag}
-                              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full capitalize"
                             >
                               {tag}
                             </span>
@@ -645,8 +621,8 @@ export default function NewGalleryPage() {
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                       <div>
                         <p className="text-sm text-gray-600">Status:</p>
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${formData.isFeatured ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {formData.isFeatured ? 'Featured ★' : 'Standard'}
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                          Ready to upload
                         </span>
                       </div>
                       <div className="text-right">
@@ -676,14 +652,15 @@ export default function NewGalleryPage() {
                 type="button"
                 onClick={() => {
                   setFormData({
-                    title: '',
-                    description: '',
+                    alt: '',
                     imageUrl: '',
                     tags: [],
-                    isFeatured: false,
                   });
                   setImagePreview(null);
                   setNewTag('');
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
                   alert('Form cleared successfully!');
                 }}
                 className="px-4 py-2.5 border border-red-300 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors duration-200"

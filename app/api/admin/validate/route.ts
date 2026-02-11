@@ -8,7 +8,6 @@ export async function GET() {
     // Get the access token from cookies
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('sb-access-token')?.value;
-    
     if (!accessToken) {
       return NextResponse.json({
         success: false,
@@ -120,7 +119,6 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Validate error:', error);
     return NextResponse.json({
       success: false,
       authenticated: false,

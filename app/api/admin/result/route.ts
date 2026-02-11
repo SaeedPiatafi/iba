@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
+import { checkAdminAuth } from '@/lib/auth-helper';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -42,69 +43,31 @@ function gradeFromPercentage(percentage: number): string {
 
 const BATCH_SIZE = 100;
 
-async function ensureStorageBucket() {
-  try {
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-    if (listError) return false;
-
-    const resultsBucketExists = buckets?.some(bucket => bucket.name === 'results');
-    if (!resultsBucketExists) {
-      const { error: createError } = await supabase.storage.createBucket('results', {
-        public: true,
-        fileSizeLimit: 52428800,
-        allowedMimeTypes: [
-          'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'text/csv',
-          'application/csv'
-        ]
-      });
-      if (createError) return false;
-    }
-    return true;
-  } catch (error) {
-    return false;
+// Check admin authentication
+async function requireAdminAuth() {
+  const authResult = await checkAdminAuth();
+  
+  if (!authResult.isAdmin) {
+    throw new Error(authResult.error || 'Admin access required');
   }
+  return authResult.user;
 }
 
-async function uploadFileToStorage(file: File): Promise<{ path: string; url: string }> {
-  try {
-    const bucketReady = await ensureStorageBucket();
-    if (!bucketReady) throw new Error('Failed to ensure storage bucket exists');
-
-    const timestamp = Date.now();
-    const fileName = `${timestamp}_${file.name.replace(/\s+/g, '_')}`;
-    const filePath = `exam-results/${fileName}`;
-    
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    const { error } = await supabase.storage
-      .from('results')
-      .upload(filePath, buffer, {
-        contentType: file.type || 'application/vnd.ms-excel',
-        upsert: true,
-        cacheControl: '3600'
-      });
-
-    if (error) throw new Error(`Storage upload failed: ${error.message}`);
-
-    const { data: urlData } = await supabase.storage.from('results').getPublicUrl(filePath);
-    return { path: filePath, url: urlData.publicUrl };
-  } catch (error) {
-    throw error;
-  }
-}
-
-async function checkExistingFile() {
+// Check if file already exists for the same class and academic year
+async function checkExistingFile(academicYear: string, className: string): Promise<any> {
   try {
     const { data, error } = await supabase
       .from('upload_history')
       .select('*')
+      .eq('academic_year', academicYear)
+      .eq('class_name', className)
       .limit(1)
       .single();
 
-    if (error && error.code !== 'PGRST116') return null;
+    if (error && error.code !== 'PGRST116') {
+      return null;
+    }
+    
     return data || null;
   } catch (error) {
     return null;
@@ -112,12 +75,12 @@ async function checkExistingFile() {
 }
 
 export async function POST(req: NextRequest) {
-  const responseErrors: any[] = [];
-
   try {
+    // Check admin authentication
+    await requireAdminAuth();
+
     const form = await req.formData();
     const file = form.get('file') as File;
-    const academicYear = (form.get('academicYear') as string) || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
     if (!file) {
       return NextResponse.json(
@@ -126,27 +89,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if file already exists (only one file allowed)
-    const existingFile = await checkExistingFile();
-    if (existingFile) {
+    // Validate file type
+    const allowedTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+      'application/csv'
+    ];
+    
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'A file already exists. Please delete it first before uploading a new one.',
-          data: {
-            existingFile: {
-              filename: existingFile.filename,
-              uploadDate: existingFile.uploaded_at,
-              recordCount: existingFile.total_records
-            }
-          }
-        },
+        { success: false, message: 'Invalid file type. Please upload Excel or CSV files only.' },
         { status: 400 }
       );
     }
 
-    // Upload file to storage
-    const { path: storagePath, url: storageUrl } = await uploadFileToStorage(file);
+    // Validate file size (50MB max)
+    if (file.size > 50 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, message: 'File size should be less than 50MB' },
+        { status: 400 }
+      );
+    }
 
     // Read Excel file
     const buffer = await file.arrayBuffer();
@@ -154,61 +118,108 @@ export async function POST(req: NextRequest) {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json<any>(sheet);
 
-    if (!rows.length) {
-      await supabase.storage.from('results').remove([storagePath]);
+    if (!rows || rows.length === 0) {
       return NextResponse.json(
-        { success: false, message: 'Excel file is empty' },
+        { success: false, message: 'Excel file is empty or has no data' },
         { status: 400 }
       );
     }
 
-    console.log(`Found ${rows.length} student records`);
-
     // Validate headers
     const headers = Object.keys(rows[0]);
-    const requiredHeaders = ['Name', 'Father Name', 'Roll Number', 'Total Marks', 'Obtain Marks', 'Percentage', 'Status', 'Grade', 'Academic Year'];
+    const requiredHeaders = ['Name', 'Roll Number', 'Total Marks', 'Obtain Marks', 'Percentage', 'Status', 'Grade', 'Academic Year', 'Class'];
     
     const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
     if (missingHeaders.length > 0) {
-      await supabase.storage.from('results').remove([storagePath]);
       return NextResponse.json({
         success: false,
-        message: 'Missing required headers',
+        message: 'Missing required headers in the file',
         missingHeaders,
         requiredHeaders
       }, { status: 400 });
     }
 
-    // Get subject headers (headers ending with *)
-    const subjectHeaders = headers.filter(header => 
-      header.trim().endsWith('*') && 
-      !requiredHeaders.includes(header.replace('*', '').trim())
-    );
+    // Extract academic year and class from the first row
+    const firstRow = rows[0];
+    const academicYear = firstRow['Academic Year']?.toString().trim();
+    const className = firstRow['Class']?.toString().trim();
+
+    if (!academicYear) {
+      return NextResponse.json(
+        { success: false, message: 'Academic Year is required in the CSV file (check first row)' },
+        { status: 400 }
+      );
+    }
+
+    if (!className) {
+      return NextResponse.json(
+        { success: false, message: 'Class is required in the CSV file (check first row)' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that all rows have the same academic year and class
+    const inconsistentRows: number[] = [];
+    rows.forEach((row, index) => {
+      const rowAcademicYear = row['Academic Year']?.toString().trim();
+      const rowClassName = row['Class']?.toString().trim();
+      
+      if (rowAcademicYear !== academicYear) {
+        inconsistentRows.push(index + 1);
+      }
+      if (rowClassName !== className) {
+        inconsistentRows.push(index + 1);
+      }
+    });
+
+    if (inconsistentRows.length > 0) {
+      const uniqueRows = Array.from(new Set(inconsistentRows)).slice(0, 10);
+      return NextResponse.json({
+        success: false,
+        message: `Inconsistent Academic Year or Class found in ${uniqueRows.length} rows`,
+        errors: {
+          inconsistentRows: uniqueRows,
+          expectedAcademicYear: academicYear,
+          expectedClassName: className
+        }
+      }, { status: 400 });
+    }
+
+    // Check if file already exists for this class and year
+    const existingFile = await checkExistingFile(academicYear, className);
     
-    const subjectNames = subjectHeaders.map(header => header.replace('*', '').trim());
-    
-    // Validate subject headers
-    const invalidSubjects = headers.filter(header => 
-      !requiredHeaders.includes(header) && 
-      !header.endsWith('*') &&
-      !['Class', 'Section'].includes(header)
-    );
-    
-    if (invalidSubjects.length > 0) {
-      responseErrors.push({
-        type: 'invalid_subjects',
-        message: 'Subjects must end with *',
-        invalidSubjects
-      });
+    if (existingFile) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: `A file already exists for ${className} - ${academicYear}. Please delete it first before uploading a new one.`,
+          data: {
+            existingFile: {
+              id: existingFile.id,
+              filename: existingFile.filename,
+              uploadDate: existingFile.uploaded_at,
+              recordCount: existingFile.total_records,
+              className: existingFile.class_name,
+              academicYear: existingFile.academic_year
+            }
+          }
+        },
+        { status: 409 }
+      );
     }
 
     // Prepare data for insertion
-    const prepared = rows.map((row, index) => {
+    const errors: any[] = [];
+    const preparedData = rows.map((row, index) => {
       try {
-        // Parse subjects
+        // Parse subjects (dynamic based on headers ending with *)
         const subjects: Record<string, any> = {};
-        let totalMarks = 0;
-        let obtainMarks = 0;
+        const subjectHeaders = headers.filter(header => 
+          header.trim().endsWith('*') && 
+          !requiredHeaders.includes(header.replace('*', '').trim())
+        );
+
+        let totalObtainMarks = 0;
         let maxTotalMarks = 0;
 
         for (const header of subjectHeaders) {
@@ -224,74 +235,120 @@ export async function POST(req: NextRequest) {
           };
           
           if (offered) {
-            obtainMarks += marks;
+            totalObtainMarks += marks;
             maxTotalMarks += 100;
           }
         }
 
         // Parse numeric values
-        const totalMarksValue = parseFloat(row['Total Marks']) || 0;
-        const obtainMarksValue = parseFloat(row['Obtain Marks']) || obtainMarks;
+        const totalMarksValue = parseFloat(row['Total Marks']) || maxTotalMarks;
+        const obtainMarksValue = parseFloat(row['Obtain Marks']) || totalObtainMarks;
         const percentageValue = parseFloat(row['Percentage']) || 0;
         
-        // Validate and calculate
-        totalMarks = totalMarksValue || maxTotalMarks;
-        obtainMarks = obtainMarksValue || obtainMarks;
-        const percentage = percentageValue || (maxTotalMarks > 0 ? (obtainMarks / maxTotalMarks) * 100 : 0);
-        const grade = row['Grade'] || gradeFromPercentage(percentage);
-        const status = row['Status'] || (percentage >= 33 ? 'PASS' : 'FAIL');
+        // Calculate percentage if not provided
+        const percentage = percentageValue || (maxTotalMarks > 0 ? (obtainMarksValue / maxTotalMarks) * 100 : 0);
+        const grade = row['Grade']?.toString().trim() || gradeFromPercentage(percentage);
+        const status = row['Status']?.toString().trim().toUpperCase() || (percentage >= 33 ? 'PASS' : 'FAIL');
 
-        // Create record
-        const record = {
+        // Validate roll number
+        const rollNumber = String(row['Roll Number']).trim();
+        if (!rollNumber) {
+          throw new Error('Roll Number is required');
+        }
+
+        // Create record - MATCHING THE EXACT DATABASE SCHEMA
+        const record: any = {
           name: row['Name']?.toString().trim() || `Student ${index + 1}`,
           father_name: row['Father Name']?.toString().trim() || '',
-          roll_number: String(row['Roll Number']).trim(),
-          academic_year: row['Academic Year'] || academicYear,
-          subjects: subjects,
-          total_marks: totalMarks,
-          obtain_marks: obtainMarks,
+          roll_number: rollNumber,
+          academic_year: academicYear,
+          class_name: className, // Added
+          subjects: Object.keys(subjects).length > 0 ? subjects : {},
+          total_marks: totalMarksValue,
+          obtain_marks: obtainMarksValue,
           percentage: Number(percentage.toFixed(2)),
-          grade: grade,
           status: status,
+          grade: grade,
           uploaded_filename: file.name,
-          storage_path: storagePath,
-          uploaded_at: new Date().toISOString()
+          uploaded_at: new Date().toISOString(),
+          created_at: new Date().toISOString(), // Added
+          updated_at: new Date().toISOString() // Added
         };
 
         return record;
 
       } catch (err: any) {
-        responseErrors.push({
+        errors.push({
           row: index + 1,
-          roll_number: row['Roll Number'],
-          error: err.message || 'Row processing failed'
+          roll_number: row['Roll Number'] || 'N/A',
+          error: err.message || 'Row processing failed',
+          name: row['Name'] || 'Unknown'
         });
         return null;
       }
-    });
+    }).filter(Boolean); // Remove null entries
 
-    const validData = prepared.filter(Boolean);
+    if (errors.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Validation failed with ${errors.length} errors`,
+          errors: errors.slice(0, 50)
+        },
+        { status: 400 }
+      );
+    }
 
-    // Duplicate check
+    // Duplicate check within the same file
     const seen = new Set<string>();
-    for (const r of validData as any[]) {
-      const key = `${r.roll_number}-${r.academic_year}`;
+    const duplicates: any[] = [];
+    
+    preparedData.forEach((record: any) => {
+      const key = `${record.roll_number}-${record.academic_year}-${record.class_name}`;
       if (seen.has(key)) {
-        responseErrors.push({
-          roll_number: r.roll_number,
+        duplicates.push({
+          roll_number: record.roll_number,
           error: 'Duplicate roll number in uploaded file'
         });
       }
       seen.add(key);
-    }
+    });
 
-    if (responseErrors.length > 0) {
-      await supabase.storage.from('results').remove([storagePath]);
+    if (duplicates.length > 0) {
+      errors.push(...duplicates);
       return NextResponse.json(
         {
           success: false,
-          message: 'Validation failed',
-          errors: responseErrors
+          message: `Found ${duplicates.length} duplicate roll numbers in file`,
+          errors: duplicates.slice(0, 50)
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check for duplicates in database
+    const rollNumbers = preparedData.map((r: any) => r.roll_number);
+    const { data: existingStudents } = await supabase
+      .from('exam_results')
+      .select('roll_number, name')
+      .in('roll_number', rollNumbers)
+      .eq('academic_year', academicYear)
+      .eq('class_name', className);
+
+    if (existingStudents && existingStudents.length > 0) {
+      existingStudents.forEach(student => {
+        errors.push({
+          roll_number: student.roll_number,
+          error: 'Roll number already exists in database for this class and year',
+          existing_name: student.name
+        });
+      });
+      
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Found ${existingStudents.length} duplicate roll numbers in database`,
+          errors: errors.slice(0, 50)
         },
         { status: 400 }
       );
@@ -299,34 +356,16 @@ export async function POST(req: NextRequest) {
 
     // Insert in batches
     let inserted = 0;
-    for (let i = 0; i < validData.length; i += BATCH_SIZE) {
-      const chunk = validData.slice(i, i + BATCH_SIZE) as any[];
-      const { error } = await supabase.from('exam_results').upsert(chunk, {
-        onConflict: 'roll_number,academic_year'
-      });
-
+    for (let i = 0; i < preparedData.length; i += BATCH_SIZE) {
+      const chunk = preparedData.slice(i, i + BATCH_SIZE);      
+      const { error } = await supabase
+        .from('exam_results')
+        .insert(chunk);
       if (error) {
-        console.error('Batch insert error:', error);
-        responseErrors.push({
-          batch: `${i + 1} - ${i + chunk.length}`,
-          error: error.message
-        });
-        break;
+        throw new Error(`Failed to insert batch ${i / BATCH_SIZE + 1}: ${error.message}`);
       }
 
       inserted += chunk.length;
-    }
-
-    if (responseErrors.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Database insert failed',
-          inserted,
-          errors: responseErrors
-        },
-        { status: 500 }
-      );
     }
 
     // Save upload history
@@ -334,10 +373,11 @@ export async function POST(req: NextRequest) {
       filename: file.name,
       file_size: file.size,
       academic_year: academicYear,
+      class_name: className, // Added
       total_records: inserted,
-      storage_path: storagePath,
       uploaded_by: 'admin',
-      uploaded_at: new Date().toISOString()
+      uploaded_at: new Date().toISOString(),
+      created_at: new Date().toISOString() // Added
     };
 
     const { error: historyError } = await supabase
@@ -345,39 +385,49 @@ export async function POST(req: NextRequest) {
       .insert([uploadHistoryData]);
 
     if (historyError) {
-      console.error('Error saving upload history:', historyError);
     }
+
+    // Count total students for this class and year
+    const { count: totalStudents } = await supabase
+      .from('exam_results')
+      .select('*', { count: 'exact', head: true })
+      .eq('academic_year', academicYear)
+      .eq('class_name', className);
+
 
     // Success response
     return NextResponse.json({
       success: true,
-      message: 'Upload completed successfully',
+      message: `Successfully uploaded ${inserted} student records for ${className} - ${academicYear}`,
       data: {
         fileInfo: {
           filename: file.name,
           size: file.size,
-          storagePath,
-          storageUrl,
-          academicYear
+          academicYear,
+          className
         },
         processingStats: {
           totalRecordsInFile: rows.length,
           successfullyInserted: inserted,
           failed: rows.length - inserted,
-          totalSubjects: subjectNames.length,
-          subjects: subjectNames
-        },
-        errors: responseErrors
+          verificationCount: inserted
+        }
       },
       timestamp: new Date().toISOString()
     });
 
-  } catch (err: any) {
-    console.error('Upload error:', err);
+  } catch (err: any) {    
+    if (err.message.includes('Admin access required')) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Please log in as admin.' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       {
         success: false,
-        message: 'Unexpected server error',
+        message: err.message || 'Unexpected server error',
         error: err.message
       },
       { status: 500 }
@@ -387,10 +437,14 @@ export async function POST(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    // Check admin authentication
+    await requireAdminAuth();
 
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
+
+    // Get upload history with class_name
+    const { data: uploads, error } = await supabase
       .from('upload_history')
       .select('*')
       .order('uploaded_at', { ascending: false })
@@ -401,7 +455,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total students count
-    const { count: totalResults } = await supabase
+    const { count: totalStudents } = await supabase
       .from('exam_results')
       .select('*', { count: 'exact', head: true });
 
@@ -411,23 +465,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        uploads: data || [],
+        uploads: uploads || [],
         statistics: {
-          totalUploads: data?.length || 0,
-          totalStudents: totalResults || 0
+          totalUploads: uploads?.length || 0,
+          totalStudents: totalStudents || 0
         },
         currentYear: currentAcademicYear
       },
       timestamp: new Date().toISOString()
     });
 
-  } catch (error) {
-    console.error('Error fetching upload history:', error);
+  } catch (error: any) {
+    
+    if (error.message.includes('Admin access required')) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Please log in as admin.' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       {
         success: false,
         message: 'Error fetching upload history',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error.message || 'Unknown error',
         timestamp: new Date().toISOString()
       },
       { status: 500 }
@@ -437,89 +498,101 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Check if any file exists
+    // Check admin authentication
+    await requireAdminAuth();
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'ID is required for deletion' },
+        { status: 400 }
+      );
+    }
+
+    // First, get the upload record to know which academic year and class to delete
     const { data: uploadRecord, error: fetchError } = await supabase
       .from('upload_history')
       .select('*')
-      .limit(1)
+      .eq('id', id)
       .single();
 
-    if (fetchError && fetchError.code === 'PGRST116') {
+    if (fetchError) {
       return NextResponse.json(
-        { success: false, message: 'No file to delete' },
+        { success: false, message: 'File not found' },
         { status: 404 }
       );
     }
 
-    if (fetchError) {
-      console.error('Error fetching upload record:', fetchError);
-      throw new Error('Failed to fetch upload record');
-    }
-
-    // Delete file from storage if exists
-    let deletedFilesCount = 0;
-    if (uploadRecord?.storage_path) {
-      const { error: storageError } = await supabase.storage
-        .from('results')
-        .remove([uploadRecord.storage_path]);
-      
-      if (storageError) {
-        console.error('Error deleting file from storage:', storageError);
-      } else {
-        deletedFilesCount = 1;
-      }
-    }
+    const { academic_year, class_name } = uploadRecord;
 
     // Get count of exam results to be deleted
-    const { count: examResultsCount, error: countError } = await supabase
+    const { count: examResultsCount } = await supabase
       .from('exam_results')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .eq('academic_year', academic_year)
+      .eq('class_name', class_name);
 
-    if (countError) {
-      console.error('Error counting exam results:', countError);
-    }
-
-    // Delete all exam results
+    // Delete exam results first
     const { error: deleteError } = await supabase
       .from('exam_results')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      .eq('academic_year', academic_year)
+      .eq('class_name', class_name);
 
     if (deleteError) {
-      console.error('Error deleting from exam_results:', deleteError);
-      throw new Error(`Failed to delete results: ${deleteError.message}`);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: `Failed to delete exam results: ${deleteError.message}` 
+        },
+        { status: 500 }
+      );
     }
 
-    // Delete from upload_history
+    // Now delete the upload history record
     const { error: historyDeleteError } = await supabase
       .from('upload_history')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      .eq('id', id);
 
     if (historyDeleteError) {
-      console.error('Error deleting from upload_history:', historyDeleteError);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: `Failed to delete upload history: ${historyDeleteError.message}` 
+        },
+        { status: 500 }
+      );
     }
-
-    console.log('Deletion completed');
-    console.log(`Deleted ${examResultsCount || 0} exam results`);
 
     return NextResponse.json({
       success: true,
-      message: 'Results deleted successfully',
+      message: `Successfully deleted ${examResultsCount || 0} student records for ${class_name} - ${academic_year}`,
       data: {
         deletedExamResults: examResultsCount || 0,
-        deletedFiles: deletedFilesCount
+        academicYear: academic_year,
+        className: class_name,
+        deletedUploadId: id
       },
       timestamp: new Date().toISOString()
     });
 
-  } catch (error) {
-    console.error('Error deleting results:', error);
+  } catch (error: any) {
+    
+    if (error.message.includes('Admin access required')) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized. Please log in as admin.' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       {
         success: false,
         message: 'Error deleting results',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error.message || 'Unknown error',
         timestamp: new Date().toISOString()
       },
       { status: 500 }

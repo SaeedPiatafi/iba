@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
-    console.log(`GET request for ${id ? `fee ID: ${id}` : 'all fees'}`);
+
     
     // If ID is provided, fetch single fee
     if (id) {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         .single();
       
       if (error) {
-        console.error('Supabase error:', error);
+  
         if (error.code === 'PGRST116') {
           return NextResponse.json(
             { success: false, error: 'Fee structure not found' },
@@ -94,14 +94,14 @@ export async function GET(request: NextRequest) {
     }
     
     // Fetch all fees
-    console.log('Fetching all fee data from Supabase...');
+
     const { data: feeData, error } = await supabase
       .from('fee')
       .select('*')
       .order('id', { ascending: true });
 
     if (error) {
-      console.error('Supabase error:', error);
+
       return NextResponse.json(
         { 
           success: false, 
@@ -111,7 +111,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`Found ${feeData?.length || 0} fee records`);
     
     // Transform data
     const transformedData = (feeData || []).map(fee => {
@@ -145,7 +144,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error:', error);
+
     return NextResponse.json(
       { 
         success: false, 
@@ -160,7 +159,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('Creating new fee:', body);
+
     
     // Validate required fields
     if (!body.className || !body.category || !body.monthlyFee) {
@@ -183,7 +182,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (checkError) {
-      console.error('Check error:', checkError);
+
       return NextResponse.json(
         { success: false, error: 'Failed to check existing fees' },
         { status: 500 }
@@ -217,7 +216,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error('Insert error:', insertError);
+
       return NextResponse.json(
         { success: false, error: 'Failed to create fee structure' },
         { status: 500 }
@@ -249,7 +248,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error: any) {
-    console.error('Error:', error);
+ 
     return NextResponse.json(
       { 
         success: false, 
@@ -264,7 +263,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('Updating fee:', body);
+
     
     // Validate required fields
     if (!body.id) {
@@ -323,7 +322,7 @@ export async function PUT(request: NextRequest) {
       .maybeSingle();
 
     if (duplicateError) {
-      console.error('Duplicate check error:', duplicateError);
+     
     }
 
     if (duplicateFee) {
@@ -354,7 +353,6 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (updateError) {
-      console.error('Update error:', updateError);
       return NextResponse.json(
         { success: false, error: 'Failed to update fee structure' },
         { status: 500 }
@@ -386,7 +384,6 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error:', error);
     return NextResponse.json(
       { 
         success: false, 
@@ -446,7 +443,6 @@ export async function DELETE(request: NextRequest) {
       .eq('id', feeId);
 
     if (deleteError) {
-      console.error('Delete error:', deleteError);
       return NextResponse.json(
         { success: false, error: 'Failed to delete fee structure' },
         { status: 500 }
@@ -474,7 +470,6 @@ export async function DELETE(request: NextRequest) {
       updatedAt: existingFee.updated_at
     };
 
-    console.log('Successfully deleted fee:', deletedFee.className);
 
     return NextResponse.json({
       success: true,
@@ -483,7 +478,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error in DELETE /api/admin/fee:', error);
     return NextResponse.json(
       { 
         success: false, 

@@ -68,11 +68,20 @@ const AddTeacherPage = () => {
     }, 3000);
   };
 
-  // Handle file selection
+  // Handle file selection from input
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    handleFileValidation(file);
+  };
 
+  // Handle file from drag and drop
+  const handleFileFromDragDrop = (file: File) => {
+    handleFileValidation(file);
+  };
+
+  // Common file validation logic
+  const handleFileValidation = (file: File) => {
     // Validate file type
     if (!allowedFileTypes.includes(file.type)) {
       showNotification(`Invalid file type. Allowed types: JPEG, JPG, PNG, WebP, GIF, SVG`, 'error');
@@ -96,17 +105,14 @@ const AddTeacherPage = () => {
     reader.readAsDataURL(file);
   };
 
-  // Handle drag and drop
+  // Handle drag and drop - FIXED VERSION
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      const inputEvent = {
-        target: { files: [file] }
-      } as ChangeEvent<HTMLInputElement>;
-      handleFileChange(inputEvent);
+      handleFileFromDragDrop(file);
     }
   };
 
@@ -221,71 +227,70 @@ const AddTeacherPage = () => {
   };
 
   // Handle form submission to API
-  // Handle form submission to API
-const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  
-  if (!validateForm()) return;
-  
-  setIsSubmitting(true);
-
-  try {
-    // Create FormData for file upload
-    const formData = new FormData();
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     
-    // Add teacher data to FormData
-    formData.append('name', teacherData.name.trim());
-    formData.append('subject', teacherData.subject.trim());
-    formData.append('email', teacherData.email.trim());
-    formData.append('classLevels', JSON.stringify(selectedClassLevels));
-    formData.append('experience', teacherData.experience.trim());
-    formData.append('education', JSON.stringify(teacherData.education.filter(edu => edu.trim() !== '')));
-    formData.append('teachingExperience', JSON.stringify(teacherData.teachingExperience.filter(exp => exp.trim() !== '')));
-    formData.append('bio', teacherData.bio.trim());
-    formData.append('achievements', JSON.stringify(teacherData.achievements.filter(ach => ach.trim() !== '')));
-    formData.append('teachingPhilosophy', teacherData.teachingPhilosophy.trim());
+    if (!validateForm()) return;
     
-    // Add image file or URL
-    if (selectedFile) {
-      formData.append('image', selectedFile);
-    } else if (teacherData.image.trim()) {
-      formData.append('image', teacherData.image.trim());
-    }
+    setIsSubmitting(true);
 
-    // Call the API with FormData - ADD credentials: 'include'
-    const response = await fetch('/api/admin/teacher', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include', // ← THIS IS CRITICAL!
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to add teacher');
-    }
-
-    showNotification('Teacher added successfully! Redirecting...', 'success');
-    
-    // Reset form
-    setTimeout(() => {
-      setTeacherData(initialTeacherData);
-      setSelectedClassLevels([]);
-      setSelectedFile(null);
-      setImagePreview('');
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
       
-      // Redirect to teachers list
-      router.push('/web-admin/teacher');
-      router.refresh();
-    }, 1500);
-    
-  } catch (error: any) {
-    console.error('Error adding teacher:', error);
-    showNotification(error.message || 'Failed to add teacher. Please try again.', 'error');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      // Add teacher data to FormData
+      formData.append('name', teacherData.name.trim());
+      formData.append('subject', teacherData.subject.trim());
+      formData.append('email', teacherData.email.trim());
+      formData.append('classLevels', JSON.stringify(selectedClassLevels));
+      formData.append('experience', teacherData.experience.trim());
+      formData.append('education', JSON.stringify(teacherData.education.filter(edu => edu.trim() !== '')));
+      formData.append('teachingExperience', JSON.stringify(teacherData.teachingExperience.filter(exp => exp.trim() !== '')));
+      formData.append('bio', teacherData.bio.trim());
+      formData.append('achievements', JSON.stringify(teacherData.achievements.filter(ach => ach.trim() !== '')));
+      formData.append('teachingPhilosophy', teacherData.teachingPhilosophy.trim());
+      
+      // Add image file or URL
+      if (selectedFile) {
+        formData.append('image', selectedFile);
+      } else if (teacherData.image.trim()) {
+        formData.append('image', teacherData.image.trim());
+      }
+
+      // Call the API with FormData - ADD credentials: 'include'
+      const response = await fetch('/api/admin/teacher', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // ← THIS IS CRITICAL!
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to add teacher');
+      }
+
+      showNotification('Teacher added successfully! Redirecting...', 'success');
+      
+      // Reset form
+      setTimeout(() => {
+        setTeacherData(initialTeacherData);
+        setSelectedClassLevels([]);
+        setSelectedFile(null);
+        setImagePreview('');
+        
+        // Redirect to teachers list
+        router.push('/web-admin/teacher');
+        router.refresh();
+      }, 1500);
+      
+    } catch (error: any) {
+      showNotification(error.message || 'Failed to add teacher. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle cancel
   const handleCancel = () => {
     if (window.confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {

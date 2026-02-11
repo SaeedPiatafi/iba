@@ -121,18 +121,14 @@ const EditTeacherPage = () => {
 
       try {
         setIsLoading(true);
-        console.log("Fetching teacher with ID:", teacherId);
 
         const response = await fetch(`/api/admin/teacher?id=${teacherId}`);
-        
-        console.log("Response status:", response.status);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch teacher: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
-        console.log("API response:", result);
 
         if (!result.success) {
           throw new Error(result.error || "Failed to load teacher");
@@ -160,7 +156,6 @@ const EditTeacherPage = () => {
           teachingPhilosophy: teacher.teachingPhilosophy || teacher.teaching_philosophy || "",
         };
 
-        console.log("Transformed teacher data:", transformedTeacher);
 
         // Set the data
         setTeacherData(transformedTeacher);
@@ -175,7 +170,6 @@ const EditTeacherPage = () => {
         
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching teacher:", error);
         showNotification(
           error instanceof Error ? error.message : "Failed to load teacher data",
           "error"
@@ -224,17 +218,39 @@ const EditTeacherPage = () => {
     reader.readAsDataURL(file);
   };
 
-  // Handle drag and drop
+  // Handle file from drag and drop
+  const handleFileFromDragDrop = (file: File) => {
+    // Validate file type
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      showNotification(`Invalid file type. Allowed types: JPEG, JPG, PNG, WebP, GIF, SVG`, 'error');
+      return;
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      showNotification(`File too large. Maximum size is 5MB`, 'error');
+      return;
+    }
+
+    setSelectedFile(file);
+    setTeacherData(prev => ({ ...prev, image: '' }));
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle drag and drop - FIXED VERSION
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      const inputEvent = {
-        target: { files: [file] }
-      } as ChangeEvent<HTMLInputElement>;
-      handleFileChange(inputEvent);
+      handleFileFromDragDrop(file);
     }
   };
 
@@ -443,7 +459,6 @@ const EditTeacherPage = () => {
     }
 
     try {
-      console.log("Submitting teacher update with FormData");
 
       // Call the update API with FormData
       const response = await fetch("/api/admin/teacher", {
@@ -453,7 +468,6 @@ const EditTeacherPage = () => {
       });
 
       const result = await response.json();
-      console.log("Update response:", result);
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to update teacher");
@@ -475,7 +489,6 @@ const EditTeacherPage = () => {
         router.push("/web-admin/teacher");
       }, 1500);
     } catch (error) {
-      console.error("Error updating teacher:", error);
       showNotification(
         error instanceof Error ? error.message : "Failed to update teacher. Please try again.",
         "error"
@@ -519,7 +532,6 @@ const EditTeacherPage = () => {
       });
 
       const result = await response.json();
-      console.log("Delete response:", result);
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to delete teacher");
@@ -532,7 +544,6 @@ const EditTeacherPage = () => {
         router.refresh();
       }, 1500);
     } catch (error) {
-      console.error("Error deleting teacher:", error);
       showNotification(
         error instanceof Error ? error.message : "Failed to delete teacher. Please try again.",
         "error"
@@ -831,7 +842,7 @@ const EditTeacherPage = () => {
                 />
               </div>
 
-              {/* Profile Image Upload/URL - UPDATED SECTION */}
+              {/* Profile Image Upload/URL */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Profile Photo

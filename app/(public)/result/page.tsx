@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import {
   Search,
   RefreshCw,
-  Printer,
   Download,
   Calculator,
   FlaskConical,
@@ -28,7 +27,15 @@ import {
   ChevronRight,
   Loader2,
   AlertTriangle,
+  School,
+  GraduationCap,
+  BarChart,
+  TrendingUp,
+  Shield,
+  Printer,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // Interfaces
 interface SubjectMark {
@@ -42,6 +49,7 @@ interface StudentResult {
     fatherName: string;
     rollNumber: string;
     academicYear: string;
+    className: string; // Added class name
   };
   marks: Record<string, SubjectMark>;
   summary: {
@@ -103,8 +111,10 @@ export default function ResultPortal() {
   const [result, setResult] = useState<StudentResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
   const [tableScrollPosition, setTableScrollPosition] = useState(0);
   const tableRef = useRef<HTMLDivElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,21 +130,28 @@ export default function ResultPortal() {
     setResult(null);
 
     try {
-      // Build API URL - only roll number, no academic year
+      // Build API URL
       const apiUrl = `/api/result?rollNumber=${encodeURIComponent(rollNumber.trim())}`;
 
       const response = await fetch(apiUrl);
-
       const data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "No result found");
       }
 
-      setResult(data.data);
+      // Ensure className is included in the result
+      const updatedData = {
+        ...data.data,
+        studentInfo: {
+          ...data.data.studentInfo,
+          className: data.data.studentInfo.className || "Not Specified"
+        }
+      };
+      
+      setResult(updatedData);
       
     } catch (err: any) {
-      console.error("Error fetching result:", err);
       setError(err.message || "Failed to fetch result. Please check the roll number and try again.");
     } finally {
       setIsLoading(false);
@@ -149,19 +166,126 @@ export default function ResultPortal() {
     setTableScrollPosition(0);
   };
 
-  // Handle print
-  const handlePrint = () => {
-    if (typeof window !== "undefined") {
-      window.print();
-    }
-  };
-
-  // Handle download PDF (placeholder)
+  // Generate and download PDF
   const handleDownloadPDF = () => {
-    if (result) {
-      alert("PDF download feature will be available soon!");
-      // In production, implement actual PDF generation
-      // window.open(`/api/result/pdf?rollNumber=${result.studentInfo.rollNumber}`, '_blank');
+    if (!result) return;
+    
+    setIsGeneratingPDF(true);
+    
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      const margin = 20;
+      
+      // Header
+      doc.setFontSize(24);
+      doc.setTextColor(41, 128, 185);
+      doc.text("OFFICIAL ACADEMIC RESULT", pageWidth / 2, margin, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Issued by Examination Department", pageWidth / 2, margin + 8, { align: 'center' });
+      
+      // Divider line
+      doc.setLineWidth(0.5);
+      doc.line(margin, margin + 15, pageWidth - margin, margin + 15);
+      
+      let yPos = margin + 25;
+      
+      // Student Information
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text("STUDENT INFORMATION", margin, yPos);
+      yPos += 10;
+      
+      doc.setFontSize(11);
+      const studentInfo = [
+        [`Name:`, result.studentInfo.name],
+        [`Father's Name:`, result.studentInfo.fatherName],
+        [`Roll Number:`, result.studentInfo.rollNumber],
+        [`Class:`, result.studentInfo.className || "Not Specified"],
+        [`Academic Year:`, result.studentInfo.academicYear]
+      ];
+      
+      studentInfo.forEach(([label, value]) => {
+        doc.text(label, margin, yPos);
+        doc.text(value, margin + 40, yPos);
+        yPos += 8;
+      });
+      
+      yPos += 5;
+      
+      // Subject Marks Table
+      doc.setFontSize(14);
+      doc.text("SUBJECT-WISE MARKS", margin, yPos);
+      yPos += 10;
+      
+      const subjects = Object.entries(result.marks);
+      const tableData = subjects.map(([subject, data]) => [
+        subject,
+        data.max_marks.toString(),
+        data.marks.toString(),
+        `${((data.marks / data.max_marks) * 100).toFixed(1)}%`,
+        data.marks >= (data.max_marks * 0.33) ? "PASS" : "FAIL"
+      ]);
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Subject', 'Max Marks', 'Marks Obtained', 'Percentage', 'Status']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185] },
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 60 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 40 },
+          4: { cellWidth: 30 }
+        }
+      });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+      
+      // Result Summary
+      doc.setFontSize(14);
+      doc.text("RESULT SUMMARY", margin, yPos);
+      yPos += 10;
+      
+      const summaryData = [
+        ['Total Marks:', `${result.summary.obtainMarks} / ${result.summary.totalMarks}`],
+        ['Percentage:', `${result.summary.percentage.toFixed(2)}%`],
+        ['Grade:', result.summary.grade],
+        ['Status:', result.summary.status]
+      ];
+      
+      summaryData.forEach(([label, value]) => {
+        doc.text(label, margin, yPos);
+        doc.text(value, margin + 40, yPos);
+        yPos += 8;
+      });
+      
+      // Footer
+      const footerY = doc.internal.pageSize.height - 20;
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text("This is a computer-generated document. No signature required.", pageWidth / 2, footerY, { align: 'center' });
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, footerY + 5, { align: 'center' });
+      
+      // Watermark
+      doc.setFontSize(60);
+      doc.setTextColor(230, 230, 230);
+      doc.text("OFFICIAL", pageWidth / 2, 120, { align: 'center', angle: 45 });
+      
+      // Save PDF
+      const fileName = `Result_${result.studentInfo.rollNumber}_${result.studentInfo.name.replace(/\s+/g, '_')}.pdf`;
+      doc.save(fileName);
+      
+    } catch (error) {
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -207,16 +331,30 @@ export default function ResultPortal() {
     return percentage >= 33;
   };
 
+  // Update the API call to include class name
+  const updateAPIToIncludeClass = async () => {
+    // Note: This would require updating your backend API
+    // to return class_name in the response
+    // For now, we'll handle it in the frontend
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-gray-100 p-4 md:p-6 lg:p-8">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-8 text-center">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-          Student Result Portal
-        </h1>
-        <p className="text-gray-600 text-sm md:text-base">
-          Enter your roll number to view your academic results
-        </p>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-4">
+          <div className="bg-blue-600 text-white p-3 rounded-full">
+            <GraduationCap className="w-8 h-8 md:w-10 md:h-10" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+              Student Result Portal
+            </h1>
+            <p className="text-gray-600 text-sm md:text-base">
+              Enter your roll number to view and download your academic results
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto">
@@ -311,7 +449,7 @@ export default function ResultPortal() {
         {result && (
           <div className="space-y-6 md:space-y-8 animate-fadeIn">
             {/* Result Card */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg md:shadow-xl p-4 md:p-6 lg:p-8 border border-gray-200">
+            <div ref={resultRef} className="bg-white rounded-xl md:rounded-2xl shadow-lg md:shadow-xl p-4 md:p-6 lg:p-8 border border-gray-200">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 md:gap-6 mb-6 md:mb-8">
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-3 mb-1">
@@ -323,28 +461,31 @@ export default function ResultPortal() {
                   </p>
                 </div>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={handlePrint}
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 md:py-3 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 flex items-center gap-2 md:gap-3 shadow-lg hover:shadow-xl"
-                  >
-                    <Printer className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden sm:inline">Print Result</span>
-                    <span className="sm:hidden">Print</span>
-                  </button>
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={handleDownloadPDF}
-                    className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 md:py-3 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 flex items-center gap-2 md:gap-3 shadow-lg hover:shadow-xl"
+                    disabled={isGeneratingPDF}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-2 md:py-3 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 flex items-center justify-center gap-2 md:gap-3 shadow-lg hover:shadow-xl disabled:opacity-50"
                   >
-                    <Download className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden sm:inline">Download PDF</span>
-                    <span className="sm:hidden">PDF</span>
+                    {isGeneratingPDF ? (
+                      <>
+                        <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                        <span className="hidden sm:inline">Generating PDF...</span>
+                        <span className="sm:hidden">Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline">Download PDF</span>
+                        <span className="sm:hidden">PDF</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
 
-              {/* Student Information */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 md:mb-8">
+              {/* Student Information - Added Class Field */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 md:mb-8">
                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-4 h-4 text-blue-600" />
@@ -383,7 +524,19 @@ export default function ResultPortal() {
 
                 <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-amber-600" />
+                    <School className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs font-semibold text-gray-600 uppercase">
+                      Class
+                    </span>
+                  </div>
+                  <p className="text-base md:text-lg font-bold text-gray-900">
+                    {result.studentInfo.className || "Not Specified"}
+                  </p>
+                </div>
+
+                <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-rose-600" />
                     <span className="text-xs font-semibold text-gray-600 uppercase">
                       Academic Year
                     </span>
@@ -398,7 +551,8 @@ export default function ResultPortal() {
               <div className="mb-6 md:mb-8">
                 {/* Table Header with Scroll Buttons for Mobile */}
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900">
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
                     Subject-wise Marks
                   </h3>
                   <div className="md:hidden flex items-center gap-2">
@@ -428,7 +582,7 @@ export default function ResultPortal() {
                   >
                     <table className="w-full min-w-[700px]">
                       <thead>
-                        <tr className="bg-blue-600 text-white">
+                        <tr className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
                           <th className="text-left p-3 md:p-4 rounded-tl-lg">
                             <div className="flex items-center gap-2">
                               <BookOpen className="w-4 h-4" />
@@ -534,9 +688,9 @@ export default function ResultPortal() {
                 </div>
               </div>
 
-              {/* Result Summary */}
+              {/* Result Summary with Visual Indicators */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 md:p-4 lg:p-6 rounded-xl border border-blue-200">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 md:p-4 lg:p-6 rounded-xl border border-blue-200 hover:shadow-md transition-shadow">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                     <div className="p-2 md:p-3 bg-blue-100 rounded-lg md:rounded-xl flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
                       <FileText className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
@@ -556,11 +710,17 @@ export default function ResultPortal() {
                           {result.summary.totalMarks}
                         </p>
                       </div>
+                      <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full" 
+                          style={{ width: `${(result.summary.obtainMarks / result.summary.totalMarks) * 100}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 md:p-4 lg:p-6 rounded-xl border border-teal-200">
+                <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 md:p-4 lg:p-6 rounded-xl border border-teal-200 hover:shadow-md transition-shadow">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                     <div className="p-2 md:p-3 bg-teal-100 rounded-lg md:rounded-xl flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
                       <Percent className="w-5 h-5 md:w-6 md:h-6 text-teal-600" />
@@ -572,11 +732,17 @@ export default function ResultPortal() {
                       <p className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900">
                         {result.summary.percentage.toFixed(2)}%
                       </p>
+                      <div className="mt-2 flex items-center gap-1">
+                        <TrendingUp className={`w-4 h-4 ${result.summary.percentage >= 33 ? 'text-green-600' : 'text-red-600'}`} />
+                        <span className={`text-xs font-medium ${result.summary.percentage >= 33 ? 'text-green-600' : 'text-red-600'}`}>
+                          {result.summary.percentage >= 33 ? 'Above Passing' : 'Below Passing'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 md:p-4 lg:p-6 rounded-xl border border-green-200">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 md:p-4 lg:p-6 rounded-xl border border-green-200 hover:shadow-md transition-shadow">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                     <div className="p-2 md:p-3 bg-green-100 rounded-lg md:rounded-xl flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
                       <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
@@ -590,12 +756,25 @@ export default function ResultPortal() {
                       }`}>
                         {result.summary.status}
                       </p>
+                      <div className="mt-2">
+                        {result.summary.status === 'Passed' ? (
+                          <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                            <CheckCircle className="w-3 h-3" />
+                            Eligible for Promotion
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
+                            <XCircle className="w-3 h-3" />
+                            Needs Improvement
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div
-                  className={`p-3 md:p-4 lg:p-6 rounded-xl border bg-gradient-to-r ${getGradeColor(result.summary.grade)}`}
+                  className={`p-3 md:p-4 lg:p-6 rounded-xl border bg-gradient-to-r ${getGradeColor(result.summary.grade)} hover:shadow-md transition-shadow`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
                     <div className="p-2 md:p-3 bg-white/20 rounded-lg md:rounded-xl flex-shrink-0 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
@@ -608,36 +787,72 @@ export default function ResultPortal() {
                       <p className="text-lg md:text-xl lg:text-2xl font-bold text-white">
                         {result.summary.grade}
                       </p>
+                      <div className="mt-2">
+                        <span className="inline-flex items-center gap-1 bg-white/20 text-white px-2 py-1 rounded text-xs">
+                          <BarChart className="w-3 h-3" />
+                          Academic Performance
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 md:py-4 px-6 md:px-8 rounded-lg md:rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:opacity-50"
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Generating PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5" />
+                      Download Result as PDF
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => window.print()}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold py-3 md:py-4 px-6 md:px-8 rounded-lg md:rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+                >
+                  <Printer className="w-5 h-5" />
+                  Print Result
+                </button>
               </div>
 
               {/* Footer Information */}
               <div className="pt-4 md:pt-6 border-t border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                   <div className="text-center sm:text-left">
-                    <p className="text-sm text-gray-600 mb-1">
-                      Issued by Examination Department
-                    </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="w-4 h-4 text-blue-600" />
+                      <p className="text-sm font-medium text-gray-900">
+                        Verified & Authenticated
+                      </p>
+                    </div>
                     <p className="text-xs text-gray-500">
                       This is an official document. Any tampering is punishable.
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center justify-center gap-4">
                     <div className="flex items-center gap-2 text-gray-600">
                       <Mail className="w-4 h-4" />
-                      <span className="text-sm hidden sm:inline">
+                      <span className="text-sm">
                         results@institution.edu.pk
                       </span>
-                      <span className="text-sm sm:hidden">Email</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Phone className="w-4 h-4" />
-                      <span className="text-sm hidden sm:inline">
+                      <span className="text-sm">
                         (021) 123-4567
                       </span>
-                      <span className="text-sm sm:hidden">Phone</span>
                     </div>
                   </div>
                 </div>
@@ -696,6 +911,18 @@ export default function ResultPortal() {
                   </ul>
                 </div>
               </div>
+              
+              {/* PDF Download Info */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-100 rounded-xl border border-green-200">
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  PDF Download Information
+                </h4>
+                <p className="text-sm text-green-700">
+                  Click the "Download PDF" button to get an official copy of your result. 
+                  The PDF includes all details and is suitable for printing and official submissions.
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -703,7 +930,7 @@ export default function ResultPortal() {
         {/* Empty State */}
         {!result && !isLoading && !error && (
           <div className="text-center py-12">
-            <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-6 rounded-full bg-blue-100 flex items-center justify-center">
+            <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
               <Search className="w-10 h-10 md:w-12 md:h-12 text-blue-600" />
             </div>
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
@@ -712,9 +939,9 @@ export default function ResultPortal() {
             <p className="text-gray-600 max-w-md mx-auto">
               Use your roll number to access your academic results. Make sure you enter the correct roll number provided by your institution.
             </p>
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 max-w-md mx-auto">
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-100 rounded-lg border border-blue-200 max-w-md mx-auto">
               <p className="text-sm text-blue-700">
-                <span className="font-medium">Note:</span> The system will automatically show your most recent academic result.
+                <span className="font-medium">Features:</span> View complete result, download PDF, and see subject-wise performance analysis.
               </p>
             </div>
           </div>
@@ -738,51 +965,45 @@ export default function ResultPortal() {
           animation: fadeIn 0.5s ease-out;
         }
 
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-
-        /* Print styles */
+        /* Print styles - Hide buttons and only show content */
         @media print {
+          body * {
+            visibility: hidden;
+          }
+          
+          #result-content,
+          #result-content * {
+            visibility: visible;
+          }
+          
+          #result-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          
           button,
-          .hidden-print {
-            display: none !important;
-          }
-
-          .bg-gradient-to-b,
-          .bg-gradient-to-r {
-            background: white !important;
-          }
-
+          .no-print,
+          .bg-gradient-to-r,
           .shadow-xl,
           .shadow-lg {
-            box-shadow: none !important;
+            display: none !important;
           }
-
-          .border {
-            border: 1px solid #000 !important;
-          }
-
-          .text-blue-600,
-          .text-green-600,
-          .text-red-600 {
-            color: #000 !important;
-          }
-
-          /* Ensure table prints properly */
+          
           table {
+            width: 100% !important;
             min-width: 100% !important;
           }
-
+          
           .overflow-x-auto {
             overflow: visible !important;
+          }
+          
+          .bg-gradient-to-br {
+            background: #f8fafc !important;
           }
         }
       `}</style>

@@ -185,7 +185,6 @@ export default function AlumniPage() {
       setAlumni(result.data);
       setFilteredAlumni(result.data);
     } catch (error) {
-      console.error('Error fetching alumni:', error);
       setError(error instanceof Error ? error.message : 'Failed to load alumni');
     } finally {
       setLoading(false);

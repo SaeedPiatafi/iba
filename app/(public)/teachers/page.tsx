@@ -34,12 +34,14 @@ interface Teacher {
   email: string;
 }
 
-// API Response Type
+// API Response Type - FIXED
 interface ApiResponse {
   success: boolean;
   data: Teacher[];
   count: number;
   timestamp: string;
+  error?: string; // Add optional error property
+  message?: string; // Add optional message property
 }
 
 // Error Display Component
@@ -162,32 +164,44 @@ export default function TeachersPage() {
   }, []);
 
   const fetchTeachers = async () => {
-  try {
-    setLoading(true);
-    setError('');
-    
-    const response = await fetch('/api/teacher'); 
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch teachers: ${response.status}`);
+    try {
+      setLoading(true);
+      setError(null); // Changed from empty string to null
+      
+      const response = await fetch('/api/teacher'); 
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (!result.success) {
+        // Use error property if it exists, otherwise use message or default
+        throw new Error(result.error || result.message || 'Failed to load teachers');
+      }
+      
+      // Make sure data is an array
+      if (!Array.isArray(result.data)) {
+        setTeachers([]);
+        setFilteredTeachers([]);
+      } else {
+        setTeachers(result.data);
+        setFilteredTeachers(result.data);
+      }
+      
+      setLoading(false);
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load teachers';
+      setError(errorMessage);
+      setLoading(false);
+      
+      // Set empty arrays on error
+      setTeachers([]);
+      setFilteredTeachers([]);
     }
-    
-    const result: ApiResponse = await response.json();
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to load teachers');
-    }
-    
-    setTeachers(result.data);
-    setFilteredTeachers(result.data);
-    setLoading(false);
-    
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Failed to load teachers');
-    setLoading(false);
-    console.error('Error fetching teachers:', err);
-  }
-};
+  };
 
   // Handle search
   useEffect(() => {
@@ -198,7 +212,9 @@ export default function TeachersPage() {
       const filtered = teachers.filter(teacher =>
         teacher.name.toLowerCase().includes(query) ||
         teacher.subject.toLowerCase().includes(query) ||
-        teacher.classLevels.some(level => level.toLowerCase().includes(query))
+        (teacher.classLevels && teacher.classLevels.some(level => 
+          level.toLowerCase().includes(query)
+        ))
       );
       setFilteredTeachers(filtered);
     }
@@ -348,14 +364,25 @@ export default function TeachersPage() {
         ) : (
           <div className="text-center py-12">
             <div className="text-gray-600 text-xl mb-4">
-              No teachers found matching "{searchQuery}"
+              {teachers.length === 0 
+                ? "No teachers available" 
+                : `No teachers found matching "${searchQuery}"`}
             </div>
-            <button
-              onClick={() => setSearchQuery("")}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-all duration-300"
-            >
-              Clear Search
-            </button>
+            {teachers.length === 0 ? (
+              <button
+                onClick={fetchTeachers}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-all duration-300"
+              >
+                Retry Loading
+              </button>
+            ) : (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-all duration-300"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         )}
       </div>

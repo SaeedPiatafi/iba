@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
       .limit(1);
     
     if (error) {
-      console.error('Database error:', error);
       return NextResponse.json(
         {
           success: false,
@@ -94,7 +93,6 @@ export async function GET(request: NextRequest) {
     return formatResultResponse(result);
     
   } catch (error: any) {
-    console.error('Unexpected error in result API:', error);
     
     // Ensure we always return JSON, not HTML
     return NextResponse.json(
@@ -131,7 +129,8 @@ function formatResultResponse(result: any) {
         name: result.name || '',
         fatherName: result.father_name || '',
         rollNumber: result.roll_number || '',
-        academicYear: result.academic_year || ''
+        academicYear: result.academic_year || '',
+        className: result.class_name || '' 
       },
       marks: transformedSubjects,
       summary: {
@@ -178,7 +177,6 @@ function formatResultResponse(result: any) {
       }
     );
   } catch (error: any) {
-    console.error('Error formatting result:', error);
     return NextResponse.json(
       {
         success: false,

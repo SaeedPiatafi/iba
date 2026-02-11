@@ -16,18 +16,14 @@ export interface AuthResult {
  * This should match exactly what your middleware does
  */
 export async function checkAdminAuth(): Promise<AuthResult> {
-  try {
-    console.log('🛡️ [Auth-Helper] Starting admin auth check (matching middleware)...');
-    
+  try {    
     // Get cookies exactly like middleware does
     const cookieStore = await cookies();
     
     // Check for sb-access-token (same as middleware)
     const accessToken = cookieStore.get('sb-access-token')?.value;
-    console.log('🔍 [Auth-Helper] sb-access-token found?', !!accessToken);
     
     if (!accessToken) {
-      console.log('❌ [Auth-Helper] No sb-access-token cookie found');
       return { 
         isAdmin: false, 
         error: 'No authentication token found. Please log in.' 
@@ -35,15 +31,12 @@ export async function checkAdminAuth(): Promise<AuthResult> {
     }
     
     // Verify the token with Supabase (same as middleware)
-    console.log('🔐 [Auth-Helper] Verifying token with Supabase...');
     const { data: { user }, error } = await supabase.auth.getUser(accessToken);
     
     if (error || !user) {
-      console.log('❌ [Auth-Helper] Invalid token or user not found:', error?.message);
       
       // Try to refresh the token (same as middleware)
       const refreshToken = cookieStore.get('sb-refresh-token')?.value;
-      console.log('🔄 [Auth-Helper] Attempting token refresh...');
       
       if (refreshToken) {
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
@@ -51,14 +44,12 @@ export async function checkAdminAuth(): Promise<AuthResult> {
         });
         
         if (refreshError || !refreshData.session) {
-          console.log('❌ [Auth-Helper] Session refresh failed:', refreshError?.message);
           return { 
             isAdmin: false, 
             error: 'Session expired. Please log in again.' 
           };
         }
         
-        console.log('✅ [Auth-Helper] Token refreshed successfully');
         // Get user from refreshed session
         const { data: { user: refreshedUser } } = await supabase.auth.getUser(refreshData.session.access_token);
         
@@ -79,13 +70,10 @@ export async function checkAdminAuth(): Promise<AuthResult> {
       };
     }
     
-    console.log('✅ [Auth-Helper] User verified:', user.email);
-    
     // Check admin profile (same as middleware)
     return await checkAdminProfile(user.id);
     
   } catch (error: any) {
-    console.error('🔥 [Auth-Helper] Exception:', error);
     return { 
       isAdmin: false, 
       error: `Authentication error: ${error.message}` 
@@ -97,8 +85,14 @@ export async function checkAdminAuth(): Promise<AuthResult> {
  * Check admin profile (same as middleware helper)
  */
 async function checkAdminProfile(userId: string): Promise<AuthResult> {
-  try {
-    console.log('👤 [Auth-Helper] Checking admin profile for user ID:', userId);
+  try {    
+    // Check if supabaseAdmin is available
+    if (!supabaseAdmin) {
+      return { 
+        isAdmin: false, 
+        error: 'Database connection error. Please try again.' 
+      };
+    }
     
     const { data: adminProfile, error } = await supabaseAdmin
       .from('admin_profiles')
@@ -107,14 +101,12 @@ async function checkAdminProfile(userId: string): Promise<AuthResult> {
       .single();
     
     if (error || !adminProfile) {
-      console.log('❌ [Auth-Helper] No admin profile found:', error?.message);
       
       // Debug: List what's in admin_profiles
       const { data: allAdmins } = await supabaseAdmin
         .from('admin_profiles')
         .select('email, user_id, is_active')
         .limit(5);
-      console.log('📋 [Auth-Helper] Current admin profiles:', allAdmins);
       
       return { 
         isAdmin: false, 
@@ -123,18 +115,12 @@ async function checkAdminProfile(userId: string): Promise<AuthResult> {
     }
     
     if (!adminProfile.is_active) {
-      console.log('❌ [Auth-Helper] Admin account is inactive');
       return { 
         isAdmin: false, 
         error: 'Admin account is inactive' 
       };
     }
     
-    console.log('✅ [Auth-Helper] Admin profile confirmed:', {
-      email: adminProfile.email,
-      role: adminProfile.role,
-      is_active: adminProfile.is_active
-    });
     
     return {
       isAdmin: true,
@@ -146,7 +132,6 @@ async function checkAdminProfile(userId: string): Promise<AuthResult> {
     };
     
   } catch (error: any) {
-    console.error('🔥 [Auth-Helper] Error checking admin profile:', error);
     return { 
       isAdmin: false, 
       error: `Database error: ${error.message}` 
@@ -174,7 +159,6 @@ export async function checkUserSession() {
     
     return user;
   } catch (error) {
-    console.error('Session check error:', error);
     return null;
   }
 }
@@ -187,7 +171,6 @@ export async function getSessionDebug() {
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
     
-    console.log('🔍 [Session Debug] All cookies:', allCookies.map(c => c.name));
     
     const accessToken = cookieStore.get('sb-access-token')?.value;
     const refreshToken = cookieStore.get('sb-refresh-token')?.value;
@@ -198,7 +181,6 @@ export async function getSessionDebug() {
       cookies: allCookies.map(c => ({ name: c.name, hasValue: !!c.value }))
     };
   } catch (error) {
-    console.error('Session debug error:', error);
     return null;
   }
 }

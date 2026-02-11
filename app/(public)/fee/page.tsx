@@ -33,9 +33,6 @@ interface FeeItem {
 }
 
 interface FeeData {
-  academicYear: string;
-  lastUpdated: string;
-  formattedDate: string;
   currency: string;
   schoolName: string;
   feeStructure: FeeItem[];
@@ -114,7 +111,6 @@ export default function FeePage() {
         setSelectedClass(result.data.feeStructure[0]);
       }
     } catch (error) {
-      console.error('Error fetching fee data:', error);
       setError(error instanceof Error ? error.message : 'Failed to load fee information');
     } finally {
       setLoading(false);
@@ -176,7 +172,7 @@ export default function FeePage() {
             <div className="h-6 bg-gray-300 rounded-lg max-w-2xl mx-auto animate-pulse"></div>
           ) : feeData ? (
             <p className="text-gray-600 text-base sm:text-lg">
-              Academic Year {feeData.academicYear} • Last updated: {feeData.formattedDate}
+              Transparent and comprehensive fee information for all classes
             </p>
           ) : null}
         </div>
@@ -491,7 +487,7 @@ export default function FeePage() {
                       <ul className="space-y-2 text-sm md:text-base" style={{ color: colors.textSecondary }}>
                         <li className="flex items-start">
                           <span className="mr-2">•</span>
-                          <span>All fees are for the academic year 2025-26</span>
+                          <span>All fees are for the current academic year</span>
                         </li>
                         <li className="flex items-start">
                           <span className="mr-2">•</span>

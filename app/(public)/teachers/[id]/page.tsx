@@ -200,14 +200,10 @@ export default function TeacherProfilePage() {
   const fetchTeacher = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      console.log('Fetching teacher with ID:', teacherId);
-      
+      setError(null);      
       // IMPORTANT: Use SINGULAR "teacher" not "teachers"
       const response = await fetch(`/api/teacher/${teacherId}`);
       
-      console.log('Response status:', response.status);
       
       if (!response.ok) {
         // Try to get error message from response
@@ -222,7 +218,6 @@ export default function TeacherProfilePage() {
       }
       
       const result = await response.json();
-      console.log('API result:', result);
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch teacher');
@@ -234,7 +229,6 @@ export default function TeacherProfilePage() {
       
       setTeacher(result.data);
     } catch (error) {
-      console.error('Error fetching teacher:', error);
       setError(error instanceof Error ? error.message : 'Failed to load teacher');
     } finally {
       setLoading(false);

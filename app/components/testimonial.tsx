@@ -40,7 +40,6 @@ export default function TestimonialsSection() {
         throw new Error(data.message || 'Failed to fetch testimonials');
       }
     } catch (err) {
-      console.error('Error fetching testimonials:', err);
       setError(err instanceof Error ? err.message : 'Failed to load testimonials');
       // Fallback to empty array
       setTestimonials([]);

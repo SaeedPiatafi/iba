@@ -1,712 +1,280 @@
-// app/api/admin/alumni/route.ts - UPDATED WITH FILE UPLOAD
+// app/api/admin/alumni/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { checkAdminAuth } from '@/lib/auth-helper';
 
-// Allowed image types and max file size (5MB)
-const ALLOWED_FILE_TYPES = [
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/gif'
-];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-// Type guard functions
-const isFile = (value: any): value is File => {
-  return value instanceof File;
-};
-
-const isString = (value: any): value is string => {
-  return typeof value === 'string';
-};
-
-// Generate unique filename
-const generateFileName = (originalName: string): string => {
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 15);
-  const extension = originalName.split('.').pop()?.toLowerCase() || 'jpg';
-  return `alumni-${timestamp}-${randomString}.${extension}`;
-};
-
-// Validate file
-const validateFile = (file: File): { isValid: boolean; error?: string } => {
-  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-    return {
-      isValid: false,
-      error: `Invalid file type. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}`
-    };
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    return {
-      isValid: false,
-      error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`
-    };
-  }
-
-  return { isValid: true };
-};
-
-// Upload image to Supabase Storage
-const uploadImageToStorage = async (file: File): Promise<{ success: boolean; url?: string; error?: string }> => {
-  try {
-    const validation = validateFile(file);
-    if (!validation.isValid) {
-      return { success: false, error: validation.error };
-    }
-
-    const fileName = generateFileName(file.name);
-    const fileBuffer = await file.arrayBuffer();
-
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('alumni-images') // Different bucket for alumni
-      .upload(fileName, fileBuffer, {
-        contentType: file.type,
-        upsert: false
-      });
-
-    if (uploadError) {
-      console.error('❌ Storage upload error:', uploadError);
-      return { success: false, error: `Upload failed: ${uploadError.message}` };
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('alumni-images')
-      .getPublicUrl(fileName);
-
-    console.log('✅ Image uploaded successfully:', publicUrl);
-    return { success: true, url: publicUrl };
-  } catch (error) {
-    console.error('🔥 Image upload error:', error);
-    return { success: false, error: 'Failed to upload image' };
-  }
-};
-
-// Helper to require admin authentication
+// Helper function for admin authentication
 async function requireAdminAuth() {
   const authResult = await checkAdminAuth();
   
   if (!authResult.isAdmin) {
-    console.error('🔐 Admin auth required but not authenticated:', authResult.error);
     throw new Error(authResult.error || 'Admin access required');
   }
   
-  console.log('🔓 Admin authenticated:', authResult.user?.email);
   return authResult.user;
 }
 
-// ===================================================================
-// POST - Add new alumni (with file upload support)
-// ===================================================================
-export async function POST(request: NextRequest) {
-  console.log('📤 POST /api/admin/alumni - Creating new alumni');
-  
+// GET - Get all alumni (for admin panel)
+export async function GET(request: NextRequest) {
   try {
-    // Require admin authentication
+    // Check admin authentication
     await requireAdminAuth();
 
-    const contentType = request.headers.get('content-type') || '';
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const search = searchParams.get('search') || '';
+    const graduationYear = searchParams.get('graduationYear');
     
-    if (contentType.includes('multipart/form-data')) {
-      // Handle form data with file upload
-      console.log('📁 Processing multipart/form-data');
-      const formData = await request.formData();
-      
-      // Log all form data for debugging
-      console.log('📋 FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        if (isFile(value)) {
-          console.log(`  ${key}: File - ${value.name} (${value.size} bytes, ${value.type})`);
-        } else if (isString(value)) {
-          console.log(`  ${key}: ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}`);
-        }
-      }
-      
-      // Extract alumni data
-      const name = formData.get('name') as string;
-      const graduationYear = formData.get('graduationYear') as string;
-      const profession = formData.get('profession') as string;
-      const email = formData.get('email') as string;
-      const bio = formData.get('bio') as string;
-      const achievements = JSON.parse(formData.get('achievements') as string || '[]');
-      const education = JSON.parse(formData.get('education') as string || '[]');
-      const skills = JSON.parse(formData.get('skills') as string || '[]');
-      
-      console.log('📝 Parsed form data:', {
-        name,
-        graduationYear,
-        profession,
-        email,
-        bioLength: bio?.length,
-        achievementsCount: achievements.length,
-        educationCount: education.length,
-        skillsCount: skills.length
-      });
+    const offset = (page - 1) * limit;
 
-      // Validate required fields
-      if (!name?.trim() || !graduationYear?.trim() || !profession?.trim() || !email?.trim()) {
-        console.error('❌ Missing required fields');
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: "Missing required fields: name, graduationYear, profession, email" 
-          },
-          { status: 400 }
-        );
-      }
+    let query = supabase
+      .from('alumni')
+      .select('*', { count: 'exact' })
+      .order('graduation_year', { ascending: false })
+      .order('name', { ascending: true });
 
-      // Validate graduation year
-      const currentYear = new Date().getFullYear();
-      const gradYear = parseInt(graduationYear);
-      if (isNaN(gradYear) || gradYear < 1900 || gradYear > currentYear + 5) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: `Please enter a valid graduation year between 1900 and ${currentYear + 5}` 
-          },
-          { status: 400 }
-        );
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        console.error('❌ Invalid email format:', email);
-        return NextResponse.json(
-          { success: false, error: "Invalid email format" },
-          { status: 400 }
-        );
-      }
-
-      // Check if email already exists
-      console.log(`🔍 Checking if email exists: ${email}`);
-      const { data: existingAlumni } = await supabaseAdmin
-        .from("alumni")
-        .select("id")
-        .eq("email", email.trim().toLowerCase())
-        .maybeSingle();
-
-      if (existingAlumni) {
-        console.error('❌ Email already exists:', email);
-        return NextResponse.json(
-          { success: false, error: "Email already registered" },
-          { status: 409 }
-        );
-      }
-
-      // Handle image upload
-      let imageUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80";
-      const imageField = formData.get('image');
-      
-      console.log('🖼️ Image handling:', {
-        hasField: !!imageField,
-        isFile: isFile(imageField),
-        isString: isString(imageField),
-        fileSize: isFile(imageField) ? imageField.size : 0,
-        urlLength: isString(imageField) ? imageField.length : 0
-      });
-
-      if (isFile(imageField) && imageField.size > 0) {
-        console.log('📤 Uploading image file...');
-        const uploadResult = await uploadImageToStorage(imageField);
-        if (uploadResult.success && uploadResult.url) {
-          imageUrl = uploadResult.url;
-        } else if (uploadResult.error) {
-          console.error('❌ Image upload failed:', uploadResult.error);
-          return NextResponse.json(
-            { success: false, error: uploadResult.error },
-            { status: 400 }
-          );
-        }
-      } else if (isString(imageField) && imageField.trim().length > 0) {
-        imageUrl = imageField.trim();
-        console.log('🔗 Using image URL:', imageUrl.substring(0, 50) + '...');
-      }
-
-      // Prepare alumni data for database
-      const alumniData = {
-        name: name.trim(),
-        graduation_year: graduationYear.trim(),
-        profession: profession.trim(),
-        email: email.trim().toLowerCase(),
-        image: imageUrl,
-        bio: bio?.trim() || '',
-        achievements: Array.isArray(achievements)
-          ? achievements.filter((a: string) => a.trim() !== "")
-          : [],
-        education: Array.isArray(education)
-          ? education.filter((e: string) => e.trim() !== "")
-          : [],
-        skills: Array.isArray(skills)
-          ? skills.filter((s: string) => s.trim() !== "")
-          : [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      console.log('💾 Inserting alumni data into database...');
-      console.log('📊 Alumni data:', {
-        name: alumniData.name,
-        email: alumniData.email,
-        profession: alumniData.profession,
-        graduationYear: alumniData.graduation_year,
-        hasImage: !!alumniData.image && alumniData.image !== 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-        imageUrl: alumniData.image?.substring(0, 50) + '...'
-      });
-
-      // Insert into database
-      const { data: alumni, error: insertError } = await supabaseAdmin
-        .from("alumni")
-        .insert(alumniData)
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('❌ Database insert error:', insertError);
-        return NextResponse.json(
-          { success: false, error: `Failed to create alumni: ${insertError.message}` },
-          { status: 400 }
-        );
-      }
-
-      console.log('✅ Alumni created successfully:', alumni.id);
-
-      // Transform back to camelCase for response
-      const transformedAlumni = {
-        id: alumni.id,
-        name: alumni.name,
-        graduationYear: alumni.graduation_year,
-        profession: alumni.profession,
-        email: alumni.email,
-        image: alumni.image,
-        bio: alumni.bio || '',
-        achievements: alumni.achievements || [],
-        education: alumni.education || [],
-        skills: alumni.skills || [],
-        createdAt: alumni.created_at,
-        updatedAt: alumni.updated_at,
-      };
-
-      return NextResponse.json({
-        success: true,
-        message: "Alumni added successfully",
-        data: transformedAlumni,
-      }, { status: 201 });
-
-    } else {
-      // Handle JSON data (for backward compatibility)
-      console.log('📄 Processing JSON data');
-      const body = await request.json();
-
-      // Validate required fields
-      if (!body.name || !body.graduationYear || !body.profession || !body.email) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Missing required fields: name, graduationYear, profession, email' 
-          },
-          { status: 400 }
-        );
-      }
-
-      // Validate graduation year
-      const currentYear = new Date().getFullYear();
-      const gradYear = parseInt(body.graduationYear);
-      if (isNaN(gradYear) || gradYear < 1900 || gradYear > currentYear + 5) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: `Please enter a valid graduation year between 1900 and ${currentYear + 5}` 
-          },
-          { status: 400 }
-        );
-      }
-
-      // Validate email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(body.email.trim())) {
-        return NextResponse.json(
-          { success: false, error: "Invalid email format" },
-          { status: 400 }
-        );
-      }
-
-      // Check if email exists
-      const { data: existingAlumni } = await supabaseAdmin
-        .from("alumni")
-        .select("id")
-        .eq("email", body.email.trim().toLowerCase())
-        .maybeSingle();
-
-      if (existingAlumni) {
-        return NextResponse.json(
-          { success: false, error: "Email already registered" },
-          { status: 409 }
-        );
-      }
-
-      const alumniData = {
-        name: body.name.trim(),
-        graduation_year: body.graduationYear.toString().trim(),
-        profession: body.profession.trim(),
-        email: body.email.trim().toLowerCase(),
-        image: body.image?.trim() || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-        bio: body.bio?.trim() || '',
-        achievements: Array.isArray(body.achievements) 
-          ? body.achievements.filter((a: string) => a.trim() !== "")
-          : [],
-        education: Array.isArray(body.education) 
-          ? body.education.filter((e: string) => e.trim() !== "")
-          : [],
-        skills: Array.isArray(body.skills) 
-          ? body.skills.filter((s: string) => s.trim() !== "")
-          : [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data: alumni, error } = await supabaseAdmin
-        .from("alumni")
-        .insert(alumniData)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("❌ Database insert error:", error);
-        return NextResponse.json(
-          { success: false, error: `Failed to create alumni: ${error.message}` },
-          { status: 400 }
-        );
-      }
-
-      const transformedAlumni = {
-        id: alumni.id,
-        name: alumni.name,
-        graduationYear: alumni.graduation_year,
-        profession: alumni.profession,
-        email: alumni.email,
-        image: alumni.image,
-        bio: alumni.bio || '',
-        achievements: alumni.achievements || [],
-        education: alumni.education || [],
-        skills: alumni.skills || [],
-      };
-
-      return NextResponse.json({
-        success: true,
-        message: "Alumni added successfully",
-        data: transformedAlumni,
-      }, { status: 201 });
+    // Apply search filter
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,profession.ilike.%${search}%,email.ilike.%${search}%`);
     }
+
+    // Apply graduation year filter
+    if (graduationYear) {
+      query = query.eq('graduation_year', graduationYear);
+    }
+
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: alumni, error, count } = await query;
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw new Error(`Failed to fetch alumni: ${error.message}`);
+    }
+
+    // Transform data to camelCase for frontend
+    const transformedData = alumni?.map(alum => ({
+      id: alum.id,
+      name: alum.name,
+      graduationYear: alum.graduation_year,
+      profession: alum.profession,
+      image: alum.image,
+      bio: alum.bio,
+      email: alum.email,
+      achievements: alum.achievements || [],
+      education: alum.education || [],
+      skills: alum.skills || [],
+      createdAt: alum.created_at,
+      updatedAt: alum.updated_at
+    })) || [];
+
+    return NextResponse.json({
+      success: true,
+      data: transformedData,
+      count: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit),
+      timestamp: new Date().toISOString()
+    });
+
   } catch (error: any) {
-    console.error('🔥 POST Error:', error);
-    
+    console.error('API Error:', error);
+
     if (error.message.includes('Admin access required')) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized. Please log in as admin." },
+        { 
+          success: false, 
+          error: 'Unauthorized. Please log in as admin.' 
+        },
         { status: 401 }
       );
     }
-    
+
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to add alumni" },
+      {
+        success: false,
+        error: error.message || 'Failed to fetch alumni data',
+        data: [],
+        count: 0
+      },
       { status: 500 }
     );
   }
 }
 
-// ===================================================================
-// PUT - Update existing alumni
-// ===================================================================
-export async function PUT(request: NextRequest) {
-  console.log('✏️ PUT /api/admin/alumni - Updating alumni');
-  
+// POST - Create new alumni (with optional image upload)
+export async function POST(request: NextRequest) {
   try {
+    // Check admin authentication
     await requireAdminAuth();
 
+    // Handle FormData (for file upload) or JSON
     const contentType = request.headers.get('content-type') || '';
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
     
-    if (!id) {
+    let alumniData: any = {};
+    let imageBuffer: Buffer | null = null;
+    let imageFileName: string | null = null;
+
+    if (contentType.includes('multipart/form-data')) {
+      // Handle file upload
+      const formData = await request.formData();
+      
+      // Extract text fields
+      alumniData = {
+        name: formData.get('name'),
+        graduationYear: formData.get('graduationYear'),
+        profession: formData.get('profession'),
+        bio: formData.get('bio'),
+        email: formData.get('email')
+      };
+
+      // Parse array fields
+      const achievements = formData.get('achievements');
+      const education = formData.get('education');
+      const skills = formData.get('skills');
+
+      if (achievements && typeof achievements === 'string') {
+        alumniData.achievements = JSON.parse(achievements);
+      }
+      if (education && typeof education === 'string') {
+        alumniData.education = JSON.parse(education);
+      }
+      if (skills && typeof skills === 'string') {
+        alumniData.skills = JSON.parse(skills);
+      }
+
+      // Handle image upload
+      const imageFile = formData.get('image') as File | null;
+      if (imageFile && imageFile.size > 0) {
+        imageFileName = `${Date.now()}-${imageFile.name}`;
+        const bytes = await imageFile.arrayBuffer();
+        imageBuffer = Buffer.from(bytes);
+        
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('alumni-images')
+          .upload(imageFileName, imageBuffer, {
+            contentType: imageFile.type,
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          // Continue without image if upload fails
+        } else {
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('alumni-images')
+            .getPublicUrl(imageFileName);
+          
+          alumniData.image = publicUrl;
+        }
+      } else {
+        // Use URL from form data
+        alumniData.image = formData.get('image') as string || '';
+      }
+    } else {
+      // Handle JSON request
+      alumniData = await request.json();
+    }
+
+    // Validate required fields
+    if (!alumniData.name || !alumniData.graduationYear || !alumniData.profession) {
       return NextResponse.json(
-        { success: false, error: "Alumni ID is required" },
+        { success: false, error: 'Name, graduation year, and profession are required' },
         { status: 400 }
       );
     }
-    
-    if (contentType.includes('multipart/form-data')) {
-      const formData = await request.formData();
+
+    // Prepare data for Supabase (convert camelCase to snake_case)
+    const supabaseData = {
+      name: alumniData.name.trim(),
+      graduation_year: alumniData.graduationYear.toString().trim(),
+      profession: alumniData.profession.trim(),
+      image: alumniData.image || null,
+      bio: alumniData.bio || '',
+      email: alumniData.email || null,
+      achievements: alumniData.achievements || [],
+      education: alumniData.education || [],
+      skills: alumniData.skills || [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Insert into database
+    const { data: newAlumni, error } = await supabase
+      .from('alumni')
+      .insert([supabaseData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Database error:', error);
       
-      const name = formData.get('name') as string;
-      const graduationYear = formData.get('graduationYear') as string;
-      const profession = formData.get('profession') as string;
-      const email = formData.get('email') as string;
-      const bio = formData.get('bio') as string;
-      const achievements = JSON.parse(formData.get('achievements') as string || '[]');
-      const education = JSON.parse(formData.get('education') as string || '[]');
-      const skills = JSON.parse(formData.get('skills') as string || '[]');
-      
-      console.log(`🔍 Checking if alumni exists: ${id}`);
-      const { data: existingAlumni } = await supabaseAdmin
-        .from("alumni")
-        .select("id, image")
-        .eq("id", id)
-        .single();
-
-      if (!existingAlumni) {
-        return NextResponse.json(
-          { success: false, error: "Alumni not found" },
-          { status: 404 }
-        );
-      }
-
-      let imageUrl = existingAlumni.image;
-      const imageField = formData.get('image');
-
-      // Handle image upload
-      if (isFile(imageField) && imageField.size > 0) {
-        console.log('📤 Uploading new image...');
-        const uploadResult = await uploadImageToStorage(imageField);
-        if (uploadResult.success && uploadResult.url) {
-          imageUrl = uploadResult.url;
-        } else if (uploadResult.error) {
-          return NextResponse.json(
-            { success: false, error: uploadResult.error },
-            { status: 400 }
-          );
-        }
-      } else if (isString(imageField) && imageField.trim().length > 0) {
-        imageUrl = imageField.trim();
-      }
-
-      // Prepare update data
-      const updateData: any = {
-        updated_at: new Date().toISOString(),
-      };
-
-      if (name !== undefined) updateData.name = name.trim();
-      if (graduationYear !== undefined) {
-        // Validate graduation year
-        const currentYear = new Date().getFullYear();
-        const gradYear = parseInt(graduationYear);
-        if (isNaN(gradYear) || gradYear < 1900 || gradYear > currentYear + 5) {
-          return NextResponse.json(
-            { 
-              success: false, 
-              error: `Please enter a valid graduation year between 1900 and ${currentYear + 5}` 
-            },
-            { status: 400 }
-          );
-        }
-        updateData.graduation_year = graduationYear.trim();
-      }
-      if (profession !== undefined) updateData.profession = profession.trim();
-      if (email !== undefined) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.trim())) {
-          return NextResponse.json(
-            { success: false, error: "Invalid email format" },
-            { status: 400 }
-          );
-        }
-        updateData.email = email.trim().toLowerCase();
-      }
-      if (imageUrl !== undefined) updateData.image = imageUrl;
-      if (bio !== undefined) updateData.bio = bio?.trim() || '';
-      if (achievements !== undefined) {
-        updateData.achievements = Array.isArray(achievements) 
-          ? achievements.filter((a: string) => a.trim() !== "")
-          : [];
-      }
-      if (education !== undefined) {
-        updateData.education = Array.isArray(education) 
-          ? education.filter((e: string) => e.trim() !== "")
-          : [];
-      }
-      if (skills !== undefined) {
-        updateData.skills = Array.isArray(skills) 
-          ? skills.filter((s: string) => s.trim() !== "")
-          : [];
-      }
-
-      console.log(`💾 Updating alumni ${id}...`);
-      const { data, error } = await supabaseAdmin
-        .from("alumni")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Update error:', error);
-        return NextResponse.json(
-          { success: false, error: `Failed to update alumni: ${error.message}` },
-          { status: 400 }
-        );
-      }
-
-      console.log('✅ Alumni updated successfully');
-
-      // Transform response
-      const responseData = {
-        id: data.id,
-        name: data.name,
-        graduationYear: data.graduation_year,
-        profession: data.profession,
-        image: data.image,
-        bio: data.bio,
-        email: data.email,
-        achievements: data.achievements || [],
-        education: data.education || [],
-        skills: data.skills || [],
-        updatedAt: data.updated_at,
-      };
-
-      return NextResponse.json({
-        success: true,
-        data: responseData,
-        message: 'Alumni updated successfully'
-      });
-
-    } else {
-      // JSON request handling (backward compatibility)
-      const body = await request.json();
-
-      // Check if alumni exists
-      const { data: existingAlumni, error: checkError } = await supabaseAdmin
-        .from("alumni")
-        .select("id")
-        .eq("id", id)
-        .single();
-
-      if (checkError || !existingAlumni) {
-        return NextResponse.json(
-          { success: false, error: 'Alumni not found' },
-          { status: 404 }
-        );
-      }
-
-      // Prepare update data
-      const updateData: any = {
-        updated_at: new Date().toISOString(),
-      };
-
-      // Add fields if provided
-      if (body.name !== undefined) updateData.name = body.name.trim();
-      if (body.graduationYear !== undefined) {
-        // Validate graduation year
-        const currentYear = new Date().getFullYear();
-        const gradYear = parseInt(body.graduationYear);
-        if (isNaN(gradYear) || gradYear < 1900 || gradYear > currentYear + 5) {
-          return NextResponse.json(
-            { 
-              success: false, 
-              error: `Please enter a valid graduation year between 1900 and ${currentYear + 5}` 
-            },
-            { status: 400 }
-          );
-        }
-        updateData.graduation_year = body.graduationYear.toString().trim();
-      }
-      if (body.profession !== undefined) updateData.profession = body.profession.trim();
-      if (body.image !== undefined) updateData.image = body.image?.trim() || null;
-      if (body.bio !== undefined) updateData.bio = body.bio?.trim() || null;
-      if (body.email !== undefined) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(body.email.trim())) {
-          return NextResponse.json(
-            { success: false, error: 'Invalid email format' },
-            { status: 400 }
-          );
-        }
-        updateData.email = body.email?.trim() || null;
+      // Clean up uploaded image if insertion failed
+      if (imageFileName) {
+        await supabase.storage
+          .from('alumni-images')
+          .remove([imageFileName]);
       }
       
-      if (body.achievements !== undefined) {
-        updateData.achievements = Array.isArray(body.achievements) 
-          ? body.achievements.map((a: string) => a.trim()).filter((a: string) => a !== "")
-          : [];
-      }
-      if (body.education !== undefined) {
-        updateData.education = Array.isArray(body.education) 
-          ? body.education.map((e: string) => e.trim()).filter((e: string) => e !== "")
-          : [];
-      }
-      if (body.skills !== undefined) {
-        updateData.skills = Array.isArray(body.skills) 
-          ? body.skills.map((s: string) => s.trim()).filter((s: string) => s !== "")
-          : [];
-      }
-
-      // Update in Supabase
-      const { data, error } = await supabaseAdmin
-        .from("alumni")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Update error:', error);
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: error.message || 'Failed to update alumni' 
-          },
-          { status: 500 }
-        );
-      }
-
-      // Transform response
-      const responseData = {
-        id: data.id,
-        name: data.name,
-        graduationYear: data.graduation_year,
-        profession: data.profession,
-        image: data.image,
-        bio: data.bio,
-        email: data.email,
-        achievements: data.achievements || [],
-        education: data.education || [],
-        skills: data.skills || [],
-        updatedAt: data.updated_at,
-      };
-
-      return NextResponse.json({
-        success: true,
-        data: responseData,
-        message: 'Alumni updated successfully'
-      });
+      throw new Error(`Failed to create alumni: ${error.message}`);
     }
+
+    // Transform response to camelCase
+    const responseData = {
+      id: newAlumni.id,
+      name: newAlumni.name,
+      graduationYear: newAlumni.graduation_year,
+      profession: newAlumni.profession,
+      image: newAlumni.image,
+      bio: newAlumni.bio,
+      email: newAlumni.email,
+      achievements: newAlumni.achievements || [],
+      education: newAlumni.education || [],
+      skills: newAlumni.skills || [],
+      createdAt: newAlumni.created_at,
+      updatedAt: newAlumni.updated_at
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: responseData,
+      message: 'Alumni created successfully',
+      timestamp: new Date().toISOString()
+    });
+
   } catch (error: any) {
-    console.error('🔥 PUT Error:', error);
-    
+    console.error('API Error:', error);
+
     if (error.message.includes('Admin access required')) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized. Please log in as admin." },
+        { 
+          success: false, 
+          error: 'Unauthorized. Please log in as admin.' 
+        },
         { status: 401 }
       );
     }
-    
+
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to update alumni" },
+      {
+        success: false,
+        error: error.message || 'Failed to create alumni',
+        details: error.message
+      },
       { status: 500 }
     );
   }
 }
 
-// ===================================================================
-// DELETE - Remove alumni
-// ===================================================================
-export async function DELETE(request: NextRequest) {
-  console.log('🗑️ DELETE /api/admin/alumni');
-  
+// PUT - Update alumni
+export async function PUT(request: NextRequest) {
   try {
+    // Check admin authentication
     await requireAdminAuth();
 
     const { searchParams } = new URL(request.url);
@@ -719,206 +287,237 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`🔍 Checking alumni ${id} before deletion...`);
-    const { data: existingAlumni } = await supabaseAdmin
-      .from("alumni")
-      .select("id, image")
-      .eq("id", id)
+    // Parse request body
+    const contentType = request.headers.get('content-type') || '';
+    let alumniData: any = {};
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      
+      // Extract text fields
+      alumniData = {
+        name: formData.get('name'),
+        graduationYear: formData.get('graduationYear'),
+        profession: formData.get('profession'),
+        bio: formData.get('bio'),
+        email: formData.get('email')
+      };
+
+      // Parse array fields
+      const achievements = formData.get('achievements');
+      const education = formData.get('education');
+      const skills = formData.get('skills');
+
+      if (achievements && typeof achievements === 'string') {
+        alumniData.achievements = JSON.parse(achievements);
+      }
+      if (education && typeof education === 'string') {
+        alumniData.education = JSON.parse(education);
+      }
+      if (skills && typeof skills === 'string') {
+        alumniData.skills = JSON.parse(skills);
+      }
+
+      // Handle image upload if provided
+      const imageFile = formData.get('image') as File | null;
+      if (imageFile && imageFile.size > 0) {
+        const imageFileName = `${Date.now()}-${imageFile.name}`;
+        const bytes = await imageFile.arrayBuffer();
+        const imageBuffer = Buffer.from(bytes);
+        
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('alumni-images')
+          .upload(imageFileName, imageBuffer, {
+            contentType: imageFile.type,
+            upsert: false
+          });
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('alumni-images')
+            .getPublicUrl(imageFileName);
+          
+          alumniData.image = publicUrl;
+        }
+      } else {
+        // Use URL from form data if no file
+        alumniData.image = formData.get('image') as string || undefined;
+      }
+    } else {
+      alumniData = await request.json();
+    }
+
+    // Prepare update data
+    const updateData: any = {
+      name: alumniData.name?.trim(),
+      graduation_year: alumniData.graduationYear?.toString().trim(),
+      profession: alumniData.profession?.trim(),
+      bio: alumniData.bio,
+      email: alumniData.email,
+      updated_at: new Date().toISOString()
+    };
+
+    // Only include fields that are provided
+    if (alumniData.image !== undefined) {
+      updateData.image = alumniData.image;
+    }
+    if (alumniData.achievements !== undefined) {
+      updateData.achievements = alumniData.achievements;
+    }
+    if (alumniData.education !== undefined) {
+      updateData.education = alumniData.education;
+    }
+    if (alumniData.skills !== undefined) {
+      updateData.skills = alumniData.skills;
+    }
+
+    // Update in database
+    const { data: updatedAlumni, error } = await supabase
+      .from('alumni')
+      .update(updateData)
+      .eq('id', parseInt(id))
+      .select()
       .single();
 
-    if (!existingAlumni) {
+    if (error) {
+      console.error('Database error:', error);
+      throw new Error(`Failed to update alumni: ${error.message}`);
+    }
+
+    if (!updatedAlumni) {
       return NextResponse.json(
         { success: false, error: 'Alumni not found' },
         { status: 404 }
       );
     }
 
-    // Delete image from storage if it's from Supabase
-    if (existingAlumni.image && existingAlumni.image.includes('supabase.co')) {
-      try {
-        const urlParts = existingAlumni.image.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        
-        console.log(`🗑️ Deleting image from storage: ${fileName}`);
-        await supabaseAdmin.storage
-          .from('alumni-images')
-          .remove([fileName]);
-      } catch (storageError) {
-        console.warn('⚠️ Failed to delete image from storage:', storageError);
-      }
-    }
+    // Transform response to camelCase
+    const responseData = {
+      id: updatedAlumni.id,
+      name: updatedAlumni.name,
+      graduationYear: updatedAlumni.graduation_year,
+      profession: updatedAlumni.profession,
+      image: updatedAlumni.image,
+      bio: updatedAlumni.bio,
+      email: updatedAlumni.email,
+      achievements: updatedAlumni.achievements || [],
+      education: updatedAlumni.education || [],
+      skills: updatedAlumni.skills || [],
+      createdAt: updatedAlumni.created_at,
+      updatedAt: updatedAlumni.updated_at
+    };
 
-    console.log(`🗑️ Deleting alumni ${id} from database...`);
-    const { error } = await supabaseAdmin
-      .from("alumni")
-      .delete()
-      .eq("id", id);
+    return NextResponse.json({
+      success: true,
+      data: responseData,
+      message: 'Alumni updated successfully',
+      timestamp: new Date().toISOString()
+    });
 
-    if (error) {
-      console.error('❌ Delete error:', error);
+  } catch (error: any) {
+    console.error('API Error:', error);
+
+    if (error.message.includes('Admin access required')) {
       return NextResponse.json(
         { 
           success: false, 
-          error: error.message || 'Failed to delete alumni' 
+          error: 'Unauthorized. Please log in as admin.' 
         },
-        { status: 500 }
-      );
-    }
-
-    console.log('✅ Alumni deleted successfully');
-    return NextResponse.json({
-      success: true,
-      message: `Alumni deleted successfully`,
-      deletedId: id,
-    });
-  } catch (error: any) {
-    console.error('🔥 DELETE Error:', error);
-    
-    if (error.message.includes('Admin access required')) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized. Please log in as admin." },
         { status: 401 }
       );
     }
-    
+
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to delete alumni" },
+      {
+        success: false,
+        error: error.message || 'Failed to update alumni',
+        details: error.message
+      },
       { status: 500 }
     );
   }
 }
 
-// ===================================================================
-// GET - Get all alumni or single alumni by ID
-// ===================================================================
-export async function GET(request: NextRequest) {
-  console.log('📥 GET /api/admin/alumni');
-  
+// DELETE - Delete alumni
+export async function DELETE(request: NextRequest) {
   try {
-    // Require admin authentication
+    // Check admin authentication
     await requireAdminAuth();
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const minimal = searchParams.get('minimal');
     
-    console.log('Query params:', { id, minimal });
-
-    // Build query
-    let query = supabaseAdmin
-      .from('alumni')
-      .select(minimal === "true" ? "id, name, graduation_year, profession, image, email" : "*")
-      .order('created_at', { ascending: false });
-
-    // Get specific alumni by ID
-    if (id) {
-      console.log(`🔍 Fetching alumni with ID: ${id}`);
-      query = query.eq('id', id);
-    }
-
-    // Execute query
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('❌ Supabase GET error:', error);
+    if (!id) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch alumni data',
-          details: error.message 
-        },
-        { status: 500 }
+        { success: false, error: 'Alumni ID is required' },
+        { status: 400 }
       );
     }
 
-    // Transform data to match frontend format
-    if (id) {
-      // Single alumni
-      if (!data || data.length === 0) {
-        return NextResponse.json(
-          { success: false, error: 'Alumni not found' },
-          { status: 404 }
-        );
-      }
-      
-      const alumni = data[0];
-      const transformedData = {
-        id: alumni.id,
-        name: alumni.name || 'Unknown Alumni',
-        graduationYear: alumni.graduation_year?.toString() || 'Unknown',
-        profession: alumni.profession || 'Not specified',
-        image: alumni.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-        bio: alumni.bio || '',
-        email: alumni.email || '',
-        achievements: Array.isArray(alumni.achievements) ? alumni.achievements : [],
-        education: Array.isArray(alumni.education) ? alumni.education : [],
-        skills: Array.isArray(alumni.skills) ? alumni.skills : [],
-        createdAt: alumni.created_at,
-        updatedAt: alumni.updated_at,
-      };
+    // First, get the alumni to get image info for cleanup
+    const { data: alumni, error: fetchError } = await supabase
+      .from('alumni')
+      .select('*')
+      .eq('id', parseInt(id))
+      .single();
 
-      return NextResponse.json({
-        success: true,
-        data: transformedData,
-      });
-    } else {
-      // All alumni
-      const transformedData = (data || []).map(alum => {
-        if (minimal === "true") {
-          // Minimal data for listing
-          return {
-            id: alum.id,
-            name: alum.name || 'Unknown Alumni',
-            graduationYear: alum.graduation_year?.toString() || 'Unknown',
-            profession: alum.profession || 'Not specified',
-            image: alum.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            email: alum.email || '',
-          };
-        } else {
-          // Full data
-          return {
-            id: alum.id,
-            name: alum.name || 'Unknown Alumni',
-            graduationYear: alum.graduation_year?.toString() || 'Unknown',
-            profession: alum.profession || 'Not specified',
-            image: alum.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-            bio: alum.bio || '',
-            email: alum.email || '',
-            achievements: Array.isArray(alum.achievements) ? alum.achievements : [],
-            education: Array.isArray(alum.education) ? alum.education : [],
-            skills: Array.isArray(alum.skills) ? alum.skills : [],
-            createdAt: alum.created_at,
-            updatedAt: alum.updated_at,
-          };
-        }
-      });
-
-      return NextResponse.json({
-        success: true,
-        data: transformedData,
-        count: transformedData.length,
-        timestamp: new Date().toISOString(),
-      });
+    if (fetchError) {
+      return NextResponse.json(
+        { success: false, error: 'Alumni not found' },
+        { status: 404 }
+      );
     }
+
+    // Delete from database
+    const { error } = await supabase
+      .from('alumni')
+      .delete()
+      .eq('id', parseInt(id));
+
+    if (error) {
+      throw new Error(`Failed to delete alumni: ${error.message}`);
+    }
+
+    // Try to delete associated image from storage if it's from our storage
+    if (alumni.image && alumni.image.includes('supabase.co/storage/v1/object/public/alumni-images/')) {
+      try {
+        const imageName = alumni.image.split('/').pop();
+        if (imageName) {
+          await supabase.storage
+            .from('alumni-images')
+            .remove([imageName]);
+        }
+      } catch (storageError) {
+        console.error('Failed to delete image from storage:', storageError);
+        // Continue even if image deletion fails
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Alumni deleted successfully',
+      timestamp: new Date().toISOString()
+    });
+
   } catch (error: any) {
-    console.error('🔥 GET Error:', error);
-    
+    console.error('API Error:', error);
+
     if (error.message.includes('Admin access required')) {
       return NextResponse.json(
         { 
           success: false, 
-          error: "Unauthorized. Please log in as admin.",
-          message: 'Please login as admin to access this resource.'
+          error: 'Unauthorized. Please log in as admin.' 
         },
         { status: 401 }
       );
     }
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+      {
+        success: false,
+        error: error.message || 'Failed to delete alumni',
+        details: error.message
       },
       { status: 500 }
     );

@@ -1,53 +1,62 @@
 // middleware.ts (at root of your project)
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Create Supabase client for middleware
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// Create admin client for middleware
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Only protect admin routes (excluding login and public API endpoints)
-  if (
-    pathname.startsWith('/web-admin') && 
-    !pathname.includes('/login') &&
-    !pathname.includes('/api/auth')
-  ) {
-    console.log(`[Middleware] Protecting route: ${pathname}`);
+  
+  // Only protect admin routes
+  if (pathname.startsWith('/web-admin') && !pathname.includes('/login')) {
     
     try {
       // Get the access token from cookies
       const accessToken = request.cookies.get('sb-access-token')?.value;
+
       
       // If no access token, redirect to login
       if (!accessToken) {
-        console.log('[Middleware] No access token found, redirecting to login');
         return redirectToLogin(request);
       }
       
       // Verify the token with Supabase
-      const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
       
-      if (error || !user) {
-        console.log('[Middleware] Invalid token or user not found:', error?.message);
+      if (error) {
         
         // Try to refresh the token
         const refreshToken = request.cookies.get('sb-refresh-token')?.value;
         
         if (refreshToken) {
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
+          
+          // Use admin client to refresh session
+          const { data: refreshData, error: refreshError } = await supabaseAdmin.auth.refreshSession({
             refresh_token: refreshToken,
           });
           
           if (refreshError || !refreshData.session) {
-            console.log('[Middleware] Session refresh failed');
             return redirectToLogin(request);
           }
           
-          // Update cookies with new session
+          // Create response with new tokens
           const response = NextResponse.next();
           const isProduction = process.env.NODE_ENV === 'production';
           
+          // Set new cookies
           response.cookies.set({
             name: 'sb-access-token',
             value: refreshData.session.access_token,
@@ -58,25 +67,36 @@ export async function middleware(request: NextRequest) {
             maxAge: refreshData.session.expires_in,
           });
           
-          // Continue to check admin status
-          const { data: { user: refreshedUser } } = await supabase.auth.getUser(refreshData.session.access_token);
+          response.cookies.set({
+            name: 'sb-refresh-token',
+            value: refreshData.session.refresh_token,
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+          });
           
+          // Check admin profile with refreshed user
+          const refreshedUser = refreshData.user;
           if (!refreshedUser) {
             return redirectToLogin(request);
           }
           
-          // Check admin profile for refreshed user
           return await checkAdminProfile(refreshedUser.id, request);
         }
         
         return redirectToLogin(request);
       }
       
+      if (!user) {
+        return redirectToLogin(request);
+      }
+      
       // User is valid, check if they're an admin
       return await checkAdminProfile(user.id, request);
       
-    } catch (error) {
-      console.error('[Middleware] Error during authentication:', error);
+    } catch (error: any) {
       return redirectToLogin(request);
     }
   }
@@ -88,40 +108,48 @@ export async function middleware(request: NextRequest) {
 // Helper function to check admin profile
 async function checkAdminProfile(userId: string, request: NextRequest) {
   try {
+    
     const { data: adminProfile, error } = await supabaseAdmin
       .from('admin_profiles')
-      .select('id, is_active')
+      .select('id, is_active, name, role')
       .eq('user_id', userId)
       .single();
     
-    if (error || !adminProfile) {
-      console.log('[Middleware] User is not an admin:', error?.message);
+    if (error) {
       
       // Clear invalid cookies
       const response = redirectToLogin(request);
       response.cookies.delete('sb-access-token');
       response.cookies.delete('sb-refresh-token');
+      response.cookies.delete('admin-authenticated');
+      
+      return response;
+    }
+    
+    if (!adminProfile) {
+      
+      const response = redirectToLogin(request);
+      response.cookies.delete('sb-access-token');
+      response.cookies.delete('sb-refresh-token');
+      response.cookies.delete('admin-authenticated');
       
       return response;
     }
     
     if (!adminProfile.is_active) {
-      console.log('[Middleware] Admin account is inactive');
       
-      // Clear cookies for inactive accounts
       const response = redirectToLogin(request);
       response.cookies.delete('sb-access-token');
       response.cookies.delete('sb-refresh-token');
+      response.cookies.delete('admin-authenticated');
       
       return response;
     }
     
     // User is authenticated and is an active admin
-    console.log('[Middleware] User authenticated as admin');
     return NextResponse.next();
     
-  } catch (error) {
-    console.error('[Middleware] Error checking admin profile:', error);
+  } catch (error: any) {
     return redirectToLogin(request);
   }
 }
@@ -141,16 +169,6 @@ function redirectToLogin(request: NextRequest) {
 // Configure which routes to protect
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * 1. /api/auth/* (auth endpoints)
-     * 2. /web-admin/login (login page)
-     * 3. _next/static (static files)
-     * 4. _next/image (image optimization files)
-     * 5. favicon.ico (favicon file)
-     * 6. public files
-     */
     '/web-admin/:path*',
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|login).*)',
   ],
 };

@@ -124,7 +124,6 @@ export default function AdminTeachersPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load teachers');
       setLoading(false);
-      console.error('Error fetching teachers:', err);
     }
   };
 
@@ -184,7 +183,6 @@ export default function AdminTeachersPage() {
       setTeacherToDelete(null);
       
     } catch (err) {
-      console.error('Error deleting teacher:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete teacher');
     } finally {
       setDeleteLoading(false);

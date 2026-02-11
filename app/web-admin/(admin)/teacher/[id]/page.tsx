@@ -35,19 +35,16 @@ const ViewTeacherPage = () => {
       
       try {
         setIsLoading(true);
-        console.log("Fetching teacher with ID:", teacherId);
         
         // Use the admin API with query parameter
         const response = await fetch(`/api/admin/teacher?id=${teacherId}`);
         
-        console.log("Response status:", response.status);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch teacher: ${response.status} ${response.statusText}`);
         }
         
         const result = await response.json();
-        console.log("API response:", result);
         
         if (!result.success) {
           throw new Error(result.error || 'Failed to load teacher data');
@@ -61,7 +58,6 @@ const ViewTeacherPage = () => {
         setIsLoading(false);
         
       } catch (error) {
-        console.error('Error fetching teacher:', error);
         setError(error instanceof Error ? error.message : 'Failed to load teacher data');
         setIsLoading(false);
       }

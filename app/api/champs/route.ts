@@ -1,112 +1,130 @@
 // app/api/champs/route.ts
-import { NextResponse } from 'next/server';
-import champs from '@/app/data/champs.json';
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase";
 
-let champsCache = champs;
+// Helper function to get Supabase admin client with null check
+function getSupabaseAdmin() {
+  if (!supabaseAdmin) {
+    throw new Error("Supabase admin client not configured. Check SUPABASE_SERVICE_ROLE_KEY environment variable.");
+  }
+  return supabaseAdmin;
+}
 
-export async function GET(request: Request) {
+// Helper functions for null safety
+const safeString = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  return String(value);
+};
+
+// ===================================================================
+// GET - Public endpoint to get champs data
+// ===================================================================
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search') || '';
-    const id = searchParams.get('id');
-    const year = searchParams.get('year');
-    const classFilter = searchParams.get('class');
-    const minPercentage = searchParams.get('minPercentage');
-    const maxPercentage = searchParams.get('maxPercentage');
-    const sortBy = searchParams.get('sortBy') || 'percentage';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    // Get the Supabase admin client
+    const adminClient = getSupabaseAdmin();
 
-    let filteredChamps = [...champsCache];
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const year = searchParams.get("year");
+    const classFilter = searchParams.get("class");
+    const minimal = searchParams.get("minimal");
 
-    // Search filter
-    if (search) {
-      const q = search.toLowerCase();
-      filteredChamps = filteredChamps.filter(student =>
-        student.name.toLowerCase().includes(q) ||
-        student.class.toLowerCase().includes(q)
-      );
-    }
-
-    // ID filter
+    // Get single champ by ID
     if (id) {
-      filteredChamps = filteredChamps.filter(
-        student => student.id === Number(id)
-      );
+      const { data: champ, error } = await adminClient
+        .from("champs")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error || !champ) {
+        return NextResponse.json(
+          { success: false, error: "Champ not found" },
+          { status: 404 },
+        );
+      }
+
+      // Ensure all string fields are safe
+      const safeChamp = {
+        ...champ,
+        name: safeString(champ.name),
+        image: safeString(champ.image),
+        class: safeString(champ.class),
+        description: safeString(champ.description),
+        achievements: safeString(champ.achievements),
+        exam_board: safeString(champ.exam_board)
+      };
+
+      return NextResponse.json({ 
+        success: true, 
+        data: safeChamp 
+      });
     }
 
-    // Year filter
+    // Get all champs with optional filters
+    let query = adminClient
+      .from("champs")
+      .select("*");
+
+    // Apply filters
     if (year) {
-      filteredChamps = filteredChamps.filter(
-        student => student.year === Number(year)
-      );
+      query = query.eq("year", parseInt(year));
     }
-
-    // Class filter
     if (classFilter) {
-      filteredChamps = filteredChamps.filter(
-        student => student.class.toLowerCase().includes(classFilter.toLowerCase())
+      query = query.eq("class", classFilter);
+    }
+
+    // For minimal view (what the component expects)
+    if (minimal === "true") {
+      query = query.select("id, name, percentage, image, year, class");
+    }
+
+    // Order by percentage and year
+    query = query.order("percentage", { ascending: false })
+                .order("year", { ascending: false });
+
+    const { data: champs, error } = await query;
+
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: "Failed to fetch champs" },
+        { status: 400 },
       );
     }
 
-    // Percentage range filter
-    if (minPercentage) {
-      filteredChamps = filteredChamps.filter(
-        student => student.percentage >= Number(minPercentage)
-      );
-    }
-
-    if (maxPercentage) {
-      filteredChamps = filteredChamps.filter(
-        student => student.percentage <= Number(maxPercentage)
-      );
-    }
-
-    // Sorting
-    filteredChamps.sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortBy) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'year':
-          aValue = a.year;
-          bValue = b.year;
-          break;
-        case 'class':
-          aValue = a.class.toLowerCase();
-          bValue = b.class.toLowerCase();
-          break;
-        case 'percentage':
-        default:
-          aValue = a.percentage;
-          bValue = b.percentage;
-          break;
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-      } else {
-        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-      }
-    });
-
+    // Make all champs data safe
+    const safeChamps = (champs || []).map(champ => ({
+      ...champ,
+      name: safeString(champ.name),
+      image: safeString(champ.image),
+      class: safeString(champ.class),
+      description: safeString(champ.description),
+      achievements: safeString(champ.achievements),
+      exam_board: safeString(champ.exam_board)
+    }));
+    
     return NextResponse.json({
       success: true,
-      data: filteredChamps,
-      count: filteredChamps.length,
-      timestamp: new Date().toISOString(),
+      count: safeChamps.length,
+      data: safeChamps,
+      timestamp: new Date().toISOString()
     });
-  } catch (error) {
+
+  } catch (error: any) {    
+    if (error.message.includes('Supabase admin client not configured')) {
+      return NextResponse.json(
+        { success: false, error: "Server configuration error. Please contact administrator." },
+        { status: 500 },
+      );
+    }
+    
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to load champs data',
-        data: [],
-        count: 0,
-      },
-      { status: 500 }
+      { success: false, error: error.message || "Failed to fetch champs" },
+      { status: 500 },
     );
   }
 }
+
+// IMPORTANT: Keep POST, PUT, DELETE endpoints protected (admin only)
+// Those should remain with admin authentication

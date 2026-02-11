@@ -1,4 +1,4 @@
-// app/web-admin/login/page.tsx - WITH COOKIE TEST
+// app/web-admin/login/page.tsx - UPDATED TO USE VALIDATE API
 'use client';
 
 import { useState, FormEvent } from 'react';
@@ -11,15 +11,23 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Test if user is properly authenticated by calling validate endpoint
   const testAuth = async () => {
     try {
-      console.log('Testing auth...');
-      const response = await fetch('/api/admin/test-auth');
+      console.log('🔐 Testing authentication...');
+      const response = await fetch('/api/admin/validate');
+      
+      if (!response.ok) {
+        console.log('❌ Validate response not OK:', response.status);
+        return false;
+      }
+      
       const data = await response.json();
-      console.log('Auth test result:', data);
-      return data.success;
+      console.log('✅ Validate response:', data);
+      
+      return data.success && data.authenticated;
     } catch (err) {
-      console.error('Auth test error:', err);
+      console.log('❌ Validate error:', err);
       return false;
     }
   };
@@ -43,7 +51,7 @@ export default function AdminLoginPage() {
     }
 
     try {
-      console.log('Sending login request...');
+      console.log('📤 Attempting login...');
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: {
@@ -53,7 +61,7 @@ export default function AdminLoginPage() {
       });
 
       const data = await response.json();
-      console.log('Login response:', data);
+      console.log('📥 Login response:', { status: response.status, data });
 
       if (!response.ok) {
         setError(data.error || 'Login failed');
@@ -62,24 +70,27 @@ export default function AdminLoginPage() {
       }
 
       if (data.success) {
-        console.log('Login successful, testing auth...');
+        console.log('✅ Login successful, testing authentication...');
         
-        // Test if auth is working
+        // Small delay to ensure cookies are set
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Test if auth is working by calling validate endpoint
         const authTest = await testAuth();
-        console.log('Auth test passed?', authTest);
         
         if (authTest) {
-          console.log('Auth working, redirecting...');
+          console.log('✅ Authentication validated, redirecting...');
           // Force a hard reload to ensure all state is cleared
           window.location.href = '/web-admin';
         } else {
+          console.log('❌ Authentication test failed');
           setError('Authentication failed. Please try again.');
         }
       } else {
         setError(data.error || 'Login failed');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('❌ Network error:', err);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);

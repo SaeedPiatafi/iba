@@ -196,7 +196,6 @@ export default function AlumniProfilePage() {
         
         setAlumni(result.data[0]);
       } catch (error) {
-        console.error('Error fetching alumni profile:', error);
         setError(error instanceof Error ? error.message : 'Failed to load alumni profile');
       } finally {
         setLoading(false);

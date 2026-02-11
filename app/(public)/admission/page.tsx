@@ -73,7 +73,6 @@ export default function AdmissionRequirements() {
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load admission data');
-        console.error('Error fetching admission data:', err);
       } finally {
         setLoading(false);
       }

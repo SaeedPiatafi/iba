@@ -195,7 +195,6 @@ export default function AdminAlumniPage() {
         setFilteredAlumni(validatedAlumni);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching alumni:", err);
         setError(err instanceof Error ? err.message : "Failed to load alumni");
         setAlumni([]);
         setFilteredAlumni([]);
@@ -289,7 +288,6 @@ const handleDeleteConfirm = async () => {
     setAlumniToDelete(null);
     
   } catch (error) {
-    console.error('Error deleting alumni:', error);
     // Only show alert on error
     alert(error instanceof Error ? error.message : 'Failed to delete alumni. Please try again.');
   } finally {
@@ -349,7 +347,6 @@ const handleDeleteConfirm = async () => {
       setLoading(false);
       setCurrentPage(1);
     } catch (err) {
-      console.error("Error refreshing alumni:", err);
       setError(err instanceof Error ? err.message : "Failed to load alumni");
       setLoading(false);
     }

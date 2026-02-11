@@ -116,7 +116,6 @@ export default function Header() {
     { name: 'Student Resources', href: '/student-resources' },
     { name: 'Admission', href: '/admission' },
     { name: 'School system', href: '/school-system' },
-    { name: 'Time Table', href: '/time-table' }
   ];
 
   const closeMenu = () => {

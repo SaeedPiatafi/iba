@@ -39,7 +39,7 @@ export default function AboutSection() {
   const carouselImages = [
     {
       id: 1,
-      src: "https://images.unsplash.com/photos/a-classroom-filled-with-desks-and-chairs-next-to-a-large-window-MT4WtqNuFkE",
+      src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=800&fit=crop&auto=format",
       alt: "School Campus"
     },
     {

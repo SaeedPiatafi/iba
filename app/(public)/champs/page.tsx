@@ -50,14 +50,12 @@ export default function ChampsAKUEB() {
         if (result.data && Array.isArray(result.data)) {
           setStudents(result.data);
         } else {
-          console.warn('API returned non-array data:', result.data);
           setStudents([]);
         }
         
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load students data');
-        console.error('Error fetching students:', err);
         setStudents([]);
       } finally {
         setLoading(false);
@@ -128,14 +126,6 @@ export default function ChampsAKUEB() {
           </div>
         </div>
         
-        {/* Performance bar skeleton */}
-        <div className="mt-4">
-          <div className="flex justify-between mb-1">
-            <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/6"></div>
-          </div>
-          <div className="h-2 bg-gray-200 rounded-full"></div>
-        </div>
       </div>
     </div>
   );
@@ -222,25 +212,6 @@ export default function ChampsAKUEB() {
                 }}>
                 {student.year}
               </span>
-            </div>
-          </div>
-
-          {/* Performance Bar */}
-          <div className="mt-4">
-            <div className="flex justify-between text-xs mb-1">
-              <span style={{ color: colors.textSecondary }}>Performance Score</span>
-              <span className="font-medium" style={{ color: colors.primaryBlue }}>{student.percentage}%</span>
-            </div>
-            <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${colors.border}` }}>
-              <div 
-                className="h-full rounded-full transition-all duration-500"
-                style={{ 
-                  width: `${student.percentage}%`,
-                  backgroundColor: student.percentage >= 95 ? colors.accentGreen :
-                                 student.percentage >= 90 ? colors.primaryBlue :
-                                 colors.accentYellow
-                }}
-              />
             </div>
           </div>
         </div>

@@ -106,8 +106,6 @@ export default function EditFeePage() {
         setLoading(true);
         setError("");
         
-        console.log('Fetching fee with ID:', id);
-        
         const response = await fetch(`/api/admin/fee?id=${id}`);
         
         if (!response.ok) {
@@ -116,7 +114,6 @@ export default function EditFeePage() {
         }
         
         const result = await response.json();
-        console.log('API Response:', result);
         
         if (result.success && result.data) {
           const fee = result.data;
@@ -141,7 +138,6 @@ export default function EditFeePage() {
           throw new Error(result.error || 'Invalid fee data');
         }
       } catch (err: any) {
-        console.error('Error fetching fee:', err);
         setError(err.message || 'Failed to load fee data');
       } finally {
         setLoading(false);
@@ -181,15 +177,27 @@ export default function EditFeePage() {
     }));
   };
 
+  // Helper function to clean and validate numeric input
+  const cleanNumericInput = (value: string): string => {
+    // Remove all non-numeric characters
+    const numericOnly = value.replace(/[^\d]/g, '');
+    
+    // Remove leading zeros
+    const withoutLeadingZeros = numericOnly.replace(/^0+/, '');
+    
+    // If empty after cleaning, return '0'
+    return withoutLeadingZeros === '' ? '0' : withoutLeadingZeros;
+  };
+
   const handleFeeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // Remove any non-numeric characters except decimal point
-    const numericValue = value.replace(/[^\d.]/g, '');
+    // Clean the input to get only numbers
+    const cleanedValue = cleanNumericInput(value);
     
     setFormData(prev => ({
       ...prev,
-      [name]: numericValue
+      [name]: cleanedValue
     }));
   };
 
@@ -200,15 +208,21 @@ export default function EditFeePage() {
     }));
   };
 
+  // Parse string to integer safely
+  const parseToInt = (value: string): number => {
+    const num = parseInt(value, 10);
+    return isNaN(num) ? 0 : num;
+  };
+
   const calculateAnnualFee = (): string => {
-    const monthlyNum = parseFloat(formData.monthlyFee) || 0;
+    const monthlyNum = parseToInt(formData.monthlyFee);
     return formatCurrency(monthlyNum * 12);
   };
 
   const calculateTotalAnnual = (): string => {
-    const monthlyNum = parseFloat(formData.monthlyFee) || 0;
-    const admissionNum = parseFloat(formData.admissionFee) || 0;
-    const otherNum = parseFloat(formData.otherCharges) || 0;
+    const monthlyNum = parseToInt(formData.monthlyFee);
+    const admissionNum = parseToInt(formData.admissionFee);
+    const otherNum = parseToInt(formData.otherCharges);
     return formatCurrency(admissionNum + (monthlyNum * 12) + otherNum);
   };
 
@@ -224,7 +238,7 @@ export default function EditFeePage() {
         throw new Error("Please fill in all required fields (*)");
       }
 
-      const monthlyFee = parseFloat(formData.monthlyFee) || 0;
+      const monthlyFee = parseToInt(formData.monthlyFee);
       if (monthlyFee <= 0) {
         throw new Error("Monthly fee must be greater than 0");
       }
@@ -233,13 +247,12 @@ export default function EditFeePage() {
         id: parseInt(id),
         className: formData.className,
         category: formData.category,
-        admissionFee: parseFloat(formData.admissionFee) || 0,
+        admissionFee: parseToInt(formData.admissionFee),
         monthlyFee: monthlyFee,
-        otherCharges: parseFloat(formData.otherCharges) || 0,
+        otherCharges: parseToInt(formData.otherCharges),
         description: formData.description,
       };
 
-      console.log("Updating fee:", updateData);
 
       const response = await fetch("/api/admin/fee", {
         method: "PUT",
@@ -265,7 +278,6 @@ export default function EditFeePage() {
       }, 1500);
       
     } catch (err: any) {
-      console.error("Error updating fee:", err);
       setError(err.message || "Failed to update fee. Please try again.");
       setSaving(false);
     }
@@ -438,13 +450,18 @@ export default function EditFeePage() {
                     <span className="text-gray-500">Rs.</span>
                   </div>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     name="monthlyFee"
-                    value={formData.monthlyFee}
+                    value={formData.monthlyFee === "0" ? "" : formData.monthlyFee}
                     onChange={handleFeeChange}
+                    onBlur={(e) => {
+                      if (e.target.value === "") {
+                        setFormData(prev => ({ ...prev, monthlyFee: "0" }));
+                      }
+                    }}
                     required
-                    min="1"
-                    step="1"
                     className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     placeholder="Enter monthly fee"
                   />
@@ -468,12 +485,17 @@ export default function EditFeePage() {
                     <span className="text-gray-500">Rs.</span>
                   </div>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     name="admissionFee"
-                    value={formData.admissionFee}
+                    value={formData.admissionFee === "0" ? "" : formData.admissionFee}
                     onChange={handleFeeChange}
-                    min="0"
-                    step="1"
+                    onBlur={(e) => {
+                      if (e.target.value === "") {
+                        setFormData(prev => ({ ...prev, admissionFee: "0" }));
+                      }
+                    }}
                     className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     placeholder="Enter one-time admission fee"
                   />
@@ -490,12 +512,17 @@ export default function EditFeePage() {
                     <span className="text-gray-500">Rs.</span>
                   </div>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     name="otherCharges"
-                    value={formData.otherCharges}
+                    value={formData.otherCharges === "0" ? "" : formData.otherCharges}
                     onChange={handleFeeChange}
-                    min="0"
-                    step="1"
+                    onBlur={(e) => {
+                      if (e.target.value === "") {
+                        setFormData(prev => ({ ...prev, otherCharges: "0" }));
+                      }
+                    }}
                     className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     placeholder="Enter other charges"
                   />

@@ -53,14 +53,13 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export default function NewAlumniPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [notification, setNotification] = useState<Notification>({
     show: false,
     message: '',
     type: '',
   });
 
-  // Single source of truth for input data
+  // Single source of truth for form data
   const [formData, setFormData] = useState<FormData>({
     name: '',
     graduationYear: new Date().getFullYear().toString(),
@@ -120,10 +119,6 @@ export default function NewAlumniPage() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
-      setFormData(prev => ({
-        ...prev,
-        image: reader.result as string // Set base64 preview as temporary image
-      }));
     };
     reader.readAsDataURL(file);
   };
@@ -138,6 +133,7 @@ export default function NewAlumniPage() {
     }));
   };
 
+  // Add item handlers
   const addAchievement = useCallback(() => {
     if (newAchievement.trim()) {
       setFormData(prev => ({
@@ -189,7 +185,7 @@ export default function NewAlumniPage() {
     }));
   }, []);
 
-  // Validate form
+  // Validate form - UPDATED to check if there's any education data
   const validateForm = useCallback((): boolean => {
     if (!formData.name.trim()) {
       showNotification('Please enter alumni name', 'error');
@@ -226,35 +222,15 @@ export default function NewAlumniPage() {
       return false;
     }
 
-    // Validate education array has at least one non-empty entry
-    const validEducation = [...formData.education, newEducation].filter(edu => edu.trim() !== '');
-    if (validEducation.length === 0) {
-      showNotification('Please enter at least one education background', 'error');
+    // Validate education - check if there's any education data (either in formData or input buffer)
+    const hasEducation = formData.education.length > 0 || newEducation.trim() !== '';
+    if (!hasEducation) {
+      showNotification('Please add at least one education background', 'error');
       return false;
     }
 
     return true;
   }, [formData, newEducation, showNotification, selectedFile]);
-
-  // Prepare form data for submission
-  const prepareFormData = useCallback((): FormData => {
-    const data = { ...formData };
-    
-    // Add current input values if they exist
-    if (newEducation.trim()) {
-      data.education = [...data.education, newEducation.trim()];
-    }
-    
-    if (newAchievement.trim()) {
-      data.achievements = [...data.achievements, newAchievement.trim()];
-    }
-    
-    if (newSkill.trim()) {
-      data.skills = [...data.skills, newSkill.trim()];
-    }
-    
-    return data;
-  }, [formData, newEducation, newAchievement, newSkill]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -264,13 +240,22 @@ export default function NewAlumniPage() {
     setLoading(true);
     
     try {
-      // Prepare final data with filtering
-      const preparedData = prepareFormData();
+      // Prepare form data including input buffer values
       const alumniData = {
-        ...preparedData,
-        achievements: preparedData.achievements.filter(ach => ach.trim()),
-        education: preparedData.education.filter(edu => edu.trim()),
-        skills: preparedData.skills.filter(skill => skill.trim()),
+        ...formData,
+        // Include input buffer values if they exist (user typed but didn't click "Add")
+        education: [
+          ...formData.education,
+          ...(newEducation.trim() ? [newEducation.trim()] : [])
+        ],
+        achievements: [
+          ...formData.achievements,
+          ...(newAchievement.trim() ? [newAchievement.trim()] : [])
+        ],
+        skills: [
+          ...formData.skills,
+          ...(newSkill.trim() ? [newSkill.trim()] : [])
+        ]
       };
       
       // Create FormData for file upload
@@ -279,7 +264,9 @@ export default function NewAlumniPage() {
       // Add all fields to FormData
       Object.entries(alumniData).forEach(([key, value]) => {
         if (Array.isArray(value)) {
-          formDataToSend.append(key, JSON.stringify(value));
+          // Filter out empty strings from arrays
+          const filteredArray = value.filter(item => item.trim() !== '');
+          formDataToSend.append(key, JSON.stringify(filteredArray));
         } else if (value !== null && value !== undefined) {
           formDataToSend.append(key, value.toString());
         }
@@ -290,7 +277,7 @@ export default function NewAlumniPage() {
         formDataToSend.append('image', selectedFile);
       }
       
-      // Submit to Admin API with FormData
+      // Submit to Admin API
       const response = await fetch('/api/admin/alumni', {
         method: 'POST',
         body: formDataToSend,
@@ -304,6 +291,11 @@ export default function NewAlumniPage() {
       
       // Show success notification
       showNotification('Alumni created successfully!', 'success');
+      
+      // Clear input buffers after successful submission
+      setNewEducation('');
+      setNewAchievement('');
+      setNewSkill('');
       
       // Wait a moment before redirecting so user can see success message
       const redirectTimer = setTimeout(() => {
@@ -469,7 +461,7 @@ export default function NewAlumniPage() {
                 />
               </div>
 
-              {/* Profile Image - Updated for file upload */}
+              {/* Profile Image */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Profile Image <span className="text-red-500">*</span>
@@ -606,7 +598,7 @@ export default function NewAlumniPage() {
           {/* Education Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">
-              Education
+              Education <span className="text-red-500">*</span>
             </h2>
             
             <div className="space-y-4">
@@ -630,9 +622,10 @@ export default function NewAlumniPage() {
                 </button>
               </div>
               
-              {(formData.education.length > 0 || newEducation.trim()) && (
+              {/* Only show added items */}
+              {formData.education.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-600 font-medium">Education:</p>
+                  <p className="text-sm text-gray-600 font-medium">Added Education:</p>
                   {formData.education.map((edu, index) => (
                     <div
                       key={index}
@@ -649,11 +642,6 @@ export default function NewAlumniPage() {
                       </button>
                     </div>
                   ))}
-                  {newEducation.trim() && (
-                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <span className="text-gray-800">{newEducation}</span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -686,9 +674,10 @@ export default function NewAlumniPage() {
                 </button>
               </div>
               
-              {(formData.achievements.length > 0 || newAchievement.trim()) && (
+              {/* Only show added items */}
+              {formData.achievements.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-600 font-medium">Achievements:</p>
+                  <p className="text-sm text-gray-600 font-medium">Added Achievements:</p>
                   {formData.achievements.map((ach, index) => (
                     <div
                       key={index}
@@ -705,11 +694,6 @@ export default function NewAlumniPage() {
                       </button>
                     </div>
                   ))}
-                  {newAchievement.trim() && (
-                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
-                      <span className="text-gray-800">{newAchievement}</span>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -742,9 +726,10 @@ export default function NewAlumniPage() {
                 </button>
               </div>
               
-              {(formData.skills.length > 0 || newSkill.trim()) && (
+              {/* Only show added items */}
+              {formData.skills.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-600 font-medium">Skills:</p>
+                  <p className="text-sm text-gray-600 font-medium">Added Skills:</p>
                   <div className="flex flex-wrap gap-2">
                     {formData.skills.map((skill, index) => (
                       <div
@@ -764,11 +749,6 @@ export default function NewAlumniPage() {
                         </button>
                       </div>
                     ))}
-                    {newSkill.trim() && (
-                      <div className="flex items-center bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-200">
-                        <span className="mr-2">{newSkill}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -788,7 +768,7 @@ export default function NewAlumniPage() {
             </button>
             <button
               type="submit"
-              disabled={loading || uploadingImage}
+              disabled={loading}
               className="inline-flex items-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={loading ? "Saving alumni profile" : "Save alumni profile"}
             >
@@ -796,11 +776,6 @@ export default function NewAlumniPage() {
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                   Saving...
-                </>
-              ) : uploadingImage ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Uploading Image...
                 </>
               ) : (
                 <>

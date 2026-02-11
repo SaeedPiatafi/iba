@@ -109,7 +109,6 @@ const parseCurrency = (currencyStr: string): number => {
     const cleaned = currencyStr.replace(/[^\d]/g, "");
     return parseInt(cleaned) || 0;
   } catch (error) {
-    console.error("Error parsing currency:", currencyStr, error);
     return 0;
   }
 };
@@ -188,7 +187,6 @@ const calculateTotalAnnual = (fees: FeeStructure[]): string => {
       const amount = parseInt(amountStr) || 0;
       return sum + amount;
     } catch (error) {
-      console.error("Error parsing fee amount:", error, fee);
       return sum;
     }
   }, 0);
@@ -227,8 +225,6 @@ export default function AdminFeesPage(): JSX.Element {
         }
 
         const data = await response.json();
-        console.log("API Response:", data); // Debug log
-
         if (
           data.success &&
           data.data &&
@@ -270,7 +266,6 @@ export default function AdminFeesPage(): JSX.Element {
           throw new Error("Invalid data format from API");
         }
       } catch (err: any) {
-        console.error("Error fetching fees:", err);
         setError(err.message || "Failed to load fee structure");
         // Set empty arrays to prevent further errors
         setFees([]);
@@ -340,7 +335,6 @@ export default function AdminFeesPage(): JSX.Element {
       setShowDeleteModal(false);
       setFeeToDelete(null);
     } catch (err: any) {
-      console.error("Error deleting fee:", err);
       setError(err.message || "Failed to delete fee structure");
     } finally {
       setDeleting(false);
@@ -654,72 +648,6 @@ export default function AdminFeesPage(): JSX.Element {
               </div>
             )}
 
-            {/* Stats Footer - Show when data is loaded */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                  <p className="text-gray-600">
-                    Showing{" "}
-                    <span className="font-semibold text-blue-600">
-                      {filteredFees.length}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-semibold text-blue-600">
-                      {fees.length}
-                    </span>{" "}
-                    fee structures
-                  </p>
-                </div>
-
-                {/* Total Stats */}
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="bg-white rounded-lg border border-gray-200 p-3 min-w-[200px]">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                        <svg
-                          className="w-5 h-5 text-blue-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Total Classes</p>
-                        <p className="text-lg font-bold text-gray-900">
-                          {calculateTotalClasses(fees)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-lg border border-gray-200 p-3 min-w-[200px]">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-green-100 rounded-lg mr-3">
-                        <MoneyIcon />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">
-                          Total Annual Fees
-                        </p>
-                        <p className="text-lg font-bold text-gray-900">
-                          {calculateTotalAnnual(fees)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Categories: </span>
-                  {categories.slice(1).join(", ")}
-                </div>
-              </div>
-            </div>
           </>
         )}
       </div>

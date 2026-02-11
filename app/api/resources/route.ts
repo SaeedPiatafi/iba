@@ -1,70 +1,340 @@
 // app/api/resources/route.ts
 import { NextResponse } from 'next/server';
-import resources from '@/app/data/resources.json';
+import { createClient } from '@supabase/supabase-js';
 
-let resourcesCache = resources;
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Define types matching your database
+interface DatabaseResource {
+  id: number;
+  title: string;
+  description: string | null;
+  type: string;
+  class: string;
+  subject: string;
+  url: string;
+  tags: string[] | null;
+  upload_date: string;
+  updated_at: string;
+  downloads: number;
+  is_active: boolean;
+  created_by: string | null;
+}
+
+interface FrontendResource {
+  id: number;
+  title: string;
+  type: 'Book' | 'Video' | 'Article' | 'Practice' | 'Exam';
+  link: string;
+  description: string;
+}
+
+interface ResourcesData {
+  classes: string[];
+  subjectsByClass: Record<string, string[]>;
+  resources: Record<string, Record<string, FrontendResource[]>>;
+}
+
+// Frontend class list (1-12)
+const CLASSES = [
+  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"
+];
+
+// Standardize database class values to frontend format
+const standardizeClass = (dbClass: string): string => {
+  // Remove any prefixes like 'class_', 'Class', etc.
+  const cleaned = dbClass.replace(/^(class_|Class_|Class)/i, '').trim();
+  
+  // Convert to simple number string
+  const match = cleaned.match(/\d+/);
+  if (match) {
+    const num = parseInt(match[0]);
+    if (num >= 1 && num <= 12) {
+      return num.toString();
+    }
+  }
+  
+  // Default fallback
+  return "9";
+};
+
+// Standardize subject names
+const standardizeSubject = (dbSubject: string): string => {
+  const subjectMap: Record<string, string> = {
+    'mathematics': 'math',
+    'maths': 'math',
+    'english language': 'english',
+    'urdu language': 'urdu',
+    'biology': 'bio',
+    'chemistry': 'chemistry',
+    'physics': 'physics',
+    'pakistan studies': 'pakistan study',
+    'islamiat': 'islamiyat',
+    'computer': 'computer science',
+    'comp science': 'computer science',
+    'sindhi': 'sindhi',
+    'economics': 'economics',
+    'accounting': 'accounting',
+    'commerce': 'commerce',
+    'business studies': 'business',
+  };
+  
+  const normalized = dbSubject.toLowerCase().trim();
+  return subjectMap[normalized] || normalized;
+};
+
+// Get unique subjects from database for each class
+async function getSubjectsFromDatabase(): Promise<Record<string, string[]>> {
+  try {
+    const { data: resources, error } = await supabase
+      .from('resources')
+      .select('class, subject')
+      .eq('is_active', true)
+      .order('subject', { ascending: true });
+
+    if (error) throw error;
+
+    const subjectsByClass: Record<string, string[]> = {};
+
+    // Initialize all classes
+    CLASSES.forEach(className => {
+      subjectsByClass[className] = [];
+    });
+
+    // Collect unique subjects for each class
+    resources?.forEach(resource => {
+      const frontendClass = standardizeClass(resource.class);
+      const frontendSubject = standardizeSubject(resource.subject);
+      
+      if (CLASSES.includes(frontendClass) && 
+          !subjectsByClass[frontendClass].includes(frontendSubject)) {
+        subjectsByClass[frontendClass].push(frontendSubject);
+      }
+    });
+
+    // Sort subjects alphabetically
+    Object.keys(subjectsByClass).forEach(className => {
+      subjectsByClass[className].sort();
+    });
+
+    return subjectsByClass;
+  } catch (error) {
+    console.error('Error fetching subjects:', error);
+    
+    // Return default subjects if database fails
+    const defaultSubjects: Record<string, string[]> = {};
+    const commonSubjects = ["english", "math", "urdu", "sindhi", "bio", "chemistry", "physics", "pakistan study"];
+    
+    CLASSES.forEach(className => {
+      defaultSubjects[className] = [...commonSubjects];
+    });
+    
+    return defaultSubjects;
+  }
+}
+
+// Map database type to frontend type
+const mapDatabaseTypeToFrontend = (dbType: string): FrontendResource['type'] => {
+  const typeMap: Record<string, FrontendResource['type']> = {
+    'book': 'Book',
+    'video': 'Video',
+    'article': 'Article',
+    'practice': 'Practice',
+    'exam': 'Exam',
+    'textbook': 'Book',
+    'past paper': 'Exam',
+    'worksheet': 'Practice',
+    'notes': 'Article',
+    'tutorial': 'Video'
+  };
+  
+  const normalizedType = dbType?.trim()?.toLowerCase() || 'book';
+  return typeMap[normalizedType] || 'Book';
+};
+
+async function getResourcesFromDatabase(): Promise<ResourcesData> {
+  try {
+    console.log('🔍 Fetching resources from database...');
+    
+    // Fetch all active resources from database
+    const { data: resources, error } = await supabase
+      .from('resources')
+      .select('*')
+      .eq('is_active', true)
+      .order('title', { ascending: true });
+
+    if (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
+
+    console.log(`✅ Found ${resources?.length || 0} active resources in database`);
+    
+    // Get subjects from database
+    const subjectsByClass = await getSubjectsFromDatabase();
+    
+    // Initialize the response structure
+    const responseData: ResourcesData = {
+      classes: CLASSES,
+      subjectsByClass: subjectsByClass,
+      resources: {}
+    };
+
+    // Initialize resources structure for all classes
+    CLASSES.forEach(className => {
+      responseData.resources[className] = {};
+      // Initialize subject arrays based on database subjects
+      subjectsByClass[className]?.forEach(subject => {
+        responseData.resources[className][subject] = [];
+      });
+    });
+
+    // Process each resource from database
+    if (resources && resources.length > 0) {
+      let processedCount = 0;
+      
+      resources.forEach((resource: DatabaseResource) => {
+        try {
+          // Map database class to frontend class name
+          const frontendClass = standardizeClass(resource.class);
+          
+          // Get and clean the subject name
+          const frontendSubject = standardizeSubject(resource.subject);
+          
+          // Map database type to frontend type
+          const frontendType = mapDatabaseTypeToFrontend(resource.type);
+          
+          // Ensure the class exists in our structure
+          if (!responseData.resources[frontendClass]) {
+            responseData.resources[frontendClass] = {};
+          }
+          
+          // Ensure the subject array exists for this class
+          if (!responseData.resources[frontendClass][frontendSubject]) {
+            responseData.resources[frontendClass][frontendSubject] = [];
+          }
+          
+          // Create resource object matching frontend interface
+          const frontendResource: FrontendResource = {
+            id: resource.id,
+            title: resource.title,
+            type: frontendType,
+            link: resource.url,
+            description: resource.description || 'No description available'
+          };
+          
+          // Add to the resources structure
+          responseData.resources[frontendClass][frontendSubject].push(frontendResource);
+          processedCount++;
+          
+        } catch (resourceError) {
+          console.error('Error processing resource:', resourceError, resource);
+        }
+      });
+      
+      console.log(`🔄 Processed ${processedCount} resources successfully`);
+      
+      // Log summary by class
+      CLASSES.forEach(className => {
+        const classResources = responseData.resources[className];
+        const totalResources = Object.values(classResources).reduce(
+          (sum, subjectResources) => sum + subjectResources.length, 0
+        );
+        if (totalResources > 0) {
+          console.log(`📚 Class ${className}: ${totalResources} resources`);
+        }
+      });
+    } else {
+      console.log('⚠️ No active resources found in database');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('❌ Error fetching resources:', error);
+    
+    // Return empty structure on error
+    const errorData: ResourcesData = {
+      classes: CLASSES,
+      subjectsByClass: await getSubjectsFromDatabase(),
+      resources: {}
+    };
+    
+    // Initialize empty resources
+    CLASSES.forEach(className => {
+      errorData.resources[className] = {};
+    });
+    
+    return errorData;
+  }
+}
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const classParam = searchParams.get('class');
-    const subject = searchParams.get('subject');
-    const type = searchParams.get('type');
-
-    // Create a fresh response data object
-    let responseData = JSON.parse(JSON.stringify(resourcesCache));
-
-    // If class parameter is provided, filter resources by class
-    if (classParam) {
-      const resourcesObj = resourcesCache.resources as Record<string, any>;
-      const classResources = resourcesObj[classParam];
-      
-      if (classResources) {
-        // Create a filtered resources object
-        const filteredResources: Record<string, any> = {};
-        filteredResources[classParam] = classResources;
-        
-        // If subject is also provided, filter further
-        if (subject && classResources[subject]) {
-          filteredResources[classParam] = {
-            [subject]: classResources[subject]
-          };
-          
-          // If type is also provided, filter by type
-          if (type) {
-            const filteredByType = classResources[subject].filter(
-              (resource: any) => resource.type.toLowerCase() === type.toLowerCase()
-            );
-            filteredResources[classParam][subject] = filteredByType;
-          }
-        }
-        
-        // Update the response data
-        responseData.resources = filteredResources;
-      } else {
-        // Class not found
-        return NextResponse.json({
-          success: false,
-          error: `Class '${classParam}' not found`,
-          data: null,
-        }, { status: 404 });
-      }
-    }
-
+    console.log('🚀 API Route: GET /api/resources');
+    
+    const data = await getResourcesFromDatabase();
+    
+    console.log('✅ Resources data prepared');
+    
     return NextResponse.json({
       success: true,
-      data: responseData,
+      data: data,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error in resources API:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to load resources data',
-        data: null,
-      },
-      { status: 500 }
-    );
+    console.error('🔥 API error:', error);
+    
+    // Return empty data on error
+    const emptyData: ResourcesData = {
+      classes: CLASSES,
+      subjectsByClass: {},
+      resources: {}
+    };
+    
+    CLASSES.forEach(className => {
+      emptyData.subjectsByClass[className] = [];
+      emptyData.resources[className] = {};
+    });
+    
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to load resources data from database',
+      data: emptyData,
+      timestamp: new Date().toISOString(),
+    }, { status: 500 });
   }
+}
+
+// Disable write methods
+export async function POST(request: Request) {
+  return NextResponse.json(
+    { 
+      success: false, 
+      error: "Method not allowed. Use admin interface for adding resources." 
+    },
+    { status: 405 }
+  );
+}
+
+export async function PUT(request: Request) {
+  return NextResponse.json(
+    { 
+      success: false, 
+      error: "Method not allowed. Use admin interface for updating resources." 
+    },
+    { status: 405 }
+  );
+}
+
+export async function DELETE(request: Request) {
+  return NextResponse.json(
+    { 
+      success: false, 
+      error: "Method not allowed. Use admin interface for deleting resources." 
+    },
+    { status: 405 }
+  );
 }
