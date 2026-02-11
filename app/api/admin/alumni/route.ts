@@ -455,53 +455,80 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Validate ID is a number
+    const alumniId = parseInt(id);
+    if (isNaN(alumniId) || alumniId <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid alumni ID format' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`🔍 Attempting to delete alumni with ID: ${alumniId}`);
+
     // First, get the alumni to get image info for cleanup
     const { data: alumni, error: fetchError } = await supabase
       .from('alumni')
       .select('*')
-      .eq('id', parseInt(id))
+      .eq('id', alumniId)
       .single();
 
     if (fetchError) {
+      console.error('❌ Alumni not found:', fetchError);
       return NextResponse.json(
         { success: false, error: 'Alumni not found' },
         { status: 404 }
       );
     }
 
+    console.log(`✅ Found alumni: ${alumni.name}`);
+
     // Delete from database
-    const { error } = await supabase
+    const { error: deleteError } = await supabase
       .from('alumni')
       .delete()
-      .eq('id', parseInt(id));
+      .eq('id', alumniId);
 
-    if (error) {
-      throw new Error(`Failed to delete alumni: ${error.message}`);
+    if (deleteError) {
+      console.error('❌ Database delete error:', deleteError);
+      throw new Error(`Failed to delete alumni from database: ${deleteError.message}`);
     }
+
+    console.log('✅ Database record deleted successfully');
 
     // Try to delete associated image from storage if it's from our storage
     if (alumni.image && alumni.image.includes('supabase.co/storage/v1/object/public/alumni-images/')) {
       try {
         const imageName = alumni.image.split('/').pop();
         if (imageName) {
-          await supabase.storage
+          console.log(`🗑️ Attempting to delete image: ${imageName}`);
+          const { error: storageError } = await supabase.storage
             .from('alumni-images')
             .remove([imageName]);
+          
+          if (storageError) {
+            console.warn('⚠️ Failed to delete image from storage:', storageError);
+          } else {
+            console.log('✅ Image deleted from storage');
+          }
         }
       } catch (storageError) {
-        console.error('Failed to delete image from storage:', storageError);
+        console.warn('⚠️ Error deleting image:', storageError);
         // Continue even if image deletion fails
       }
+    } else {
+      console.log('ℹ️ No image to delete or image is external URL');
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Alumni deleted successfully',
+      message: `Alumni "${alumni.name}" deleted successfully`,
+      deletedId: alumniId,
       timestamp: new Date().toISOString()
     });
 
   } catch (error: any) {
-    console.error('API Error:', error);
+    console.error('🔥 DELETE API Error:', error);
 
     if (error.message.includes('Admin access required')) {
       return NextResponse.json(

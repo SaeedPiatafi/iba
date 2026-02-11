@@ -14,9 +14,9 @@ interface Resource {
 interface ApiResponse {
   success: boolean;
   data: {
-    classes: string[];
-    subjectsByClass: Record<string, string[]>;
-    resources: Record<string, Record<string, Resource[]>>;
+    classes: string[]; // API returns ["1", "2", "3", ... "12"]
+    subjectsByClass: Record<string, string[]>; // API returns {"1": ["math"], "9": ["english", "math", "physics"], ...}
+    resources: Record<string, Record<string, Resource[]>>; // API returns {"1": {"math": [...]}, "9": {"math": [...]}, ...}
   };
   timestamp: string;
   error?: string;
@@ -42,8 +42,8 @@ export default function StudentResources() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ApiResponse['data'] | null>(null);
-  const [selectedClass, setSelectedClass] = useState("Class 9");
-  const [selectedSubject, setSelectedSubject] = useState("Physics");
+  const [selectedClass, setSelectedClass] = useState("9"); // Changed to match API format
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [currentSubjects, setCurrentSubjects] = useState<string[]>([]);
 
   // Fetch data from API
@@ -51,6 +51,8 @@ export default function StudentResources() {
     const fetchResources = async () => {
       try {
         setLoading(true);
+        console.log('Fetching resources from API...');
+        
         const response = await fetch('/api/resources');
         
         if (!response.ok) {
@@ -63,9 +65,26 @@ export default function StudentResources() {
           throw new Error(result.error || 'Failed to load resources data');
         }
         
+        console.log('API Data loaded:', {
+          classes: result.data.classes,
+          subjectsByClass: result.data.subjectsByClass,
+          resourcesCount: Object.keys(result.data.resources).length
+        });
+        
         setData(result.data);
         setError(null);
+        
+        // Auto-select first class with subjects
+        if (result.data.classes.length > 0) {
+          const firstClassWithSubjects = result.data.classes.find(cls => 
+            result.data.subjectsByClass[cls]?.length > 0
+          ) || result.data.classes[0];
+          
+          setSelectedClass(firstClassWithSubjects);
+        }
+        
       } catch (err) {
+        console.error('Error fetching resources:', err);
         setError(err instanceof Error ? err.message : 'Failed to load resources data');
       } finally {
         setLoading(false);
@@ -79,42 +98,47 @@ export default function StudentResources() {
   useEffect(() => {
     if (!data) return;
 
-    if (selectedClass.includes("6") || selectedClass.includes("7") || selectedClass.includes("8")) {
-      setCurrentSubjects(data.subjectsByClass["Class 6-8"] || []);
-    } else if (selectedClass.includes("9") || selectedClass.includes("10")) {
-      setCurrentSubjects(data.subjectsByClass["Class 9-10"] || []);
-    } else if (selectedClass.includes("Science")) {
-      setCurrentSubjects(data.subjectsByClass["Science"] || []);
-    } else if (selectedClass.includes("Commerce")) {
-      setCurrentSubjects(data.subjectsByClass["Commerce"] || []);
-    } else if (selectedClass.includes("Arts")) {
-      setCurrentSubjects(data.subjectsByClass["Arts"] || []);
+    console.log('Selected class changed to:', selectedClass);
+    console.log('Available subjects for this class:', data.subjectsByClass[selectedClass]);
+    
+    const subjects = data.subjectsByClass[selectedClass] || [];
+    setCurrentSubjects(subjects);
+    
+    // Auto-select first subject if available
+    if (subjects.length > 0 && (!selectedSubject || !subjects.includes(selectedSubject))) {
+      setSelectedSubject(subjects[0]);
+    } else if (subjects.length === 0) {
+      setSelectedSubject("");
     }
     
-    // Reset to first subject when class changes
-    if (selectedClass.includes("6") || selectedClass.includes("7") || selectedClass.includes("8")) {
-      setSelectedSubject("Mathematics");
-    } else if (selectedClass.includes("9") || selectedClass.includes("10")) {
-      setSelectedSubject("Mathematics");
-    } else if (selectedClass.includes("Science")) {
-      setSelectedSubject("Mathematics");
-    } else if (selectedClass.includes("Commerce")) {
-      setSelectedSubject("Principles of Accounting");
-    } else if (selectedClass.includes("Arts")) {
-      setSelectedSubject("English Literature");
-    }
-  }, [selectedClass, data]);
+  }, [selectedClass, data, selectedSubject]);
 
   // Get resources for selected class and subject
-  const getResources = () => {
-    if (!data || !data.resources) return [];
+  const getResources = (): Resource[] => {
+    if (!data || !data.resources || !selectedClass || !selectedSubject) {
+      console.log('No resources - missing data:', { 
+        hasData: !!data, 
+        selectedClass, 
+        selectedSubject,
+        classResources: data?.resources?.[selectedClass]
+      });
+      return [];
+    }
     
     const classResources = data.resources[selectedClass];
     if (!classResources) {
-      // Fallback to Class 9 if no resources for selected class
-      return data.resources["Class 9"]?.[selectedSubject] || [];
+      console.log(`No resources found for class ${selectedClass}`);
+      return [];
     }
-    return classResources[selectedSubject] || [];
+    
+    const subjectResources = classResources[selectedSubject] || [];
+    console.log(`Found ${subjectResources.length} resources for ${selectedClass} - ${selectedSubject}`);
+    return subjectResources;
+  };
+
+  // Format class display name
+  const formatClassName = (className: string) => {
+    return `Class ${className}`;
   };
 
   // Get type color
@@ -167,46 +191,15 @@ export default function StudentResources() {
     }
   };
 
-  // Skeleton Card Component
-  const SkeletonCard = () => (
-    <div 
-      className="bg-white rounded-xl p-5 animate-pulse"
-      style={{ border: `1px solid ${colors.border}` }}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center">
-          <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3"></div>
-          <div className="w-16 h-6 bg-gray-200 rounded-full"></div>
-        </div>
-      </div>
-      
-      <div className="h-6 bg-gray-200 rounded mb-2"></div>
-      <div className="h-4 bg-gray-200 rounded mb-4 w-3/4"></div>
-      
-      <div className="h-10 bg-gray-200 rounded-lg"></div>
-    </div>
-  );
-
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen py-8 md:py-12" suppressHydrationWarning style={{ backgroundColor: colors.background }}>
+      <div className="min-h-screen py-8 md:py-12" style={{ backgroundColor: colors.background }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header Section - Always visible */}
+          {/* Header Skeleton */}
           <div className="text-center mb-8 md:mb-12">
-            <h1 
-              className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
-              style={{ 
-                color: colors.textPrimary,
-                fontFamily: "var(--font-montserrat)",
-                lineHeight: "1.2"
-              }}
-            >
-              Student Resources Hub
-            </h1>
-            <p className="text-lg md:text-xl max-w-3xl mx-auto" style={{ color: colors.textSecondary }}>
-              Access study materials, videos, and practice resources for your subjects
-            </p>
+            <div className="h-12 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+            <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto"></div>
           </div>
 
           {/* Class Selection Skeleton */}
@@ -222,7 +215,6 @@ export default function StudentResources() {
 
           {/* Desktop Layout Skeleton */}
           <div className="hidden lg:flex lg:flex-row gap-8">
-            {/* Subjects Sidebar Skeleton */}
             <div className="w-1/4">
               <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
                 <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
@@ -234,7 +226,6 @@ export default function StudentResources() {
               </div>
             </div>
 
-            {/* Resources Main Content Skeleton */}
             <div className="w-3/4">
               <div className="bg-white rounded-2xl shadow-lg p-8">
                 <div className="flex items-center justify-between mb-8">
@@ -244,11 +235,13 @@ export default function StudentResources() {
                   </div>
                   <div className="w-32 h-10 bg-gray-200 rounded-lg"></div>
                 </div>
-
-                {/* Resources Grid Skeleton - 2 columns on desktop */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <SkeletonCard key={i} />
+                    <div key={i} className="bg-white rounded-xl p-5 animate-pulse">
+                      <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded mb-4 w-3/4"></div>
+                      <div className="h-10 bg-gray-200 rounded-lg"></div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -257,7 +250,6 @@ export default function StudentResources() {
 
           {/* Mobile Layout Skeleton */}
           <div className="block lg:hidden">
-            {/* Mobile Subject Selection Skeleton */}
             <div className="mb-6">
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
@@ -268,8 +260,6 @@ export default function StudentResources() {
                 </div>
               </div>
             </div>
-
-            {/* Mobile Resources Skeleton */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="mb-6">
                 <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
@@ -314,10 +304,12 @@ export default function StudentResources() {
     );
   }
 
+  const resources = getResources();
+
   return (
-    <div className="min-h-screen py-8 md:py-12" suppressHydrationWarning style={{ backgroundColor: colors.background }}>
+    <div className="min-h-screen py-8 md:py-12" style={{ backgroundColor: colors.background }}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section - Always visible */}
+        {/* Header Section */}
         <div className="text-center mb-8 md:mb-12">
           <h1 
             className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4"
@@ -361,7 +353,7 @@ export default function StudentResources() {
               >
                 {data.classes.map((className) => (
                   <option key={className} value={className}>
-                    {className}
+                    {formatClassName(className)}
                   </option>
                 ))}
               </select>
@@ -374,20 +366,17 @@ export default function StudentResources() {
           </div>
         </div>
 
+
         {/* Main Content - Mobile Layout */}
         <div className="block lg:hidden">
-          {/* Mobile Subject Selection - Scrollable Menu */}
-          <div className="mb-6">
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>
-                Select Subject
-              </h3>
-              
-              {/* Mobile Scrollable Subjects */}
-              <div className="relative">
-                <p className="text-sm mb-3" style={{ color: colors.textSecondary }}>
-                  Scroll horizontally to see all subjects →
-                </p>
+          {/* Mobile Subject Selection */}
+          {currentSubjects.length > 0 && (
+            <div className="mb-6">
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>
+                  Select Subject
+                </h3>
+                
                 <div className="flex overflow-x-auto pb-4 space-x-3 scrollbar-hide -mx-2 px-2">
                   {currentSubjects.map((subject) => (
                     <button
@@ -419,39 +408,28 @@ export default function StudentResources() {
                     </button>
                   ))}
                 </div>
-                
-                {/* Scroll indicators */}
-                <div className="flex justify-center space-x-1 mt-3">
-                  {[0, 1, 2].map((dot) => (
-                    <div 
-                      key={dot}
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ 
-                        backgroundColor: dot === 0 ? colors.primaryBlue : colors.border 
-                      }}
-                    />
-                  ))}
-                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Mobile Resources Display */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             {/* Subject Header */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: colors.textPrimary }}>
-                {selectedSubject}
-              </h2>
-              <p className="text-lg" style={{ color: colors.textSecondary }}>
-                Resources for {selectedClass}
-              </p>
-            </div>
+            {selectedSubject && (
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2" style={{ color: colors.textPrimary }}>
+                  {selectedSubject}
+                </h2>
+                <p className="text-lg" style={{ color: colors.textSecondary }}>
+                  Resources for {formatClassName(selectedClass)}
+                </p>
+              </div>
+            )}
 
             {/* Mobile Resources List */}
-            {getResources().length > 0 ? (
+            {resources.length > 0 ? (
               <div className="space-y-4">
-                {getResources().map((resource) => (
+                {resources.map((resource) => (
                   <div 
                     key={resource.id}
                     className="rounded-xl p-4 transition-all duration-300 hover:shadow-lg"
@@ -460,7 +438,6 @@ export default function StudentResources() {
                       backgroundColor: 'white'
                     }}
                   >
-                    {/* Resource Type Badge */}
                     <div className="flex items-center mb-3">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center mr-2"
                         style={{ backgroundColor: `${getTypeColor(resource.type)}15` }}>
@@ -503,7 +480,7 @@ export default function StudentResources() {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : selectedSubject ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: `${colors.textSecondary}10` }}>
@@ -515,90 +492,106 @@ export default function StudentResources() {
                   No Resources Available
                 </h3>
                 <p className="text-sm" style={{ color: colors.textSecondary }}>
-                  Select a different subject for resources
+                  No resources found for {selectedSubject} in {formatClassName(selectedClass)}.
+                </p>
+                {currentSubjects.length > 1 && (
+                  <p className="text-sm mt-2" style={{ color: colors.textSecondary }}>
+                    Try selecting a different subject.
+                  </p>
+                )}
+              </div>
+            ) : currentSubjects.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: `${colors.textSecondary}10` }}>
+                  <svg className="w-8 h-8" style={{ color: colors.textSecondary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: colors.textPrimary }}>
+                  No Subjects Available
+                </h3>
+                <p className="text-sm" style={{ color: colors.textSecondary }}>
+                  No subjects found for {formatClassName(selectedClass)}.
+                  Please select a different class.
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
         {/* Main Content - Desktop Layout */}
         <div className="hidden lg:flex lg:flex-row gap-8">
           {/* Subjects Sidebar */}
-          <div className="w-1/4">
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
-              <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>
-                Subjects for {selectedClass}
-              </h3>
-              
-              <div className="space-y-2">
-                {currentSubjects.map((subject) => (
-                  <button
-                    key={subject}
-                    onClick={() => setSelectedSubject(subject)}
-                    className={`w-full text-left p-3 rounded-lg transition-all ${
-                      selectedSubject === subject
-                        ? 'transform scale-[1.02]'
-                        : 'hover:bg-gray-50'
-                    }`}
-                    style={{
-                      backgroundColor: selectedSubject === subject 
-                        ? `${colors.primaryBlue}10` 
-                        : 'transparent',
-                      border: `1px solid ${
-                        selectedSubject === subject 
+          {currentSubjects.length > 0 && (
+            <div className="w-1/4">
+              <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6">
+                <h3 className="text-lg font-bold mb-4" style={{ color: colors.textPrimary }}>
+                  Subjects for {formatClassName(selectedClass)}
+                </h3>
+                
+                <div className="space-y-2">
+                  {currentSubjects.map((subject) => (
+                    <button
+                      key={subject}
+                      onClick={() => setSelectedSubject(subject)}
+                      className={`w-full text-left p-3 rounded-lg transition-all ${
+                        selectedSubject === subject
+                          ? 'transform scale-[1.02]'
+                          : 'hover:bg-gray-50'
+                      }`}
+                      style={{
+                        backgroundColor: selectedSubject === subject 
+                          ? `${colors.primaryBlue}10` 
+                          : 'transparent',
+                        border: `1px solid ${
+                          selectedSubject === subject 
+                            ? colors.primaryBlue 
+                            : colors.border
+                        }`,
+                        color: selectedSubject === subject 
                           ? colors.primaryBlue 
-                          : colors.border
-                      }`,
-                      color: selectedSubject === subject 
-                        ? colors.primaryBlue 
-                        : colors.textPrimary,
-                    }}
-                  >
-                    <div className="font-medium">{subject}</div>
-                  </button>
-                ))}
+                          : colors.textPrimary,
+                      }}
+                    >
+                      <div className="font-medium">{subject}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Resources Main Content */}
-          <div className="w-3/4">
+          <div className={currentSubjects.length > 0 ? "w-3/4" : "w-full"}>
             <div className="bg-white rounded-2xl shadow-lg p-8">
               {/* Subject Header */}
-              <div className="flex items-center justify-between mb-8">
-                <div>
+              {selectedSubject ? (
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 className="text-3xl font-bold mb-2" style={{ color: colors.textPrimary }}>
+                      {selectedSubject} Resources
+                    </h2>
+                    <p className="text-lg" style={{ color: colors.textSecondary }}>
+                      For {formatClassName(selectedClass)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-8">
                   <h2 className="text-3xl font-bold mb-2" style={{ color: colors.textPrimary }}>
-                    {selectedSubject} Resources
+                    Select a Class
                   </h2>
                   <p className="text-lg" style={{ color: colors.textSecondary }}>
-                    For {selectedClass}
+                    Choose a class from the dropdown above to view resources
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm" style={{ color: colors.textSecondary }}>Filter:</span>
-                  <select 
-                    className="px-3 py-2 rounded-lg border text-sm"
-                    style={{ 
-                      borderColor: colors.border,
-                      color: colors.textPrimary,
-                      backgroundColor: 'white'
-                    }}
-                  >
-                    <option value="all">All Types</option>
-                    <option value="book">Books</option>
-                    <option value="video">Videos</option>
-                    <option value="article">Articles</option>
-                    <option value="practice">Practice</option>
-                    <option value="exam">Exams</option>
-                  </select>
-                </div>
-              </div>
+              )}
 
-              {/* Resources Grid - 2 columns on desktop */}
-              {getResources().length > 0 ? (
+              {/* Resources Grid */}
+              {resources.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {getResources().map((resource) => (
+                  {resources.map((resource) => (
                     <div 
                       key={resource.id}
                       className="rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
@@ -653,7 +646,7 @@ export default function StudentResources() {
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : selectedSubject ? (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: `${colors.textSecondary}10` }}>
@@ -665,11 +658,26 @@ export default function StudentResources() {
                     No Resources Available
                   </h3>
                   <p className="max-w-md mx-auto" style={{ color: colors.textSecondary }}>
-                    We're adding more resources for {selectedSubject} in {selectedClass}. 
-                    Please check back soon or select a different subject.
+                    No resources found for {selectedSubject} in {formatClassName(selectedClass)}.
                   </p>
                 </div>
-              )}
+              ) : currentSubjects.length === 0 && selectedClass ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${colors.textSecondary}10` }}>
+                    <svg className="w-10 h-10" style={{ color: colors.textSecondary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3" style={{ color: colors.textPrimary }}>
+                    No Subjects Available
+                  </h3>
+                  <p className="max-w-md mx-auto" style={{ color: colors.textSecondary }}>
+                    No subjects found for {formatClassName(selectedClass)}.
+                    Please select a different class.
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

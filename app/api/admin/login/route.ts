@@ -1,8 +1,7 @@
-// app/api/admin/login/route.ts - UPDATED VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client directly
+// Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -24,9 +23,6 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 export async function POST(request: NextRequest) {
   try {
     console.log('🔐 Admin login attempt');
-    console.log('🌍 Environment:', process.env.NODE_ENV);
-    console.log('🔗 Supabase URL exists:', !!supabaseUrl);
-    console.log('🔑 Supabase Key exists:', !!supabaseAnonKey);
     
     const { email, password } = await request.json();
     console.log('📧 Login attempt for:', email);
@@ -39,16 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    console.log('🔑 Attempting Supabase sign-in...');
-    
     // Supabase sign-in
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: email.toLowerCase().trim(),
@@ -57,23 +43,8 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.log('❌ Auth error:', authError.message);
-      
-      // More specific error messages
-      if (authError.message.includes('Invalid login credentials')) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid email or password' },
-          { status: 401 }
-        );
-      }
-      if (authError.message.includes('Email not confirmed')) {
-        return NextResponse.json(
-          { success: false, error: 'Please confirm your email first' },
-          { status: 401 }
-        );
-      }
-      
       return NextResponse.json(
-        { success: false, error: authError.message },
+        { success: false, error: 'Invalid email or password' },
         { status: 401 }
       );
     }
@@ -85,9 +56,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    console.log('✅ User authenticated:', authData.user.id);
-    console.log('📝 Session token:', authData.session.access_token.substring(0, 20) + '...');
 
     // Check admin profile
     const { data: adminProfile, error: profileError } = await supabaseAdmin
@@ -111,8 +79,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Admin authorized:', adminProfile.name);
-
     // Update last login
     await supabaseAdmin
       .from('admin_profiles')
@@ -134,34 +100,52 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get domain for cookies
+    // Get environment
     const isProduction = process.env.NODE_ENV === 'production';
-    const domain = isProduction ? '.iba-steel.vercel.app' : 'localhost';
+    const isVercel = process.env.VERCEL_ENV === 'production';
     
-    console.log('🍪 Setting cookies for domain:', domain);
-    console.log('🔒 Production mode:', isProduction);
+    // IMPORTANT: For Vercel deployments, we need to handle domains differently
+    const requestOrigin = request.headers.get('origin') || '';
+    const isVercelDeployment = requestOrigin.includes('vercel.app');
+    
+    console.log('🌍 Environment:', {
+      isProduction,
+      isVercel,
+      requestOrigin,
+      isVercelDeployment
+    });
 
-    // Set cookies with proper domain
+    // Set cookies - VERCEL SPECIFIC FIX
+    const cookieOptions: any = {
+      httpOnly: true,
+      secure: true, // Always secure in production
+      sameSite: 'lax',
+      path: '/',
+      maxAge: authData.session.expires_in,
+    };
+
+    // For Vercel deployments, don't set domain
+    if (isVercelDeployment) {
+      // Vercel doesn't allow .vercel.app domain cookies
+      cookieOptions.domain = undefined;
+    } else if (isProduction) {
+      // For custom domains in production
+      cookieOptions.domain = `.${new URL(requestOrigin).hostname}`;
+    }
+
+    // Set access token cookie
     response.cookies.set({
       name: 'sb-access-token',
       value: authData.session.access_token,
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-      maxAge: authData.session.expires_in,
-      domain: isProduction ? domain : undefined,
+      ...cookieOptions
     });
 
+    // Set refresh token cookie
     response.cookies.set({
       name: 'sb-refresh-token',
       value: authData.session.refresh_token,
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
+      ...cookieOptions,
       maxAge: 60 * 60 * 24 * 7, // 7 days
-      domain: isProduction ? domain : undefined,
     });
 
     // Client-readable cookie
@@ -169,11 +153,11 @@ export async function POST(request: NextRequest) {
       name: 'admin-authenticated',
       value: 'true',
       httpOnly: false,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'lax',
       path: '/',
       maxAge: authData.session.expires_in,
-      domain: isProduction ? domain : undefined,
+      domain: isVercelDeployment ? undefined : (isProduction ? `.${new URL(requestOrigin).hostname}` : undefined),
     });
 
     console.log('✅ Login completed successfully');
@@ -181,7 +165,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('🔥 Login error:', error.message);
-    console.error('🔥 Full error:', error);
     
     return NextResponse.json(
       { success: false, error: 'Internal server error' },

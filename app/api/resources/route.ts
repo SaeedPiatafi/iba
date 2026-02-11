@@ -2,10 +2,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
+// Initialize Supabase clients with both anon and service role
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Create both clients
+const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseService = supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : null;
 
 // Define types matching your database
 interface DatabaseResource {
@@ -87,7 +93,7 @@ const standardizeSubject = (dbSubject: string): string => {
 };
 
 // Get unique subjects from database for each class
-async function getSubjectsFromDatabase(): Promise<Record<string, string[]>> {
+async function getSubjectsFromDatabase(supabase: any): Promise<Record<string, string[]>> {
   try {
     const { data: resources, error } = await supabase
       .from('resources')
@@ -155,9 +161,10 @@ const mapDatabaseTypeToFrontend = (dbType: string): FrontendResource['type'] => 
   return typeMap[normalizedType] || 'Book';
 };
 
-async function getResourcesFromDatabase(): Promise<ResourcesData> {
+// Function to get resources using a specific Supabase client
+async function getResourcesFromDatabase(supabase: any, clientType: string): Promise<ResourcesData> {
   try {
-    console.log('🔍 Fetching resources from database...');
+    console.log(`🔍 Fetching resources from database using ${clientType} client...`);
     
     // Fetch all active resources from database
     const { data: resources, error } = await supabase
@@ -167,14 +174,14 @@ async function getResourcesFromDatabase(): Promise<ResourcesData> {
       .order('title', { ascending: true });
 
     if (error) {
-      console.error('Database error:', error);
+      console.error(`Database error (${clientType}):`, error);
       throw error;
     }
 
-    console.log(`✅ Found ${resources?.length || 0} active resources in database`);
+    console.log(`✅ Found ${resources?.length || 0} active resources in database (${clientType})`);
     
     // Get subjects from database
-    const subjectsByClass = await getSubjectsFromDatabase();
+    const subjectsByClass = await getSubjectsFromDatabase(supabase);
     
     // Initialize the response structure
     const responseData: ResourcesData = {
@@ -235,7 +242,7 @@ async function getResourcesFromDatabase(): Promise<ResourcesData> {
         }
       });
       
-      console.log(`🔄 Processed ${processedCount} resources successfully`);
+      console.log(`🔄 Processed ${processedCount} resources successfully (${clientType})`);
       
       // Log summary by class
       CLASSES.forEach(className => {
@@ -244,26 +251,27 @@ async function getResourcesFromDatabase(): Promise<ResourcesData> {
           (sum, subjectResources) => sum + subjectResources.length, 0
         );
         if (totalResources > 0) {
-          console.log(`📚 Class ${className}: ${totalResources} resources`);
+          console.log(`📚 Class ${className}: ${totalResources} resources (${clientType})`);
         }
       });
     } else {
-      console.log('⚠️ No active resources found in database');
+      console.log(`⚠️ No active resources found in database (${clientType})`);
     }
 
     return responseData;
   } catch (error) {
-    console.error('❌ Error fetching resources:', error);
+    console.error(`❌ Error fetching resources (${clientType}):`, error);
     
     // Return empty structure on error
     const errorData: ResourcesData = {
       classes: CLASSES,
-      subjectsByClass: await getSubjectsFromDatabase(),
+      subjectsByClass: {},
       resources: {}
     };
     
     // Initialize empty resources
     CLASSES.forEach(className => {
+      errorData.subjectsByClass[className] = [];
       errorData.resources[className] = {};
     });
     
@@ -275,13 +283,33 @@ export async function GET(request: Request) {
   try {
     console.log('🚀 API Route: GET /api/resources');
     
-    const data = await getResourcesFromDatabase();
+    let data: ResourcesData;
+    let source = 'unknown';
     
-    console.log('✅ Resources data prepared');
+    // Try with service role first (bypasses RLS)
+    if (supabaseService) {
+      try {
+        data = await getResourcesFromDatabase(supabaseService, 'service_role');
+        source = 'service_role';
+        console.log('✅ Using service role data');
+      } catch (serviceError) {
+        console.log('⚠️ Service role failed, trying anon:', serviceError);
+        // Fall back to anon
+        data = await getResourcesFromDatabase(supabaseAnon, 'anon');
+        source = 'anon_fallback';
+      }
+    } else {
+      // Only anon available
+      data = await getResourcesFromDatabase(supabaseAnon, 'anon');
+      source = 'anon_only';
+    }
+    
+    console.log(`✅ Resources data prepared (source: ${source})`);
     
     return NextResponse.json({
       success: true,
       data: data,
+      source: source,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
