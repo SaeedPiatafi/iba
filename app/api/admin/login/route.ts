@@ -1,24 +1,38 @@
-// app/api/admin/login/route.ts
+// app/api/admin/login/route.ts - UPDATED VERSION
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
-// Helper function to get Supabase admin client with null check
-function getSupabaseAdmin() {
-  if (!supabaseAdmin) {
-    throw new Error("Supabase admin client not configured. Check SUPABASE_SERVICE_ROLE_KEY environment variable.");
+// Initialize Supabase client directly
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
   }
-  return supabaseAdmin;
-}
+});
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  }
+});
 
 export async function POST(request: NextRequest) {
   try {
     console.log('🔐 Admin login attempt');
+    console.log('🌍 Environment:', process.env.NODE_ENV);
+    console.log('🔗 Supabase URL exists:', !!supabaseUrl);
+    console.log('🔑 Supabase Key exists:', !!supabaseAnonKey);
     
     const { email, password } = await request.json();
+    console.log('📧 Login attempt for:', email);
 
     // Validation
     if (!email || !password) {
-      console.log('❌ Missing email or password');
       return NextResponse.json(
         { success: false, error: 'Email and password are required' },
         { status: 400 }
@@ -27,83 +41,80 @@ export async function POST(request: NextRequest) {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log('❌ Invalid email format:', email);
       return NextResponse.json(
         { success: false, error: 'Invalid email format' },
         { status: 400 }
       );
     }
 
-    console.log('🔑 Attempting Supabase sign-in for:', email.toLowerCase().trim());
+    console.log('🔑 Attempting Supabase sign-in...');
     
     // Supabase sign-in
-    const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
-        password: password.trim(),
-      });
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase().trim(),
+      password: password.trim(),
+    });
 
     if (authError) {
-      console.log('❌ Supabase auth error:', authError.message);
+      console.log('❌ Auth error:', authError.message);
+      
+      // More specific error messages
+      if (authError.message.includes('Invalid login credentials')) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid email or password' },
+          { status: 401 }
+        );
+      }
+      if (authError.message.includes('Email not confirmed')) {
+        return NextResponse.json(
+          { success: false, error: 'Please confirm your email first' },
+          { status: 401 }
+        );
+      }
+      
       return NextResponse.json(
-        { success: false, error: 'Invalid email or password' },
+        { success: false, error: authError.message },
         { status: 401 }
       );
     }
 
     if (!authData.user || !authData.session) {
-      console.log('❌ No user or session returned');
+      console.log('❌ No user or session');
       return NextResponse.json(
-        { success: false, error: 'Invalid email or password' },
+        { success: false, error: 'Authentication failed' },
         { status: 401 }
       );
     }
 
-    const user = authData.user;
-    const session = authData.session;
+    console.log('✅ User authenticated:', authData.user.id);
+    console.log('📝 Session token:', authData.session.access_token.substring(0, 20) + '...');
 
-    console.log('✅ User authenticated:', user.id);
-    console.log('📝 Session expires in:', session.expires_in);
-
-    // Get the Supabase admin client
-    const adminClient = getSupabaseAdmin();
-    
     // Check admin profile
-    const { data: adminProfile, error: profileError } = await adminClient
+    const { data: adminProfile, error: profileError } = await supabaseAdmin
       .from('admin_profiles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', authData.user.id)
       .single();
 
-    if (profileError) {
-      console.log('❌ Profile error:', profileError.message);
-      // Don't sign out here, just return error
+    if (profileError || !adminProfile) {
+      console.log('❌ Admin profile error:', profileError?.message);
       return NextResponse.json(
-        { success: false, error: 'Unauthorized access' },
-        { status: 403 }
-      );
-    }
-
-    if (!adminProfile) {
-      console.log('❌ No admin profile found for user:', user.id);
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized access' },
+        { success: false, error: 'Unauthorized access - Not an admin' },
         { status: 403 }
       );
     }
 
     if (!adminProfile.is_active) {
-      console.log('❌ Admin account disabled:', user.id);
       return NextResponse.json(
         { success: false, error: 'Account is disabled' },
         { status: 403 }
       );
     }
 
-    console.log('✅ Admin profile found:', adminProfile.name, '- Role:', adminProfile.role);
+    console.log('✅ Admin authorized:', adminProfile.name);
 
     // Update last login
-    await adminClient
+    await supabaseAdmin
       .from('admin_profiles')
       .update({
         last_login: new Date().toISOString(),
@@ -111,79 +122,70 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', adminProfile.id);
 
-    // Set cookies - FIXED: Create headers object first
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    console.log('🍪 Setting cookies...');
-    
     // Create response
     const response = NextResponse.json({
       success: true,
       message: 'Login successful',
       user: {
-        id: user.id,
-        email: user.email,
+        id: authData.user.id,
+        email: authData.user.email,
         name: adminProfile.name,
         role: adminProfile.role,
       },
     });
 
-    // Set cookies with proper attributes
+    // Get domain for cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+    const domain = isProduction ? '.iba-steel.vercel.app' : 'localhost';
+    
+    console.log('🍪 Setting cookies for domain:', domain);
+    console.log('🔒 Production mode:', isProduction);
+
+    // Set cookies with proper domain
     response.cookies.set({
       name: 'sb-access-token',
-      value: session.access_token,
+      value: authData.session.access_token,
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/',
-      maxAge: session.expires_in,
+      maxAge: authData.session.expires_in,
+      domain: isProduction ? domain : undefined,
     });
 
     response.cookies.set({
       name: 'sb-refresh-token',
-      value: session.refresh_token,
+      value: authData.session.refresh_token,
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days
+      domain: isProduction ? domain : undefined,
     });
 
-    // Also set a client-readable cookie for checking auth status
+    // Client-readable cookie
     response.cookies.set({
       name: 'admin-authenticated',
       value: 'true',
       httpOnly: false,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/',
-      maxAge: session.expires_in,
+      maxAge: authData.session.expires_in,
+      domain: isProduction ? domain : undefined,
     });
 
-    console.log('✅ Login successful, cookies set');
+    console.log('✅ Login completed successfully');
     return response;
 
   } catch (error: any) {
     console.error('🔥 Login error:', error.message);
-    
-    // Handle specific errors
-    if (error.message.includes('Supabase admin client not configured')) {
-      return NextResponse.json(
-        { success: false, error: 'Server configuration error. Please contact administrator.' },
-        { status: 500 }
-      );
-    }
+    console.error('🔥 Full error:', error);
     
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
-
-export async function GET() {
-  return NextResponse.json(
-    { success: false, error: 'Method not allowed' },
-    { status: 405 }
-  );
 }
